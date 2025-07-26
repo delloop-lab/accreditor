@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Disable server-side rendering for client components that use browser APIs
+  reactStrictMode: true,
 };
 
 export default nextConfig;

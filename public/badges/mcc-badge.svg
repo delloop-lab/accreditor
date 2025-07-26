@@ -1,0 +1,10 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="60" cy="60" r="55" fill="#8B5CF6" stroke="#6D28D9" stroke-width="2"/>
+  <circle cx="60" cy="60" r="45" fill="#EDE9FE" stroke="#8B5CF6" stroke-width="1"/>
+  <text x="60" y="45" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#6D28D9">MCC</text>
+  <text x="60" y="65" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" fill="#6D28D9">Master</text>
+  <text x="60" y="75" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" fill="#6D28D9">Certified</text>
+  <text x="60" y="85" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" fill="#6D28D9">Coach</text>
+  <circle cx="60" cy="25" r="8" fill="#FEF3C7" stroke="#F59E0B" stroke-width="1"/>
+  <path d="M60 20 L62 24 L66 24 L63 27 L64 31 L60 29 L56 31 L57 27 L54 24 L58 24 Z" fill="#F59E0B"/>
+</svg> 
