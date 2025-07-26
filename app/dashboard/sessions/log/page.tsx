@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { ClockIcon, UserIcon, CalendarIcon, CurrencyDollarIcon, CheckCircleIcon, ArrowDownTrayIcon, PencilIcon } from "@heroicons/react/24/outline";
@@ -32,7 +32,7 @@ type Client = {
   created_at: string;
 };
 
-export default function SessionsLogPage() {
+function SessionsLogContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [sessions, setSessions] = useState<SessionEntry[]>([]);
@@ -286,5 +286,20 @@ export default function SessionsLogPage() {
 
 
     </div>
+  );
+}
+
+export default function SessionsLogPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading sessions log...</p>
+        </div>
+      </div>
+    }>
+      <SessionsLogContent />
+    </Suspense>
   );
 } 

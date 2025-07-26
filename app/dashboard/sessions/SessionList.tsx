@@ -18,7 +18,7 @@ export default function SessionList({ sessions, onDelete, onCardClick }: { sessi
             <div className="text-sm text-gray-500">{session.date} &bull; {session.duration} min</div>
             <div className="text-sm text-gray-500">Type: {session.types.join(", ")}</div>
             <div className="text-sm text-gray-500">Payment: {session.paymentType === "paid" ? "Paid" : "Pro Bono"}</div>
-            {session.notes && <div className="text-sm mt-1">Notes: {session.notes}</div>}
+            {session.additionalNotes && <div className="text-sm mt-1">Notes: {session.additionalNotes}</div>}
           </div>
           <button
             onClick={e => { e.stopPropagation(); onDelete(idx); }}

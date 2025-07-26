@@ -105,7 +105,7 @@ export default function ProfilePage() {
             icf_level: "none",
             currency: "USD",
             created_at: user.created_at,
-            updated_at: user.updated_at
+            updated_at: user.updated_at || new Date().toISOString()
           });
         }
       } catch (error) {
@@ -157,7 +157,7 @@ export default function ProfilePage() {
         .eq("user_id", user.id);
 
       // If no rows were updated, insert new profile
-      if (updateError || updateError?.message?.includes('No rows found')) {
+      if (updateError) {
         const { error: insertError } = await supabase
           .from("profiles")
           .insert({
@@ -170,12 +170,9 @@ export default function ProfilePage() {
           });
 
         if (insertError) {
-          setError(insertError.message);
+          setError(insertError.message || 'Failed to create profile');
           return;
         }
-      } else if (updateError) {
-        setError(updateError.message);
-        return;
       }
 
       setSuccess("Profile updated successfully!");

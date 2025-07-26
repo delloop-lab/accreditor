@@ -148,11 +148,25 @@ export default function ClientDetailPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // First verify the client belongs to the user, then delete
+      const { data: clientCheck, error: checkError } = await supabase
+        .from("clients")
+        .select("id")
+        .eq("id", clientId)
+        .eq("user_id", user.id)
+        .single();
+
+      if (checkError || !clientCheck) {
+        setError('Client not found or access denied');
+        setDeleting(false);
+        setShowDeleteModal(false);
+        return;
+      }
+
       const { error } = await supabase
         .from("clients")
         .delete()
-        .eq("id", clientId)
-        .eq("user_id", user.id);
+        .eq("id", clientId);
 
       if (!error) {
         router.push('/dashboard/clients');
