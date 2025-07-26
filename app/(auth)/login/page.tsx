@@ -97,11 +97,13 @@ export default function LoginPage() {
           </p>
         </div>
         
-        {/* Demo credentials hint */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
-          <p className="font-medium mb-1">Demo Mode</p>
-          <p>Since Supabase isn't configured, you can use any email/password to see the demo.</p>
-        </div>
+        {/* Demo credentials hint - only show if Supabase isn't configured */}
+        {(!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
+            <p className="font-medium mb-1">Demo Mode</p>
+            <p>Since Supabase isn't configured, you can use any email/password to see the demo.</p>
+          </div>
+        )}
       </div>
     </div>
   );
