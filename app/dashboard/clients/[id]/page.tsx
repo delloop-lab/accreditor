@@ -59,12 +59,13 @@ export default function ClientDetailPage() {
           setProfile(null);
         }
 
-        const { data, error } = await supabase
+        // @ts-ignore: Supabase type workaround for .eq
+        const { data, error } = await ((supabase as any)
           .from("clients")
           .select("*")
           .eq("id", clientId)
           .eq("user_id", user.id)
-          .single();
+          .single());
 
         if (!error && data) {
           setClient(data);
