@@ -23,7 +23,7 @@ export default function EditSessionPage() {
 
         const { data, error } = await supabase
           .from("sessions")
-          .select("id,client_id,client_name,date,finish_date,duration,types,paymenttype,payment_amount,additional_notes,user_id")
+          .select("id,client_id,client_name,date,finish_date,duration,types,paymenttype,payment_amount,focus_area,key_outcomes,client_progress,coaching_tools,icf_competencies,additional_notes,user_id")
           .eq("id", sessionId)
           .eq("user_id", user.id)
           .single();
@@ -45,11 +45,11 @@ export default function EditSessionPage() {
             types: data.types || [],
             paymentType: data.paymenttype,
             paymentAmount: data.payment_amount,
-            focusArea: '',
-            keyOutcomes: '',
-            clientProgress: '',
-            coachingTools: [],
-            icfCompetencies: [],
+            focusArea: data.focus_area || '',
+            keyOutcomes: data.key_outcomes || '',
+            clientProgress: data.client_progress || '',
+            coachingTools: data.coaching_tools || [],
+            icfCompetencies: data.icf_competencies || [],
             additionalNotes: data.additional_notes || '',
           };
           setSession(sessionData);
@@ -86,6 +86,11 @@ export default function EditSessionPage() {
           types: updatedData.types,
           paymenttype: updatedData.paymentType,
           payment_amount: updatedData.paymentAmount,
+          focus_area: updatedData.focusArea,
+          key_outcomes: updatedData.keyOutcomes,
+          client_progress: updatedData.clientProgress,
+          coaching_tools: updatedData.coachingTools,
+          icf_competencies: updatedData.icfCompetencies,
           additional_notes: updatedData.additionalNotes,
         })
         .eq("id", sessionId)

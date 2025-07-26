@@ -11,7 +11,8 @@ import {
   CalendarIcon,
   DocumentTextIcon,
   ArrowTrendingUpIcon,
-  UserIcon
+  UserIcon,
+  EnvelopeIcon
 } from "@heroicons/react/24/outline";
 
 type ICFCompetency = {
@@ -60,9 +61,32 @@ export default function ReportsPage() {
   const [currentYearHours, setCurrentYearHours] = useState(0);
   const [totalSessions, setTotalSessions] = useState(0);
   const [currentYearSessions, setCurrentYearSessions] = useState(0);
+  const [currentYearSessionHours, setCurrentYearSessionHours] = useState(0);
   const [competencyBreakdown, setCompetencyBreakdown] = useState<ICFCompetency[]>([]);
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const [profile, setProfile] = useState<any>(null);
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [currentYearCpdHours, setCurrentYearCpdHours] = useState(0);
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+
+  // Currency symbols mapping
+  const CURRENCY_SYMBOLS: { [key: string]: string } = {
+    "USD": "$",
+    "EUR": "€",
+    "GBP": "£",
+    "CAD": "C$",
+    "AUD": "A$",
+    "JPY": "¥",
+    "CHF": "CHF",
+    "NZD": "NZ$",
+    "SEK": "SEK",
+    "NOK": "NOK",
+    "DKK": "DKK"
+  };
+
+  const getCurrencySymbol = (currency: string) => {
+    return CURRENCY_SYMBOLS[currency] || currency;
+  };
 
   const ICF_COMPETENCIES: ICFCompetency[] = [
     {
@@ -212,6 +236,7 @@ export default function ReportsPage() {
           .filter((entry: CPDEntry) => new Date(entry.date).getFullYear() === currentYear)
           .reduce((sum: number, entry: CPDEntry) => sum + entry.hours, 0);
         setCurrentYearHours(currentYearTotal);
+        setCurrentYearCpdHours(currentYearTotal);
 
         // Calculate session metrics
         setTotalSessions(sessionEntries.length);
@@ -219,6 +244,12 @@ export default function ReportsPage() {
           .filter((session: SessionEntry) => new Date(session.date).getFullYear() === currentYear)
           .length;
         setCurrentYearSessions(currentYearSessionsTotal);
+        
+        // Calculate current year session hours
+        const currentYearSessionHoursTotal = sessionEntries
+          .filter((session: SessionEntry) => new Date(session.date).getFullYear() === currentYear)
+          .reduce((sum: number, session: SessionEntry) => sum + (session.duration / 60), 0);
+        setCurrentYearSessionHours(Math.round(currentYearSessionHoursTotal * 10) / 10); // Round to 1 decimal place
 
         // Calculate competency breakdown
         const competencyHours: { [key: string]: number } = {};
@@ -280,6 +311,149 @@ export default function ReportsPage() {
     return profile && profile.name && profile.name.trim() !== '';
   };
 
+  const generateICFReport = () => {
+    setIsGeneratingReport(true);
+    
+    const currentYearSessions = sessions.filter(session => 
+      new Date(session.date).getFullYear() === currentYear
+    );
+    
+    const currentYearCpd = cpdEntries.filter(entry => 
+      new Date(entry.date).getFullYear() === currentYear
+    );
+
+    const reportData = {
+      coachName: profile?.name || 'Coach',
+      icfLevel: profile?.icf_level || 'Not specified',
+      reportYear: currentYear,
+      generatedDate: new Date().toLocaleDateString(),
+      
+      // Session Summary
+      totalSessions: currentYearSessions.length,
+      totalSessionHours: currentYearSessionHours,
+             sessions: currentYearSessions.map(session => ({
+         date: new Date(session.date).toLocaleDateString(),
+         clientName: session.client_name,
+         duration: (session.duration / 60).toFixed(1) + 'h',
+         sessionType: session.types.length > 0 ? session.types[0] : 'Individual',
+         notes: session.notes || session.additional_notes || ''
+       })),
+       
+       // CPD Summary
+       totalCpdActivities: currentYearCpd.length,
+       totalCpdHours: currentYearCpdHours,
+       cpdActivities: currentYearCpd.map(entry => ({
+         date: new Date(entry.date).toLocaleDateString(),
+         title: entry.title,
+         description: entry.description,
+         duration: entry.hours + 'h',
+         category: entry.cpdType,
+         competencies: entry.icfCompetencies.length || 0
+       }))
+    };
+
+    const reportHTML = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ICF Credential Renewal Report - ${reportData.coachName}</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; border-bottom: 2px solid #2563eb; padding-bottom: 20px; margin-bottom: 30px; }
+        .summary-section { background: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 30px; }
+        .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .summary-card { background: white; padding: 15px; border-radius: 6px; border-left: 4px solid #2563eb; }
+        .summary-card.cpd { border-left-color: #8b5cf6; }
+        .section-title { color: #1e40af; font-size: 18px; font-weight: bold; margin-bottom: 15px; border-bottom: 1px solid #e5e7eb; padding-bottom: 5px; }
+        .activity-item { background: white; padding: 15px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #e5e7eb; }
+        .activity-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .activity-date { color: #6b7280; font-size: 14px; }
+        .activity-duration { background: #dbeafe; color: #1e40af; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+        .activity-category { background: #f3e8ff; color: #7c3aed; padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+        .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 14px; }
+        .icf-logo { text-align: center; margin-bottom: 20px; }
+        .icf-logo img { max-width: 200px; }
+        @media print { body { max-width: none; } }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>ICF Credential Renewal Report</h1>
+        <p><strong>Coach:</strong> ${reportData.coachName}</p>
+        <p><strong>ICF Level:</strong> ${reportData.icfLevel.toUpperCase()}</p>
+        <p><strong>Report Period:</strong> ${reportData.reportYear}</p>
+        <p><strong>Generated:</strong> ${reportData.generatedDate}</p>
+    </div>
+
+    <div class="summary-section">
+        <h2 class="section-title">Summary</h2>
+        <div class="summary-grid">
+            <div class="summary-card">
+                <h3>Coaching Sessions</h3>
+                <p><strong>Total Sessions:</strong> ${reportData.totalSessions}</p>
+                <p><strong>Total Hours:</strong> ${reportData.totalSessionHours}h</p>
+            </div>
+            <div class="summary-card cpd">
+                <h3>CPD Activities</h3>
+                <p><strong>Total Activities:</strong> ${reportData.totalCpdActivities}</p>
+                <p><strong>Total Hours:</strong> ${reportData.totalCpdHours}h</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="section-title">Coaching Sessions (${reportData.reportYear})</div>
+    ${reportData.sessions.map(session => `
+        <div class="activity-item">
+            <div class="activity-header">
+                <strong>${session.clientName}</strong>
+                <div>
+                    <span class="activity-duration">${session.duration}</span>
+                    <span class="activity-category">${session.sessionType}</span>
+                </div>
+            </div>
+            <div class="activity-date">${session.date}</div>
+            ${session.notes ? `<p style="margin-top: 8px; font-style: italic;">${session.notes}</p>` : ''}
+        </div>
+    `).join('')}
+
+    <div class="section-title">CPD Activities (${reportData.reportYear})</div>
+    ${reportData.cpdActivities.map(activity => `
+        <div class="activity-item">
+            <div class="activity-header">
+                <strong>${activity.title}</strong>
+                <div>
+                    <span class="activity-duration">${activity.duration}</span>
+                    <span class="activity-category">${activity.category}</span>
+                </div>
+            </div>
+            <div class="activity-date">${activity.date}</div>
+            <p style="margin-top: 8px;">${activity.description}</p>
+            ${activity.competencies > 0 ? `<p style="margin-top: 4px; color: #6b7280;"><small>Competencies: ${activity.competencies}</small></p>` : ''}
+        </div>
+    `).join('')}
+
+    <div class="footer">
+        <p>This report was generated by Accreditor - Professional Coaching Log & CPD Tracker</p>
+        <p>For ICF credential renewal purposes</p>
+    </div>
+</body>
+</html>`;
+
+    // Create a blob and download the report
+    const blob = new Blob([reportHTML], { type: 'text/html' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ICF_Report_${reportData.coachName}_${currentYear}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+    
+    setIsGeneratingReport(false);
+  };
+
   const renderDetailView = () => {
     if (!selectedCard) return null;
 
@@ -326,6 +500,54 @@ export default function ReportsPage() {
                         <div className="text-right">
                           <p className="font-semibold text-gray-900">{entry.hours}h</p>
                           <p className="text-xs text-gray-500">{new Date(entry.date).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'sessionProgress':
+        return (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl max-w-4xl w-full max-h-[80vh] overflow-y-auto">
+              <div className="p-6 border-b">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold text-gray-900">Session Progress Details</h2>
+                  <button onClick={() => setSelectedCard(null)} className="text-gray-400 hover:text-gray-600">✕</button>
+                </div>
+              </div>
+              <div className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-blue-900 mb-2">Session Summary</h3>
+                    <p className="text-2xl font-bold text-blue-600">{currentYearSessionHours}h</p>
+                    <p className="text-sm text-blue-700">Total coaching hours this year</p>
+                  </div>
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-green-900 mb-2">Annual Goal</h3>
+                    <p className="text-2xl font-bold text-green-600">100h</p>
+                    <p className="text-sm text-green-700">Target coaching hours</p>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-gray-900">Recent Sessions This Year</h3>
+                  {sessions
+                    .filter((session) => new Date(session.date).getFullYear() === new Date().getFullYear())
+                    .slice(0, 10)
+                    .map((session, index) => (
+                    <div key={session.id || index} className="border rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-medium text-gray-900">{session.client_name}</h4>
+                          <p className="text-sm text-gray-600">{session.notes}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold text-gray-900">{(session.duration / 60).toFixed(1)}h</p>
+                          <p className="text-xs text-gray-500">{new Date(session.date).toLocaleDateString()}</p>
                         </div>
                       </div>
                     </div>
@@ -388,6 +610,59 @@ export default function ReportsPage() {
                           <p className="text-xs text-gray-500">
                             {entry.icfCompetencies.length} competencies
                           </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'currentYearSessions':
+        return (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl max-w-4xl w-full max-h-[80vh] overflow-y-auto">
+              <div className="p-6 border-b">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold text-gray-900">Current Year Sessions Details</h2>
+                  <button
+                    onClick={() => setSelectedCard(null)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+              <div className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-green-900 mb-2">Session Summary</h3>
+                    <p className="text-2xl font-bold text-green-600">{currentYearSessionHours}h</p>
+                    <p className="text-sm text-green-700">Total coaching hours this year</p>
+                  </div>
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h3 className="font-semibold text-blue-900 mb-2">Sessions Breakdown</h3>
+                    <p className="text-2xl font-bold text-blue-600">{currentYearSessions}</p>
+                    <p className="text-sm text-blue-700">Sessions completed this year</p>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-gray-900">Recent Sessions This Year</h3>
+                  {sessions
+                    .filter((session) => new Date(session.date).getFullYear() === new Date().getFullYear())
+                    .slice(0, 10)
+                    .map((session, index) => (
+                    <div key={session.id || index} className="border rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-medium text-gray-900">{session.client_name}</h4>
+                          <p className="text-sm text-gray-600">{session.notes}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold text-gray-900">{(session.duration / 60).toFixed(1)}h</p>
+                          <p className="text-xs text-gray-500">{new Date(session.date).toLocaleDateString()}</p>
                         </div>
                       </div>
                     </div>
@@ -551,73 +826,119 @@ export default function ReportsPage() {
   return (
     <div className="max-w-7xl mx-auto p-6">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-8">
-        <div className="bg-blue-100 p-3 rounded-full">
-          <ChartBarIcon className="h-8 w-8 text-blue-600" />
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-3">
+          <div className="bg-blue-100 p-3 rounded-full">
+            <ChartBarIcon className="h-8 w-8 text-blue-600" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">ICF Compliance Report</h1>
+            <p className="text-gray-600">Track your progress toward ICF credential renewal requirements</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">ICF Compliance Report</h1>
-          <p className="text-gray-600">Track your progress toward ICF credential renewal requirements</p>
+        
+        {/* Export ICF Report Button */}
+        <div className="flex gap-3">
+          <button
+            onClick={generateICFReport}
+            disabled={isGeneratingReport || !isProfileComplete()}
+            className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title={!isProfileComplete() ? "Complete your profile first" : "Generate ICF credential renewal report"}
+          >
+            <EnvelopeIcon className="h-5 w-5" />
+            {isGeneratingReport ? "Generating..." : "Export ICF Report"}
+          </button>
         </div>
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-6 mb-8">
+        {/* Current Year CPD card */}
         <div 
           className="bg-white rounded-xl shadow-lg p-6 border cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105"
           onClick={() => handleCardClick('cpd')}
         >
           <div className="flex items-center justify-between mb-4">
-            <div className="bg-blue-100 p-2 rounded-full">
-              <ClockIcon className="h-6 w-6 text-blue-600" />
+            <div className="bg-red-100 p-2 rounded-full">
+              <AcademicCapIcon className="h-6 w-6 text-red-600" />
             </div>
-            {getStatusIcon(currentYearHours, 40)}
+            <ArrowTrendingUpIcon className="h-5 w-5 text-red-600" />
           </div>
           <h3 className="text-sm font-medium text-gray-500 mb-1">Current Year CPD</h3>
-          <p className="text-2xl font-bold text-gray-900">{currentYearHours}h / 40h</p>
-          <div className="mt-3">
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className={`h-2 rounded-full transition-all duration-300 ${getProgressColor(currentYearHours, 40)}`}
-                style={{ width: `${Math.min((currentYearHours / 40) * 100, 100)}%` }}
-              ></div>
-            </div>
-          </div>
+          <p className="text-2xl font-bold text-gray-900">{currentYearCpdHours}h / 40h</p>
+          <p className="text-sm text-gray-500 mt-1">ICF requirement</p>
           <p className="text-xs text-gray-500 mt-2 text-center">Click for details</p>
         </div>
 
+        {/* Session Progress card */}
+        <div 
+          className="bg-white rounded-xl shadow-lg p-6 border cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105"
+          onClick={() => handleCardClick('sessionProgress')}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div className="bg-blue-100 p-2 rounded-full">
+              <ClockIcon className="h-6 w-6 text-blue-600" />
+            </div>
+            <ArrowTrendingUpIcon className="h-5 w-5 text-blue-600" />
+          </div>
+          <h3 className="text-sm font-medium text-gray-500 mb-1">Session Progress</h3>
+          <p className="text-2xl font-bold text-gray-900">{currentYearSessionHours}h / 100h</p>
+          <p className="text-sm text-gray-500 mt-1">Annual goal</p>
+          <p className="text-xs text-gray-500 mt-2 text-center">Click for details</p>
+        </div>
+
+        {/* Activities Logged card */}
         <div 
           className="bg-white rounded-xl shadow-lg p-6 border cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105"
           onClick={() => handleCardClick('activities')}
         >
           <div className="flex items-center justify-between mb-4">
-            <div className="bg-purple-100 p-2 rounded-full">
-              <DocumentTextIcon className="h-6 w-6 text-purple-600" />
+            <div className="bg-blue-100 p-2 rounded-full">
+              <DocumentTextIcon className="h-6 w-6 text-blue-600" />
             </div>
-            <ArrowTrendingUpIcon className="h-5 w-5 text-purple-600" />
+            <ArrowTrendingUpIcon className="h-5 w-5 text-blue-600" />
           </div>
           <h3 className="text-sm font-medium text-gray-500 mb-1">Activities Logged</h3>
-          <p className="text-2xl font-bold text-gray-900">{cpdEntries.length}</p>
-          <p className="text-sm text-gray-500 mt-1">CPD activities</p>
+          <p className="text-2xl font-bold text-gray-900">{cpdEntries.length} CPD activities</p>
+          <p className="text-sm text-gray-500 mt-1">This year</p>
           <p className="text-xs text-gray-500 mt-2 text-center">Click for details</p>
         </div>
 
+        {/* Current Year Sessions card */}
+        <div 
+          className="bg-white rounded-xl shadow-lg p-6 border cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105"
+          onClick={() => handleCardClick('currentYearSessions')}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div className="bg-green-100 p-2 rounded-full">
+              <ClockIcon className="h-6 w-6 text-green-600" />
+            </div>
+            <ArrowTrendingUpIcon className="h-5 w-5 text-green-600" />
+          </div>
+          <h3 className="text-sm font-medium text-gray-500 mb-1">Current Year Sessions</h3>
+          <p className="text-2xl font-bold text-gray-900">{currentYearSessionHours}h</p>
+          <p className="text-sm text-gray-500 mt-1">Coaching hours</p>
+          <p className="text-xs text-gray-500 mt-2 text-center">Click for details</p>
+        </div>
+
+        {/* Total Sessions card */}
         <div 
           className="bg-white rounded-xl shadow-lg p-6 border cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105"
           onClick={() => handleCardClick('sessions')}
         >
           <div className="flex items-center justify-between mb-4">
-            <div className="bg-indigo-100 p-2 rounded-full">
-              <UserIcon className="h-6 w-6 text-indigo-600" />
+            <div className="bg-purple-100 p-2 rounded-full">
+              <UserIcon className="h-6 w-6 text-purple-600" />
             </div>
-            <ArrowTrendingUpIcon className="h-5 w-5 text-indigo-600" />
+            <ArrowTrendingUpIcon className="h-5 w-5 text-purple-600" />
           </div>
           <h3 className="text-sm font-medium text-gray-500 mb-1">Total Sessions</h3>
-          <p className="text-2xl font-bold text-gray-900">{totalSessions}</p>
-          <p className="text-sm text-gray-500 mt-1">All time</p>
+          <p className="text-2xl font-bold text-gray-900">{sessions.length} All time</p>
+          <p className="text-sm text-gray-500 mt-1">Coaching sessions</p>
           <p className="text-xs text-gray-500 mt-2 text-center">Click for details</p>
         </div>
 
+        {/* Renewal Status card */}
         <div 
           className="bg-white rounded-xl shadow-lg p-6 border cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105"
           onClick={() => handleCardClick('renewal')}
@@ -626,14 +947,14 @@ export default function ReportsPage() {
             <div className="bg-orange-100 p-2 rounded-full">
               <CalendarIcon className="h-6 w-6 text-orange-600" />
             </div>
-            <ExclamationTriangleIcon className="h-5 w-5 text-orange-600" />
+            <ArrowTrendingUpIcon className="h-5 w-5 text-orange-600" />
           </div>
           <h3 className="text-sm font-medium text-gray-500 mb-1">Renewal Status</h3>
           <p className="text-2xl font-bold text-gray-900">
-            {currentYearHours >= 40 ? "Complete" : "In Progress"}
+            {currentYearCpdHours >= 40 ? 'Complete' : 'In Progress'}
           </p>
           <p className="text-sm text-gray-500 mt-1">
-            {currentYearHours >= 40 ? "Ready for renewal" : `${40 - currentYearHours}h needed`}
+            {currentYearCpdHours >= 40 ? 'Requirements met' : `${40 - currentYearCpdHours}h needed`}
           </p>
           <p className="text-xs text-gray-500 mt-2 text-center">Click for details</p>
         </div>
@@ -724,7 +1045,7 @@ export default function ReportsPage() {
               <div className="text-right">
                 <div className="text-sm font-medium text-gray-900">{session.duration}min</div>
                 <div className="text-xs text-gray-500">
-                  ${session.payment_amount}
+                  {getCurrencySymbol(profile?.currency || "USD")} {session.payment_amount}
                 </div>
               </div>
             </div>

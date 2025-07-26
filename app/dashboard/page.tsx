@@ -60,6 +60,38 @@ const getICFBadge = (level: string) => {
   }
 };
 
+// Helper for getting next level requirements
+const getNextLevelRequirements = (currentLevel: string) => {
+  switch (currentLevel) {
+    case "none":
+      return { sessionHours: 100, cpdHours: 60 }; // ACC requirements
+    case "acc":
+      return { sessionHours: 500, cpdHours: 125 }; // PCC requirements
+    case "pcc":
+      return { sessionHours: 2500, cpdHours: 200 }; // MCC requirements
+    case "mcc":
+      return { sessionHours: 2500, cpdHours: 200 }; // Already at highest level
+    default:
+      return { sessionHours: 100, cpdHours: 60 }; // Default to ACC requirements
+  }
+};
+
+// Helper for getting next level name
+const getNextLevelName = (currentLevel: string) => {
+  switch (currentLevel) {
+    case "none":
+      return "ACC";
+    case "acc":
+      return "PCC";
+    case "pcc":
+      return "MCC";
+    case "mcc":
+      return "MCC";
+    default:
+      return "ACC";
+  }
+};
+
 export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
@@ -75,109 +107,156 @@ export default function DashboardPage() {
   const [showSessionModal, setShowSessionModal] = useState(false);
   const [showCpdModal, setShowCpdModal] = useState(false);
 
-  useEffect(() => {
-    const getUserAndData = async () => {
-      try {
-        const { data, error: authError } = await supabase.auth.getUser();
-        
-        if (authError) {
-          console.error('Auth error:', authError);
-          if (authError.message === 'Mock client') {
-            setError('Supabase not configured. Please set up your environment variables.');
-            setLoading(false);
-            return;
-          }
-          router.replace("/login");
+  // Currency symbols mapping
+  const CURRENCY_SYMBOLS: { [key: string]: string } = {
+    "USD": "$",
+    "EUR": "€",
+    "GBP": "£",
+    "CAD": "C$",
+    "AUD": "A$",
+    "JPY": "¥",
+    "CHF": "CHF",
+    "NZD": "NZ$",
+    "SEK": "SEK",
+    "NOK": "NOK",
+    "DKK": "DKK"
+  };
+
+  const getCurrencySymbol = (currency: string) => {
+    return CURRENCY_SYMBOLS[currency] || currency;
+  };
+
+  // Function to fetch all data
+  const fetchData = async () => {
+    try {
+      const { data, error: authError } = await supabase.auth.getUser();
+      
+      if (authError) {
+        console.error('Auth error:', authError);
+        if (authError.message === 'Mock client') {
+          setError('Supabase not configured. Please set up your environment variables.');
           setLoading(false);
           return;
         }
-        
-        if (!data.user) {
-          router.replace("/login");
-          setLoading(false);
-          return;
-        }
-        
-        setUser(data.user);
-        
-        // Fetch user profile
-        const { data: profileData, error: profileError } = await supabase
-          .from("profiles")
-          .select("name, icf_level")
-          .eq("user_id", data.user.id)
-          .single();
-          
-        if (!profileError && profileData) {
-          setProfile(profileData);
-        }
-        
-        // Fetch sessions (limit 3 recent)
-        const { data: sessionData, error: sessionError } = await supabase
-          .from("sessions")
-          .select("id, client_name, date, duration, notes, types, paymenttype, focus_area, key_outcomes, client_progress, coaching_tools, icf_competencies, additional_notes")
-          .eq("user_id", data.user.id)
-          .order("date", { ascending: false })
-          .limit(3);
-          
-        if (sessionError && sessionError.message !== 'Mock client') {
-          console.error('Session fetch error:', sessionError);
-        }
-        
-        // Map real session data to consistent format
-        const mappedSessionData = sessionData ? sessionData.map((session: any) => ({
-          id: session.id,
-          clientName: session.client_name,
-          client_name: session.client_name, // Keep both for compatibility
-          date: session.date,
-          duration: session.duration,
-          notes: session.notes,
-          additionalNotes: session.additional_notes,
-          types: session.types,
-          paymentType: session.paymenttype,
-          payment_type: session.paymenttype, // Keep both for compatibility
-          focusArea: session.focus_area,
-          keyOutcomes: session.key_outcomes,
-          clientProgress: session.client_progress,
-          coachingTools: session.coaching_tools,
-          icfCompetencies: session.icf_competencies
-        })) : null;
-        
-        setSessions(mappedSessionData || []);
-        
-        // Fetch CPD activities (limit 3 recent)
-        const { data: cpdData, error: cpdError } = await supabase
-          .from("cpd")
-          .select("id, title, activity_date, hours, description, cpd_type, certificate_proof")
-          .eq("user_id", data.user.id)
-          .order("activity_date", { ascending: false })
-          .limit(3);
-          
-        if (cpdError && cpdError.message !== 'Mock client') {
-          console.error('CPD fetch error:', cpdError);
-        }
-        
-        // Map real data to consistent format
-        const mappedCpdData = cpdData ? cpdData.map((item: any) => ({
-          id: item.id,
-          title: item.title,
-          date: item.activity_date || item.date,
-          hours: item.hours,
-          description: item.description,
-          cpdType: item.cpd_type || item.type || "workshop",
-          certificate_link: item.certificate_proof || ""
-        })) : null;
-        
-        setCpdActivities(mappedCpdData || []);
-      } catch (error) {
-        console.error('Error in getUserAndData:', error);
-        setError('An unexpected error occurred. Please try again.');
-      } finally {
+        router.replace("/login");
         setLoading(false);
+        return;
       }
+      
+      if (!data.user) {
+        router.replace("/login");
+        setLoading(false);
+        return;
+      }
+      
+      setUser(data.user);
+      
+      // Fetch user profile
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("name, icf_level, currency")
+        .eq("user_id", data.user.id)
+        .single();
+        
+      if (!profileError && profileData) {
+        setProfile(profileData);
+      }
+      
+      // Fetch sessions (limit 3 recent)
+      const { data: sessionData, error: sessionError } = await supabase
+        .from("sessions")
+        .select("id, client_name, date, duration, notes, types, paymenttype, focus_area, key_outcomes, client_progress, coaching_tools, icf_competencies, additional_notes")
+        .eq("user_id", data.user.id)
+        .order("date", { ascending: false })
+        .limit(3);
+        
+      if (sessionError && sessionError.message !== 'Mock client') {
+        console.error('Session fetch error:', sessionError);
+      }
+      
+      // Map real session data to consistent format
+      const mappedSessionData = sessionData ? sessionData.map((session: any) => ({
+        id: session.id,
+        clientName: session.client_name,
+        client_name: session.client_name, // Keep both for compatibility
+        date: session.date,
+        duration: session.duration,
+        notes: session.notes,
+        additionalNotes: session.additional_notes,
+        types: session.types,
+        paymentType: session.paymenttype,
+        payment_type: session.paymenttype, // Keep both for compatibility
+        focusArea: session.focus_area,
+        keyOutcomes: session.key_outcomes,
+        clientProgress: session.client_progress,
+        coachingTools: session.coaching_tools,
+        icfCompetencies: session.icf_competencies
+      })) : null;
+      
+      setSessions(mappedSessionData || []);
+      
+      // Fetch CPD activities (limit 3 recent for display)
+      const { data: cpdData, error: cpdError } = await supabase
+        .from("cpd")
+        .select("id, title, activity_date, hours, description, cpd_type, certificate_proof")
+        .eq("user_id", data.user.id)
+        .order("activity_date", { ascending: false })
+        .limit(3);
+        
+      // Fetch all CPD activities for total hours calculation
+      const { data: allCpdData, error: allCpdError } = await supabase
+        .from("cpd")
+        .select("hours")
+        .eq("user_id", data.user.id);
+        
+      if (cpdError && cpdError.message !== 'Mock client') {
+        console.error('CPD fetch error:', cpdError);
+      }
+      
+      // Map real data to consistent format
+      const mappedCpdData = cpdData ? cpdData.map((item: any) => ({
+        id: item.id,
+        title: item.title,
+        date: item.activity_date || item.date,
+        hours: item.hours,
+        description: item.description,
+        cpdType: item.cpd_type || item.type || "workshop",
+        certificate_link: item.certificate_proof || ""
+      })) : null;
+      
+      setCpdActivities(mappedCpdData || []);
+
+      // Calculate total CPD hours from all fetched data
+      if (allCpdData && allCpdData.length > 0) {
+        const totalCpdHours = allCpdData.reduce((sum: number, item: any) => sum + (item.hours || 0), 0);
+        setCpdHours(totalCpdHours);
+      } else {
+        setCpdHours(0);
+      }
+
+    } catch (error) {
+      console.error('Error in fetchData:', error);
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+    
+    // Add focus event listener to refresh data when user returns to the page
+    const handleFocus = () => {
+      fetchData();
     };
     
-    getUserAndData();
-  }, [router]);
+    window.addEventListener('focus', handleFocus);
+    
+    // Cleanup
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
 
   const handleSessionClick = (sessionId: string) => {
     const session = sessions.find(s => s.id === sessionId || s.id === `session-${sessionId}`);
@@ -280,7 +359,7 @@ export default function DashboardPage() {
             )}
           </div>
           <p className="text-gray-500">Track your coaching journey and maintain ICF compliance</p>
-          <p className="text-xs text-gray-400 mt-1">Beta V0.8.001</p>
+          <p className="text-xs text-gray-400 mt-1">BETA V0.9.002</p>
         </div>
         <div className="flex gap-2">
           <button 
@@ -332,6 +411,107 @@ export default function DashboardPage() {
           <div>
             <div className="text-xs text-gray-500">ICF Compliance</div>
             <div className="font-bold text-xl">In Progress</div>
+          </div>
+        </div>
+      </div>
+
+      {/* ICF Progress Graph */}
+      <div className="bg-white rounded-xl shadow p-6 mb-8">
+        <h2 className="font-semibold text-lg mb-4">Progress to Next ICF Level</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Session Hours Progress */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-medium text-gray-700">Coaching Hours</h3>
+              <span className="text-sm text-gray-500">
+                {Math.round(sessions.reduce((total, session) => total + (session.duration || 0), 0) / 60)}h / {getNextLevelRequirements(profile?.icf_level).sessionHours}h
+              </span>
+            </div>
+            <div className="relative pt-1">
+              <div className="flex mb-2 items-center justify-between">
+                <div>
+                  <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-blue-600 bg-blue-200">
+                    {getNextLevelName(profile?.icf_level)}
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs font-semibold inline-block text-blue-600">
+                    {Math.round((sessions.reduce((total, session) => total + (session.duration || 0), 0) / 60) / getNextLevelRequirements(profile?.icf_level).sessionHours * 100)}%
+                  </span>
+                </div>
+              </div>
+              <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-blue-200">
+                <div 
+                  style={{ width: `${Math.min(100, (sessions.reduce((total, session) => total + (session.duration || 0), 0) / 60) / getNextLevelRequirements(profile?.icf_level).sessionHours * 100)}%` }}
+                  className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500 transition-all duration-500"
+                ></div>
+              </div>
+            </div>
+            <div className="text-xs text-gray-600">
+              <p>• Current: {Math.round(sessions.reduce((total, session) => total + (session.duration || 0), 0) / 60)} coaching hours</p>
+              <p>• Required: {getNextLevelRequirements(profile?.icf_level).sessionHours} hours for {getNextLevelName(profile?.icf_level)}</p>
+              <p>• Remaining: {Math.max(0, getNextLevelRequirements(profile?.icf_level).sessionHours - Math.round(sessions.reduce((total, session) => total + (session.duration || 0), 0) / 60))} hours needed</p>
+            </div>
+          </div>
+
+          {/* CPD Hours Progress */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-medium text-gray-700">CPD Training Hours</h3>
+              <span className="text-sm text-gray-500">
+                {cpdHours}h / {getNextLevelRequirements(profile?.icf_level).cpdHours}h
+              </span>
+            </div>
+            <div className="relative pt-1">
+              <div className="flex mb-2 items-center justify-between">
+                <div>
+                  <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-purple-600 bg-purple-200">
+                    {getNextLevelName(profile?.icf_level)}
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs font-semibold inline-block text-purple-600">
+                    {Math.round((cpdHours / getNextLevelRequirements(profile?.icf_level).cpdHours) * 100)}%
+                  </span>
+                </div>
+              </div>
+              <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-purple-200">
+                <div 
+                  style={{ width: `${Math.min(100, (cpdHours / getNextLevelRequirements(profile?.icf_level).cpdHours) * 100)}%` }}
+                  className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-purple-500 transition-all duration-500"
+                ></div>
+              </div>
+            </div>
+            <div className="text-xs text-gray-600">
+              <p>• Current: {cpdHours} CPD training hours</p>
+              <p>• Required: {getNextLevelRequirements(profile?.icf_level).cpdHours} hours for {getNextLevelName(profile?.icf_level)}</p>
+              <p>• Remaining: {Math.max(0, getNextLevelRequirements(profile?.icf_level).cpdHours - cpdHours)} hours needed</p>
+            </div>
+          </div>
+        </div>
+        
+        {/* Overall Progress Summary */}
+        <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+          <h4 className="font-medium text-gray-700 mb-2">Next Level: {getNextLevelName(profile?.icf_level)}</h4>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="text-gray-600">Coaching Hours:</span>
+              <span className="ml-2 font-medium">
+                {Math.round(sessions.reduce((total, session) => total + (session.duration || 0), 0) / 60)}/{getNextLevelRequirements(profile?.icf_level).sessionHours}
+              </span>
+            </div>
+            <div>
+              <span className="text-gray-600">CPD Hours:</span>
+              <span className="ml-2 font-medium">
+                {cpdHours}/{getNextLevelRequirements(profile?.icf_level).cpdHours}
+              </span>
+            </div>
+          </div>
+          <div className="mt-3 text-xs text-gray-500">
+            {profile?.icf_level === 'mcc' ? 
+              "You have reached the highest ICF credential level!" :
+              `Complete both requirements to apply for ${getNextLevelName(profile?.icf_level)} credential.`
+            }
           </div>
         </div>
       </div>
@@ -415,6 +595,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
+
+
       {/* Session Detail Modal */}
       {showSessionModal && selectedSession && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -450,7 +632,7 @@ export default function DashboardPage() {
                 {selectedSession.payment_amount && selectedSession.payment_type === 'paid' && (
                   <div>
                     <label className="text-sm font-medium text-gray-500">Payment Amount</label>
-                    <p>${selectedSession.payment_amount}</p>
+                    <p>{getCurrencySymbol(profile?.currency || 'USD')}{selectedSession.payment_amount}</p>
                   </div>
                 )}
                 <div>
@@ -469,11 +651,11 @@ export default function DashboardPage() {
                 <p className="mt-1">{selectedSession.client_progress || selectedSession.clientProgress || 'Not specified'}</p>
               </div>
               
-              {selectedSession.coaching_tools && selectedSession.coaching_tools.length > 0 && (
+              {(selectedSession.coaching_tools || selectedSession.coachingTools) && (selectedSession.coaching_tools?.length > 0 || selectedSession.coachingTools?.length > 0) && (
                 <div>
                   <label className="text-sm font-medium text-gray-500">Coaching Tools</label>
                   <div className="flex flex-wrap gap-2 mt-1">
-                    {selectedSession.coaching_tools.map((tool: string, index: number) => (
+                    {(selectedSession.coaching_tools || selectedSession.coachingTools || []).map((tool: string, index: number) => (
                       <span key={index} className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-sm">
                         {tool}
                       </span>
@@ -482,11 +664,11 @@ export default function DashboardPage() {
                 </div>
               )}
               
-              {selectedSession.icf_competencies && selectedSession.icf_competencies.length > 0 && (
+              {(selectedSession.icf_competencies || selectedSession.icfCompetencies) && (selectedSession.icf_competencies?.length > 0 || selectedSession.icfCompetencies?.length > 0) && (
                 <div>
                   <label className="text-sm font-medium text-gray-500">ICF Competencies</label>
                   <div className="flex flex-wrap gap-2 mt-1">
-                    {selectedSession.icf_competencies.map((comp: string, index: number) => (
+                    {(selectedSession.icf_competencies || selectedSession.icfCompetencies || []).map((comp: string, index: number) => (
                       <span key={index} className="bg-green-100 text-green-700 px-2 py-1 rounded text-sm">
                         {comp}
                       </span>

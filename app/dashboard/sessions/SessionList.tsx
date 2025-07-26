@@ -16,9 +16,21 @@ export default function SessionList({ sessions, onDelete, onCardClick }: { sessi
           <div>
             <div className="font-semibold text-blue-700">{session.clientName}</div>
             <div className="text-sm text-gray-500">{session.date} &bull; {session.duration} min</div>
-            <div className="text-sm text-gray-500">Type: {session.types.join(", ")}</div>
-            <div className="text-sm text-gray-500">Payment: {session.paymentType === "paid" ? "Paid" : "Pro Bono"}</div>
-            {session.additionalNotes && <div className="text-sm mt-1">Notes: {session.additionalNotes}</div>}
+            <div className="text-sm text-gray-500">Type: {session.types?.join(", ") || "Not specified"}</div>
+            <div className="text-sm text-gray-500">
+              Payment: {session.paymentType === "paid" ? "Paid" : "Pro Bono"}
+              {session.paymentAmount && session.paymentType === "paid" && ` - $${session.paymentAmount}`}
+            </div>
+            {session.focusArea && <div className="text-sm text-gray-600 mt-1">Focus: {session.focusArea}</div>}
+            {session.keyOutcomes && <div className="text-sm text-gray-600">Outcomes: {session.keyOutcomes}</div>}
+            {session.clientProgress && <div className="text-sm text-gray-600">Progress: {session.clientProgress}</div>}
+            {session.coachingTools && session.coachingTools.length > 0 && (
+              <div className="text-sm text-gray-600">Tools: {session.coachingTools.join(", ")}</div>
+            )}
+            {session.icfCompetencies && session.icfCompetencies.length > 0 && (
+              <div className="text-sm text-gray-600">ICF: {session.icfCompetencies.join(", ")}</div>
+            )}
+            {session.additionalNotes && <div className="text-sm mt-1 text-gray-700">Notes: {session.additionalNotes}</div>}
           </div>
           <button
             onClick={e => { e.stopPropagation(); onDelete(idx); }}

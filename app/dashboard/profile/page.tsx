@@ -10,6 +10,7 @@ type Profile = {
   email: string;
   icf_level: string;
   currency: string;
+  country: string;
   created_at: string;
   updated_at: string;
 };
@@ -51,6 +52,59 @@ const CURRENCIES = [
   { value: "DKK", label: "Danish Krone (DKK)", symbol: "DKK" }
 ];
 
+const COUNTRIES = [
+  { value: "United States", label: "United States" },
+  { value: "Canada", label: "Canada" },
+  { value: "United Kingdom", label: "United Kingdom" },
+  { value: "Australia", label: "Australia" },
+  { value: "Germany", label: "Germany" },
+  { value: "France", label: "France" },
+  { value: "Italy", label: "Italy" },
+  { value: "Spain", label: "Spain" },
+  { value: "Netherlands", label: "Netherlands" },
+  { value: "Belgium", label: "Belgium" },
+  { value: "Switzerland", label: "Switzerland" },
+  { value: "Austria", label: "Austria" },
+  { value: "Sweden", label: "Sweden" },
+  { value: "Norway", label: "Norway" },
+  { value: "Denmark", label: "Denmark" },
+  { value: "Finland", label: "Finland" },
+  { value: "Ireland", label: "Ireland" },
+  { value: "New Zealand", label: "New Zealand" },
+  { value: "Japan", label: "Japan" },
+  { value: "South Korea", label: "South Korea" },
+  { value: "Singapore", label: "Singapore" },
+  { value: "Hong Kong", label: "Hong Kong" },
+  { value: "India", label: "India" },
+  { value: "Brazil", label: "Brazil" },
+  { value: "Mexico", label: "Mexico" },
+  { value: "Argentina", label: "Argentina" },
+  { value: "Chile", label: "Chile" },
+  { value: "South Africa", label: "South Africa" },
+  { value: "United Arab Emirates", label: "United Arab Emirates" },
+  { value: "Saudi Arabia", label: "Saudi Arabia" },
+  { value: "Israel", label: "Israel" },
+  { value: "Turkey", label: "Turkey" },
+  { value: "Poland", label: "Poland" },
+  { value: "Czech Republic", label: "Czech Republic" },
+  { value: "Hungary", label: "Hungary" },
+  { value: "Romania", label: "Romania" },
+  { value: "Bulgaria", label: "Bulgaria" },
+  { value: "Croatia", label: "Croatia" },
+  { value: "Slovenia", label: "Slovenia" },
+  { value: "Slovakia", label: "Slovakia" },
+  { value: "Estonia", label: "Estonia" },
+  { value: "Latvia", label: "Latvia" },
+  { value: "Lithuania", label: "Lithuania" },
+  { value: "Luxembourg", label: "Luxembourg" },
+  { value: "Iceland", label: "Iceland" },
+  { value: "Malta", label: "Malta" },
+  { value: "Cyprus", label: "Cyprus" },
+  { value: "Greece", label: "Greece" },
+  { value: "Portugal", label: "Portugal" },
+  { value: "Other", label: "Other" }
+];
+
 export default function ProfilePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -65,6 +119,7 @@ export default function ProfilePage() {
     email: "",
     icf_level: "none",
     currency: "USD",
+    country: "United States", // Default country
     created_at: "",
     updated_at: ""
   });
@@ -82,7 +137,7 @@ export default function ProfilePage() {
         // Fetch profile from profiles table
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
-          .select("*")
+          .select("id, name, email, icf_level, currency, country, created_at, updated_at")
           .eq("user_id", user.id)
           .single();
 
@@ -93,6 +148,7 @@ export default function ProfilePage() {
             email: profileData.email || user.email || "",
             icf_level: profileData.icf_level || "none",
             currency: profileData.currency || "USD",
+            country: profileData.country || "United States",
             created_at: profileData.created_at,
             updated_at: profileData.updated_at
           });
@@ -104,6 +160,7 @@ export default function ProfilePage() {
             email: user.email || "",
             icf_level: "none",
             currency: "USD",
+            country: "United States",
             created_at: user.created_at,
             updated_at: user.updated_at || new Date().toISOString()
           });
@@ -152,6 +209,7 @@ export default function ProfilePage() {
           email: profile.email.trim(),
           icf_level: profile.icf_level,
           currency: profile.currency,
+          country: profile.country,
           updated_at: new Date().toISOString()
         })
         .eq("user_id", user.id);
@@ -166,6 +224,7 @@ export default function ProfilePage() {
             email: profile.email.trim(),
             icf_level: profile.icf_level,
             currency: profile.currency,
+            country: profile.country,
             updated_at: new Date().toISOString()
           });
 
@@ -350,6 +409,29 @@ export default function ProfilePage() {
                 </p>
               </div>
 
+              {/* Country */}
+              <div>
+                <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-2">
+                  Country of Residence
+                </label>
+                <select
+                  id="country"
+                  name="country"
+                  value={profile.country}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  {COUNTRIES.map(country => (
+                    <option key={country.value} value={country.value}>
+                      {country.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-sm text-gray-600 mt-2">
+                  This information is used for tax and legal purposes.
+                </p>
+              </div>
+
               {/* Error/Success Messages */}
               {error && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -435,28 +517,42 @@ export default function ProfilePage() {
               )}
             </div>
           </div>
+        </div>
+      </div>
 
-          {/* ICF Information */}
-          <div className="bg-white rounded-xl shadow-lg p-6 border">
-            <h3 className="text-lg font-bold mb-4">About ICF Accreditation</h3>
-            <div className="space-y-3 text-sm text-gray-600">
-              <p>
-                The International Coaching Federation (ICF) offers three levels of professional coaching credentials:
-              </p>
-              <ul className="space-y-2">
-                <li className="flex items-start gap-2">
-                  <span className="font-semibold text-blue-600">ACC:</span>
-                  <span>60+ hours training, entry-level</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="font-semibold text-green-600">PCC:</span>
-                  <span>125+ hours training, intermediate</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="font-semibold text-purple-600">MCC:</span>
-                  <span>200+ hours training, master level</span>
-                </li>
-              </ul>
+      {/* ICF Information - Below both sections */}
+      <div className="mt-6">
+        <div className="bg-white rounded-xl shadow-lg p-6 border lg:col-span-2">
+          <h3 className="text-lg font-bold mb-4">About ICF Accreditation</h3>
+          <div className="space-y-4 text-sm text-gray-600">
+            <p>
+              The International Coaching Federation (ICF) offers three levels of professional coaching credentials:
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <h4 className="font-semibold text-blue-800 mb-2">ACC (Associate Certified Coach)</h4>
+                <ul className="space-y-1 text-xs">
+                  <li>• Minimum 60 hours of coach-specific training</li>
+                  <li>• At least 100 hours of coaching experience</li>
+                  <li>• Entry-level credential</li>
+                </ul>
+              </div>
+              <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                <h4 className="font-semibold text-green-800 mb-2">PCC (Professional Certified Coach)</h4>
+                <ul className="space-y-1 text-xs">
+                  <li>• Minimum 125 hours of coach-specific training</li>
+                  <li>• At least 500 hours of coaching experience</li>
+                  <li>• Intermediate/Professional-level credential</li>
+                </ul>
+              </div>
+              <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                <h4 className="font-semibold text-purple-800 mb-2">MCC (Master Certified Coach)</h4>
+                <ul className="space-y-1 text-xs">
+                  <li>• Minimum 200 hours of coach-specific training</li>
+                  <li>• At least 2,500 hours of coaching experience</li>
+                  <li>• Advanced/Master-level credential</li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>

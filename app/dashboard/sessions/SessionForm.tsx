@@ -56,6 +56,7 @@ export default function SessionForm({
   const router = useRouter();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userCurrency, setUserCurrency] = useState("USD");
   const [clientId, setClientId] = useState("");
   const [clientName, setClientName] = useState("");
   const [date, setDate] = useState("");
@@ -73,8 +74,27 @@ export default function SessionForm({
   const [additionalNotes, setAdditionalNotes] = useState("");
   const [showAdvanced, setShowAdvanced] = useState(false);
 
+  // Currency symbols mapping
+  const CURRENCY_SYMBOLS: { [key: string]: string } = {
+    "USD": "$",
+    "EUR": "€",
+    "GBP": "£",
+    "CAD": "C$",
+    "AUD": "A$",
+    "JPY": "¥",
+    "CHF": "CHF",
+    "NZD": "NZ$",
+    "SEK": "SEK",
+    "NOK": "NOK",
+    "DKK": "DKK"
+  };
+
+  const getCurrencySymbol = (currency: string) => {
+    return CURRENCY_SYMBOLS[currency] || currency;
+  };
+
   useEffect(() => {
-    const fetchClients = async () => {
+    const fetchData = async () => {
       setLoading(true);
       try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -83,6 +103,18 @@ export default function SessionForm({
           return;
         }
 
+        // Fetch user profile to get currency preference
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("currency")
+          .eq("user_id", user.id)
+          .single();
+
+        if (!profileError && profileData?.currency) {
+          setUserCurrency(profileData.currency);
+        }
+
+        // Fetch clients
         const { data, error } = await supabase
           .from("clients")
           .select("id, name, email")
@@ -95,12 +127,12 @@ export default function SessionForm({
           setClients([]);
         }
       } catch (error) {
-        console.error('Error fetching clients:', error);
+        console.error('Error fetching data:', error);
       }
       setLoading(false);
     };
 
-    fetchClients();
+    fetchData();
   }, [router]);
 
   // Populate form with initial data when editing
@@ -268,7 +300,7 @@ export default function SessionForm({
         </div>
         {paymentType === "paid" && (
           <div>
-            <label className="block font-medium mb-1">Payment Amount ($)</label>
+            <label className="block font-medium mb-1">Payment Amount ({getCurrencySymbol(userCurrency)})</label>
             <input 
               type="number" 
               min="0" 

@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
-import { ClockIcon, UserIcon, CalendarIcon, CurrencyDollarIcon, CheckCircleIcon, ArrowDownTrayIcon, PencilIcon } from "@heroicons/react/24/outline";
+import { ClockIcon, UserIcon, CalendarIcon, CurrencyDollarIcon, CheckCircleIcon, ArrowDownTrayIcon, PencilIcon, ChevronUpIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 import { exportSessionsToCSV, exportSessionsToXLSX } from "@/lib/exportUtils";
 
 type SessionEntry = {
@@ -42,6 +42,25 @@ function SessionsLogContent() {
   const highlightedRef = useRef<HTMLDivElement>(null);
 
   const [profile, setProfile] = useState<any>(null);
+
+  // Currency symbols mapping
+  const CURRENCY_SYMBOLS: { [key: string]: string } = {
+    "USD": "$",
+    "EUR": "€",
+    "GBP": "£",
+    "CAD": "C$",
+    "AUD": "A$",
+    "JPY": "¥",
+    "CHF": "CHF",
+    "NZD": "NZ$",
+    "SEK": "SEK",
+    "NOK": "NOK",
+    "DKK": "DKK"
+  };
+
+  const getCurrencySymbol = (currency: string) => {
+    return CURRENCY_SYMBOLS[currency] || currency;
+  };
 
   const toggleCard = (sessionId: string) => {
     setExpandedCards(prev => {
@@ -103,7 +122,7 @@ function SessionsLogContent() {
         
         const { data, error } = await supabase
           .from("sessions")
-          .select("id,client_name,date,duration,types,paymenttype,payment_amount,user_id")
+          .select("id,client_name,date,duration,types,paymenttype,payment_amount,focus_area,key_outcomes,client_progress,coaching_tools,icf_competencies,additional_notes,user_id")
           .eq("user_id", user.id)
           .order("date", { ascending: false });
         
@@ -118,12 +137,12 @@ function SessionsLogContent() {
             types: Array.isArray(session.types) ? session.types : [],
             paymentType: session.paymenttype || session.payment_type || "",
             paymentAmount: session.payment_amount,
-            focusArea: "",
-            keyOutcomes: "",
-            clientProgress: "",
-            coachingTools: [],
-            icfCompetencies: [],
-            additionalNotes: "",
+            focusArea: session.focus_area || "",
+            keyOutcomes: session.key_outcomes || "",
+            clientProgress: session.client_progress || "",
+            coachingTools: session.coaching_tools || [],
+            icfCompetencies: session.icf_competencies || [],
+            additionalNotes: session.additional_notes || "",
             user_id: session.user_id || "",
           }));
           setSessions(mapped);
@@ -245,7 +264,7 @@ function SessionsLogContent() {
                           : 'bg-blue-100 text-blue-700'
                       }`}>
                         {session.paymentType === 'paid' ? 'Paid' : 'Pro Bono'}
-                        {session.paymentAmount && session.paymentType === 'paid' && ` - $${session.paymentAmount}`}
+                        {session.paymentAmount && session.paymentType === 'paid' && ` - ${getCurrencySymbol(profile?.currency || 'USD')}${session.paymentAmount}`}
                       </span>
                     </div>
                   </div>
@@ -267,6 +286,20 @@ function SessionsLogContent() {
                     <button
                       onClick={e => {
                         e.stopPropagation();
+                        toggleCard(session.id);
+                      }}
+                      className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                      title={expandedCards.has(session.id) ? "Collapse Details" : "Expand Details"}
+                    >
+                      {expandedCards.has(session.id) ? (
+                        <ChevronUpIcon className="h-4 w-4" />
+                      ) : (
+                        <ChevronDownIcon className="h-4 w-4" />
+                      )}
+                    </button>
+                    <button
+                      onClick={e => {
+                        e.stopPropagation();
                         if (session.id && session.id.trim() !== '') {
                           router.push(`/dashboard/sessions/edit/${session.id}`);
                         }
@@ -278,6 +311,67 @@ function SessionsLogContent() {
                     </button>
                   </div>
                 </div>
+                
+                {/* Expanded Content - Show when card is expanded */}
+                {expandedCards.has(session.id) && (
+                  <div className="px-4 pb-4 border-t border-gray-100">
+                    <div className="pt-4 space-y-3">
+                      {session.focusArea && (
+                        <div>
+                          <h4 className="text-sm font-semibold text-gray-700 mb-1">Focus Area</h4>
+                          <p className="text-sm text-gray-600">{session.focusArea}</p>
+                        </div>
+                      )}
+                      
+                      {session.keyOutcomes && (
+                        <div>
+                          <h4 className="text-sm font-semibold text-gray-700 mb-1">Key Outcomes</h4>
+                          <p className="text-sm text-gray-600">{session.keyOutcomes}</p>
+                        </div>
+                      )}
+                      
+                      {session.clientProgress && (
+                        <div>
+                          <h4 className="text-sm font-semibold text-gray-700 mb-1">Client Progress</h4>
+                          <p className="text-sm text-gray-600">{session.clientProgress}</p>
+                        </div>
+                      )}
+                      
+                      {session.coachingTools && session.coachingTools.length > 0 && (
+                        <div>
+                          <h4 className="text-sm font-semibold text-gray-700 mb-1">Coaching Tools</h4>
+                          <div className="flex flex-wrap gap-1">
+                            {session.coachingTools.map((tool, idx) => (
+                              <span key={idx} className="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs">
+                                {tool}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {session.icfCompetencies && session.icfCompetencies.length > 0 && (
+                        <div>
+                          <h4 className="text-sm font-semibold text-gray-700 mb-1">ICF Core Competencies</h4>
+                          <div className="flex flex-wrap gap-1">
+                            {session.icfCompetencies.map((competency, idx) => (
+                              <span key={idx} className="bg-orange-100 text-orange-700 px-2 py-1 rounded text-xs">
+                                {competency}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {session.additionalNotes && (
+                        <div>
+                          <h4 className="text-sm font-semibold text-gray-700 mb-1">Additional Notes</h4>
+                          <p className="text-sm text-gray-600">{session.additionalNotes}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}

@@ -52,13 +52,16 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         {/* Logo and App Name */}
         <div className="flex flex-col items-center mb-8">
           <div 
-            className="rounded-full bg-blue-100 p-3 mb-2 cursor-pointer hover:bg-blue-200 transition-colors"
+            className="mb-2 cursor-pointer hover:opacity-80 transition-opacity"
             onClick={handleHomeClick}
             title="Go to dashboard and refresh data"
           >
-            <HomeIcon className="h-8 w-8 text-blue-600" />
+            <img 
+              src="/mycoachinglog.png" 
+              alt="MY COACHING LOG" 
+              className="h-16 w-auto"
+            />
           </div>
-          <div className="font-bold text-lg">My Coaching Log</div>
           <div className="text-xs text-gray-500">ICF Compliance Made Simple</div>
         </div>
         {/* Navigation */}
@@ -92,20 +95,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             <ChartBarIcon className="h-5 w-5" /> Reports
           </Link>
         </nav>
-        {/* Quick Stats */}
-        <div className="mt-8">
-          <div className="text-xs font-semibold text-gray-500 mb-2">QUICK STATS</div>
-          <div className="mb-2 p-2 bg-blue-50 rounded flex flex-col">
-            <span className="text-xs text-blue-700">This Month</span>
-            <span className="font-bold text-lg">0</span>
-            <span className="text-xs text-gray-500">coaching hours</span>
-          </div>
-          <div className="p-2 bg-purple-50 rounded flex flex-col">
-            <span className="text-xs text-purple-700">CPD Progress</span>
-            <span className="font-bold text-lg">0h</span>
-            <span className="text-xs text-gray-500">of 40h required</span>
-          </div>
-        </div>
+
         {/* Logout Button */}
         <div className="mt-4 pt-4 border-t">
           <button 

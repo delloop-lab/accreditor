@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabaseClient";
 export default function CPDPage() {
   const [cpd, setCPD] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   // Fetch CPD from Supabase
   useEffect(() => {
@@ -56,25 +57,46 @@ export default function CPDPage() {
       const file = data.supportingDocument as any; // Assuming it's a File object
       if (file instanceof File) {
         try {
-          const fileName = `${user.id}/${Date.now()}_${file.name}`;
-          console.log('Uploading file:', fileName);
+          // Sanitize filename to avoid path issues
+          const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+          const fileName = `${user.id}/${Date.now()}_${sanitizedName}`;
+          console.log('Attempting to upload file:', fileName);
+          console.log('File size:', file.size, 'bytes');
+          console.log('File type:', file.type);
           
-          const { data: uploadData, error: uploadError } = await supabase.storage
+          // First check if bucket exists and we have access
+          const { data: bucketData, error: bucketError } = await supabase.storage
             .from('certificates')
-            .upload(fileName, file);
+            .list('', { limit: 1 });
           
-          if (uploadError) {
-            console.error('Upload error:', uploadError);
-            // Continue without file upload if it fails
-          } else if (uploadData) {
-            const { data: urlData } = supabase.storage
+          if (bucketError) {
+            console.error('Bucket access error:', bucketError);
+            // Continue without file upload if bucket access fails
+          } else {
+            console.log('Bucket access successful, proceeding with upload...');
+            
+            const { data: uploadData, error: uploadError } = await supabase.storage
               .from('certificates')
-              .getPublicUrl(fileName);
-            documentUrl = urlData.publicUrl;
-            console.log('File uploaded successfully:', documentUrl);
+              .upload(fileName, file, {
+                cacheControl: '3600',
+                upsert: false
+              });
+            
+            if (uploadError) {
+              console.error('Upload error details:', uploadError);
+              console.error('Error message:', uploadError.message);
+              // Continue without file upload if it fails
+            } else if (uploadData) {
+              console.log('Upload successful, getting public URL...');
+              const { data: urlData } = supabase.storage
+                .from('certificates')
+                .getPublicUrl(fileName);
+              documentUrl = urlData.publicUrl;
+              console.log('File uploaded successfully:', documentUrl);
+            }
           }
         } catch (error) {
-          console.error('File upload failed:', error);
+          console.error('File upload failed with exception:', error);
           // Continue without file upload if it fails
         }
       }

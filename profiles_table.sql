@@ -5,6 +5,7 @@ CREATE TABLE profiles (
     name VARCHAR(255),
     email VARCHAR(255),
     icf_level VARCHAR(10) DEFAULT 'none' CHECK (icf_level IN ('none', 'acc', 'pcc', 'mcc')),
+    currency VARCHAR(3) DEFAULT 'USD' CHECK (currency IN ('USD', 'EUR', 'GBP', 'CAD', 'AUD', 'CHF', 'JPY', 'SEK', 'NOK', 'DKK')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -28,6 +29,9 @@ CREATE POLICY "Users can update their own profile" ON profiles
 CREATE POLICY "Users can delete their own profile" ON profiles
     FOR DELETE USING (auth.uid() = user_id);
 
+-- Add currency column to existing profiles table (run this if the table already exists)
+-- ALTER TABLE profiles ADD COLUMN currency VARCHAR(3) DEFAULT 'USD' CHECK (currency IN ('USD', 'EUR', 'GBP', 'CAD', 'AUD', 'CHF', 'JPY', 'SEK', 'NOK', 'DKK'));
+
 -- Sample data (replace user_id with actual user ID)
--- INSERT INTO profiles (user_id, name, email, icf_level) VALUES
--- ('your-user-id-here', 'John Doe', 'john.doe@example.com', 'pcc'); 
+-- INSERT INTO profiles (user_id, name, email, icf_level, currency) VALUES
+-- ('your-user-id-here', 'John Doe', 'john.doe@example.com', 'pcc', 'USD'); 
