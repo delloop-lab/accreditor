@@ -22,12 +22,13 @@ export default function EditCPDPage() {
           return;
         }
 
-        const { data, error } = await supabase
+        // @ts-ignore: Supabase type workaround for .eq
+        const { data, error } = await ((supabase as any)
           .from("cpd")
           .select("*")
           .eq("id", cpdId)
           .eq("user_id", user.id)
-          .single();
+          .single());
 
         if (error) {
           console.error('Error fetching CPD:', error);
