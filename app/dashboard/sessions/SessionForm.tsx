@@ -92,13 +92,7 @@ export default function SessionForm({
         if (!error && data) {
           setClients(data);
         } else {
-          // Use mock data for demo
-          const mockClients = [
-            { id: 'mock-client-1', name: 'Sarah Johnson', email: 'sarah.johnson@email.com' },
-            { id: 'mock-client-2', name: 'Michael Chen', email: 'michael.chen@email.com' },
-            { id: 'mock-client-3', name: 'Emily Rodriguez', email: 'emily.rodriguez@email.com' }
-          ];
-          setClients(mockClients);
+          setClients([]);
         }
       } catch (error) {
         console.error('Error fetching clients:', error);

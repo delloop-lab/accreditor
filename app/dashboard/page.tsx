@@ -123,56 +123,26 @@ export default function DashboardPage() {
           console.error('Session fetch error:', sessionError);
         }
         
-        // Use mock session data if no real data
-        const mockSessionData = [
-          {
-            id: 'mock-session-1',
-            clientName: "Sarah Johnson",
-            date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-            duration: 60,
-            types: ["executive"],
-            paymentType: "paid",
-            paymentAmount: 150,
-            focusArea: "Career transition and leadership development",
-            keyOutcomes: "Clarified career goals and developed action plan",
-            clientProgress: "Made significant progress in identifying next steps",
-            coachingTools: ["GROW model", "Values clarification"],
-            icfCompetencies: ["Establishing Trust and Intimacy", "Coaching Presence"],
-            additionalNotes: "Client is ready to take action on career transition"
-          },
-          {
-            id: 'mock-session-2',
-            clientName: "Michael Chen",
-            date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-            duration: 45,
-            types: ["life"],
-            paymentType: "pro-bono",
-            paymentAmount: 0,
-            focusArea: "Work-life balance and stress management",
-            keyOutcomes: "Identified stress triggers and coping strategies",
-            clientProgress: "Started implementing new boundaries at work",
-            coachingTools: ["Wheel of Life", "Stress assessment"],
-            icfCompetencies: ["Active Listening", "Powerful Questioning"],
-            additionalNotes: "Client committed to weekly self-care practices"
-          },
-          {
-            id: 'mock-session-3',
-            clientName: "Emma Rodriguez",
-            date: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-            duration: 90,
-            types: ["business"],
-            paymentType: "paid",
-            paymentAmount: 200,
-            focusArea: "Team leadership and communication skills",
-            keyOutcomes: "Developed communication strategy for team conflicts",
-            clientProgress: "Successfully resolved recent team disagreement",
-            coachingTools: ["Conflict resolution framework", "Communication models"],
-            icfCompetencies: ["Designing Actions", "Managing Progress and Accountability"],
-            additionalNotes: "Client showing strong leadership growth"
-          }
-        ];
+        // Map real session data to consistent format
+        const mappedSessionData = sessionData ? sessionData.map((session: any) => ({
+          id: session.id,
+          clientName: session.client_name,
+          client_name: session.client_name, // Keep both for compatibility
+          date: session.date,
+          duration: session.duration,
+          notes: session.notes,
+          additionalNotes: session.additional_notes,
+          types: session.types,
+          paymentType: session.paymenttype,
+          payment_type: session.paymenttype, // Keep both for compatibility
+          focusArea: session.focus_area,
+          keyOutcomes: session.key_outcomes,
+          clientProgress: session.client_progress,
+          coachingTools: session.coaching_tools,
+          icfCompetencies: session.icf_competencies
+        })) : null;
         
-        setSessions(sessionData || mockSessionData);
+        setSessions(mappedSessionData || []);
         
         // Fetch CPD activities (limit 3 recent)
         const { data: cpdData, error: cpdError } = await supabase
@@ -186,38 +156,7 @@ export default function DashboardPage() {
           console.error('CPD fetch error:', cpdError);
         }
         
-        // Use mock CPD data if no real data
-        const mockCpdData = [
-          {
-            id: 'mock-cpd-1',
-            title: "ICF Core Competencies Workshop",
-            date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-            hours: 4,
-            description: "Advanced workshop on ICF core competencies",
-            cpdType: "workshop",
-            certificate_link: "https://example.com/certificate1"
-          },
-          {
-            id: 'mock-cpd-2',
-            title: "Coaching Psychology Research",
-            date: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-            hours: 2,
-            description: "Reading latest research in coaching psychology",
-            cpdType: "reading",
-            certificate_link: "https://example.com/certificate2"
-          },
-          {
-            id: 'mock-cpd-3',
-            title: "Executive Coaching Conference",
-            date: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString(),
-            hours: 8,
-            description: "Annual executive coaching conference",
-            cpdType: "conference",
-            certificate_link: "https://example.com/certificate3"
-          }
-        ];
-        
-        // Map real data to match mock data structure
+        // Map real data to consistent format
         const mappedCpdData = cpdData ? cpdData.map((item: any) => ({
           id: item.id,
           title: item.title,
@@ -228,7 +167,7 @@ export default function DashboardPage() {
           certificate_link: item.certificate_proof || ""
         })) : null;
         
-        setCpdActivities(mappedCpdData || mockCpdData);
+        setCpdActivities(mappedCpdData || []);
       } catch (error) {
         console.error('Error in getUserAndData:', error);
         setError('An unexpected error occurred. Please try again.');
@@ -420,7 +359,7 @@ export default function DashboardPage() {
               >
                 <div>
                   <div className="font-semibold">{session.client_name || session.clientName}</div>
-                  <div className="text-sm text-gray-500">{session.notes || session.focusArea || 'No notes'}</div>
+                  <div className="text-sm text-gray-500">{session.additionalNotes || session.notes || session.focusArea || 'No notes'}</div>
                   <div className="flex gap-4 text-xs text-gray-500 mt-1">
                     <span className="flex items-center gap-1"><ClockIcon className="h-4 w-4" /> {session.duration} min</span>
                     <span>{session.date && new Date(session.date).toLocaleDateString()}</span>

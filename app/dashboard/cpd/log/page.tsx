@@ -101,107 +101,11 @@ function CPDLogContent() {
           }));
           setCpdEntries(mapped);
         } else {
-          // Use mock CPD data if no real data (same as dashboard)
-          const mockCpdData = [
-            {
-              id: 'mock-cpd-1',
-              title: "ICF Core Competencies Workshop",
-              date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-              hours: 4,
-              cpdType: "workshop",
-              learningMethod: "In-Person",
-              providerOrganization: "ICF Global",
-              description: "Advanced workshop on ICF core competencies covering all 8 competencies in depth.",
-              keyLearnings: "Deepened understanding of ethical practice and client growth facilitation. Learned new techniques for maintaining presence and active listening.",
-              applicationToPractice: "Will incorporate new questioning techniques and ethical frameworks into my coaching sessions. Plan to use the presence exercises before each session.",
-              icfCompetencies: ["Demonstrates Ethical Practice", "Maintains Presence", "Listens Actively"],
-              certificateProof: "",
-              user_id: user.id,
-            },
-            {
-              id: 'mock-cpd-2',
-              title: "Coaching Psychology Research",
-              date: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-              hours: 2,
-              cpdType: "reading",
-              learningMethod: "Self-Study",
-              providerOrganization: "Journal of Coaching Psychology",
-              description: "Reading latest research in coaching psychology focusing on evidence-based coaching approaches.",
-              keyLearnings: "Understanding of neuroscience behind coaching effectiveness. Insights into how different coaching styles impact client outcomes.",
-              applicationToPractice: "Will integrate evidence-based questioning techniques and incorporate neuroscience principles into my coaching framework.",
-              icfCompetencies: ["Evokes Awareness", "Facilitates Client Growth"],
-              certificateProof: "",
-              user_id: user.id,
-            },
-            {
-              id: 'mock-cpd-3',
-              title: "Executive Coaching Conference",
-              date: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString(),
-              hours: 8,
-              cpdType: "conference",
-              learningMethod: "In-Person",
-              providerOrganization: "Executive Coaching Network",
-              description: "Annual executive coaching conference featuring keynote speakers and breakout sessions on advanced coaching techniques.",
-              keyLearnings: "Latest trends in executive coaching, systemic coaching approaches, and organizational development strategies.",
-              applicationToPractice: "Will apply systemic coaching frameworks to organizational clients and use new assessment tools for executive coaching.",
-              icfCompetencies: ["Establishes and Maintains Agreements", "Cultivates Trust and Safety", "Embodies a Coaching Mindset"],
-              certificateProof: "",
-              user_id: user.id,
-            }
-          ];
-          setCpdEntries(mockCpdData);
+          setCpdEntries([]);
         }
       } catch (error) {
         console.error('Error fetching CPD:', error);
-        // Fallback to mock data on error
-        const mockCpdData = [
-          {
-            id: 'mock-cpd-1',
-            title: "ICF Core Competencies Workshop",
-            date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-            hours: 4,
-            cpdType: "workshop",
-            learningMethod: "In-Person",
-            providerOrganization: "ICF Global",
-            description: "Advanced workshop on ICF core competencies covering all 8 competencies in depth.",
-            keyLearnings: "Deepened understanding of ethical practice and client growth facilitation. Learned new techniques for maintaining presence and active listening.",
-            applicationToPractice: "Will incorporate new questioning techniques and ethical frameworks into my coaching sessions. Plan to use the presence exercises before each session.",
-            icfCompetencies: ["Demonstrates Ethical Practice", "Maintains Presence", "Listens Actively"],
-            certificateProof: "",
-            user_id: "demo-user",
-          },
-          {
-            id: 'mock-cpd-2',
-            title: "Coaching Psychology Research",
-            date: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-            hours: 2,
-            cpdType: "reading",
-            learningMethod: "Self-Study",
-            providerOrganization: "Journal of Coaching Psychology",
-            description: "Reading latest research in coaching psychology focusing on evidence-based coaching approaches.",
-            keyLearnings: "Understanding of neuroscience behind coaching effectiveness. Insights into how different coaching styles impact client outcomes.",
-            applicationToPractice: "Will integrate evidence-based questioning techniques and incorporate neuroscience principles into my coaching framework.",
-            icfCompetencies: ["Evokes Awareness", "Facilitates Client Growth"],
-            certificateProof: "",
-            user_id: "demo-user",
-          },
-          {
-            id: 'mock-cpd-3',
-            title: "Executive Coaching Conference",
-            date: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString(),
-            hours: 8,
-            cpdType: "conference",
-            learningMethod: "In-Person",
-            providerOrganization: "Executive Coaching Network",
-            description: "Annual executive coaching conference featuring keynote speakers and breakout sessions on advanced coaching techniques.",
-            keyLearnings: "Latest trends in executive coaching, systemic coaching approaches, and organizational development strategies.",
-            applicationToPractice: "Will apply systemic coaching frameworks to organizational clients and use new assessment tools for executive coaching.",
-            icfCompetencies: ["Establishes and Maintains Agreements", "Cultivates Trust and Safety", "Embodies a Coaching Mindset"],
-            certificateProof: "",
-            user_id: "demo-user",
-          }
-        ];
-        setCpdEntries(mockCpdData);
+        setCpdEntries([]);
       }
       setLoading(false);
     };

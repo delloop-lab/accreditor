@@ -160,95 +160,7 @@ export default function ReportsPage() {
           .eq("user_id", user.id)
           .order("date", { ascending: false });
 
-        // Define mock data
-        const mockCpdData = [
-          {
-            id: 'mock-cpd-1',
-            title: "ICF Core Competencies Workshop",
-            date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-            hours: 4,
-            cpdType: "workshop",
-            learningMethod: "In-Person",
-            providerOrganization: "ICF Global",
-            description: "Advanced workshop on ICF core competencies",
-            keyLearnings: "Deepened understanding of ethical practice",
-            applicationToPractice: "Will incorporate new techniques",
-            icfCompetencies: ["Demonstrates Ethical Practice", "Maintains Presence", "Listens Actively"],
-            certificateProof: "",
-            user_id: user.id,
-          },
-          {
-            id: 'mock-cpd-2',
-            title: "Coaching Psychology Research",
-            date: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-            hours: 2,
-            cpdType: "reading",
-            learningMethod: "Self-Study",
-            providerOrganization: "Journal of Coaching Psychology",
-            description: "Reading latest research in coaching psychology",
-            keyLearnings: "Understanding of neuroscience behind coaching",
-            applicationToPractice: "Will integrate evidence-based techniques",
-            icfCompetencies: ["Evokes Awareness", "Facilitates Client Growth"],
-            certificateProof: "",
-            user_id: user.id,
-          },
-          {
-            id: 'mock-cpd-3',
-            title: "Executive Coaching Conference",
-            date: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString(),
-            hours: 8,
-            cpdType: "conference",
-            learningMethod: "In-Person",
-            providerOrganization: "Executive Coaching Network",
-            description: "Annual executive coaching conference",
-            keyLearnings: "Latest trends in executive coaching",
-            applicationToPractice: "Will apply systemic coaching frameworks",
-            icfCompetencies: ["Establishes and Maintains Agreements", "Cultivates Trust and Safety", "Embodies a Coaching Mindset"],
-            certificateProof: "",
-            user_id: user.id,
-          }
-        ];
-
-        const mockSessionData = [
-          {
-            id: 'mock-session-1',
-            client_name: "Sarah Johnson",
-            date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-            duration: 60,
-            notes: "Career transition coaching session focusing on leadership development",
-            types: ["Career Coaching", "Leadership Development"],
-            payment_type: "Hourly",
-            payment_amount: 150,
-            additional_notes: "Client showed significant progress in identifying career goals",
-            user_id: user.id,
-          },
-          {
-            id: 'mock-session-2',
-            client_name: "Michael Chen",
-            date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-            duration: 90,
-            notes: "Executive coaching session on team management and communication",
-            types: ["Executive Coaching", "Team Management"],
-            payment_type: "Package",
-            payment_amount: 200,
-            additional_notes: "Focused on improving team dynamics and communication skills",
-            user_id: user.id,
-          },
-          {
-            id: 'mock-session-3',
-            client_name: "Emily Rodriguez",
-            date: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-            duration: 45,
-            notes: "Life coaching session on work-life balance and stress management",
-            types: ["Life Coaching", "Wellness"],
-            payment_type: "Hourly",
-            payment_amount: 120,
-            additional_notes: "Client committed to implementing new stress management techniques",
-            user_id: user.id,
-          }
-        ];
-
-        // Use real data or fall back to mock data
+        // Use real data only
         let entries: CPDEntry[] = [];
         if (!cpdError && cpdData) {
           entries = cpdData.map((item: any) => ({
@@ -267,7 +179,7 @@ export default function ReportsPage() {
             user_id: item.user_id || "",
           }));
         } else {
-          entries = mockCpdData;
+          entries = [];
         }
 
         let sessionEntries: SessionEntry[] = [];
@@ -285,7 +197,7 @@ export default function ReportsPage() {
             user_id: item.user_id || "",
           }));
         } else {
-          sessionEntries = mockSessionData;
+          sessionEntries = [];
         }
 
         setCpdEntries(entries);

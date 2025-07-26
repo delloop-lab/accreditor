@@ -51,34 +51,7 @@ export default function ClientsPage() {
         if (!error && data) {
           setClients(data);
         } else {
-          // Use mock data for demo
-          const mockClients = [
-            {
-              id: 'mock-client-1',
-              name: 'Sarah Johnson',
-              email: 'sarah.johnson@email.com',
-              phone: '+1-555-0123',
-              notes: 'Career transition client',
-              created_at: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-            },
-            {
-              id: 'mock-client-2',
-              name: 'Michael Chen',
-              email: 'michael.chen@email.com',
-              phone: '+1-555-0456',
-              notes: 'Executive coaching client',
-              created_at: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
-            },
-            {
-              id: 'mock-client-3',
-              name: 'Emily Rodriguez',
-              email: 'emily.rodriguez@email.com',
-              phone: '+1-555-0789',
-              notes: 'Life coaching client',
-              created_at: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
-            }
-          ];
-          setClients(mockClients);
+          setClients([]);
         }
       } catch (error) {
         console.error('Error fetching clients:', error);

@@ -27,7 +27,7 @@ export default function SessionsPage() {
           clientName: session.client_name,
           date: session.date,
           duration: session.duration,
-          notes: session.notes,
+          additionalNotes: session.notes,
           types: session.types,
           paymentType: session.paymenttype,
           user_id: session.user_id,
