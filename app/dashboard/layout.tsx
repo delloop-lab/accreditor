@@ -57,12 +57,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             title="Go to dashboard and refresh data"
           >
             <img 
-              src="/ifclog.png" 
-              alt="IFC Log" 
+              src="/icflog.png" 
+              alt="ICF Log" 
               className="h-16 w-auto"
             />
           </div>
-          <div className="text-xs text-gray-500">IFC Log</div>
+          <div className="text-xs text-gray-500">ICF Log</div>
           <div className="text-xs text-gray-500">ICF Compliance Made Simple</div>
           <div className="text-xs text-gray-400 mt-1">Beta 0.9.450</div>
         </div>

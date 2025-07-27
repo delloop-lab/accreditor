@@ -826,7 +826,7 @@ export default function DashboardPage() {
               <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full mx-auto mb-4">
                 <UserIcon className="h-6 w-6 text-blue-600" />
               </div>
-              <h2 className="text-xl font-bold text-center mb-2">Welcome to Your Coaching Log!</h2>
+              <h2 className="text-xl font-bold text-center mb-2">Welcome to ICF Log!</h2>
               <p className="text-gray-600 text-center mb-6">
                 To get the most out of your coaching log and ensure accurate ICF compliance tracking, 
                 please complete your profile setup.

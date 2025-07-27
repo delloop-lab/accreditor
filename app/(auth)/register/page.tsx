@@ -114,8 +114,8 @@ export default function RegisterPage() {
       <form onSubmit={handleRegister} className="bg-white p-8 rounded shadow w-full max-w-sm space-y-6">
         <div className="text-center">
           <img 
-            src="/ifclog.png" 
-            alt="IFC Log" 
+            src="/icflog.png" 
+            alt="ICF Log" 
             className="h-20 w-auto mx-auto mb-4"
           />
           <h1 className="text-2xl font-bold mb-4">Register</h1>
