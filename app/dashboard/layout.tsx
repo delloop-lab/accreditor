@@ -57,8 +57,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             title="Go to dashboard and refresh data"
           >
             <img 
-              src="/mycoachinglog.png" 
-              alt="MY COACHING LOG" 
+              src="/ifclog.png" 
+              alt="ICFlog" 
               className="h-16 w-auto"
             />
           </div>
