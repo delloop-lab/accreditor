@@ -123,6 +123,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       </aside>
       {/* Main content */}
       <main className="flex-1 p-6">{children}</main>
+      
+      {/* Footer */}
+      <footer className="bg-white border-t border-gray-200 py-4 px-6 text-center text-xs text-gray-500">
+        <p>Copyright (c) 2025 The Novita Group Pty Ltd.</p>
+        <p className="mt-1">Note: This app is independently developed and is not associated with the International Coaching Federation (ICF) in any way.</p>
+      </footer>
     </div>
   );
 } 
