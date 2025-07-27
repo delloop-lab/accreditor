@@ -45,9 +45,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen flex bg-gray-50">
-      {/* Sidebar */}
-      <aside className="hidden md:flex flex-col w-72 bg-white border-r shadow-sm p-4">
+    <div className="min-h-screen flex flex-col bg-gray-50">
+      <div className="flex flex-1">
+        {/* Sidebar */}
+        <aside className="hidden md:flex flex-col w-72 bg-white border-r shadow-sm p-4">
         {/* Logo and App Name */}
         <div className="flex flex-col items-center mb-8">
           <div 
@@ -121,8 +122,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </button>
         </div>
       </aside>
-      {/* Main content */}
-      <main className="flex-1 p-6">{children}</main>
+        {/* Main content */}
+        <main className="flex-1 p-6">{children}</main>
+      </div>
       
       {/* Footer */}
       <footer className="bg-white border-t border-gray-200 py-4 px-6 text-center text-xs text-gray-500">
