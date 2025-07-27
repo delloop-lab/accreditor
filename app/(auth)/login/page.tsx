@@ -40,7 +40,7 @@ export default function LoginPage() {
         <div className="text-center">
           <img 
             src="/ifclog.png" 
-            alt="ICFlog" 
+            alt="IFC Log" 
             className="h-20 w-auto mx-auto mb-4"
           />
           <h1 className="text-2xl font-bold mb-2">Welcome Back</h1>
