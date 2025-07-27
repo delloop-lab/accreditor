@@ -141,7 +141,10 @@ export default function ProfilePage() {
           .eq("user_id", user.id)
           .single();
 
+        console.log('Profile fetch result:', { profileData, profileError });
+
         if (!profileError && profileData) {
+          console.log('Setting profile from database:', profileData);
           setProfile({
             id: profileData.id,
             name: profileData.name || "",
@@ -153,6 +156,7 @@ export default function ProfilePage() {
             updated_at: profileData.updated_at
           });
         } else {
+          console.log('Using fallback profile data from user:', user);
           // Use user data as fallback
           setProfile({
             id: user.id,
@@ -181,41 +185,53 @@ export default function ProfilePage() {
     setSuccess("");
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      console.log('Auth check result:', { user, authError });
+      
+      if (authError) {
+        console.error('Auth error:', authError);
+        setError(`Authentication error: ${authError.message}`);
+        setSaving(false);
+        return;
+      }
+      
       if (!user) {
+        console.log('No user found, redirecting to login');
         router.replace("/login");
         return;
       }
 
+      console.log('Current user:', user.id);
+
       // Check if email already exists for another user
-      const { data: existingProfile, error: checkError } = await supabase
+      console.log('Checking email uniqueness for:', profile.email.trim());
+      const { data: existingProfileWithEmail, error: emailCheckError } = await supabase
         .from("profiles")
         .select("user_id, name")
         .eq("email", profile.email.trim())
         .neq("user_id", user.id)
         .single();
 
-      if (!checkError && existingProfile) {
+      console.log('Email check result:', { existingProfileWithEmail, emailCheckError });
+
+      if (!emailCheckError && existingProfileWithEmail) {
         setShowUserExistsModal(true);
         setSaving(false);
         return;
       }
 
-      // First try to update existing profile
-      const { error: updateError } = await supabase
+      // Check if profile exists first
+      console.log('Checking if profile exists for user:', user.id);
+      const { data: existingProfile, error: profileCheckError } = await supabase
         .from("profiles")
-        .update({
-          name: profile.name.trim(),
-          email: profile.email.trim(),
-          icf_level: profile.icf_level,
-          currency: profile.currency,
-          country: profile.country,
-          updated_at: new Date().toISOString()
-        })
-        .eq("user_id", user.id);
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
 
-      // If no rows were updated, insert new profile
-      if (updateError) {
+      console.log('Profile existence check result:', { existingProfile, profileCheckError });
+
+      if (profileCheckError && profileCheckError.code === 'PGRST116') {
+        // Profile doesn't exist, insert new one
         const { error: insertError } = await supabase
           .from("profiles")
           .insert({
@@ -232,13 +248,35 @@ export default function ProfilePage() {
           setError(insertError.message || 'Failed to create profile');
           return;
         }
+      } else if (profileCheckError) {
+        // Some other error occurred
+        setError(profileCheckError.message || 'Failed to check profile');
+        return;
+      } else {
+        // Profile exists, update it
+        const { error: updateError } = await supabase
+          .from("profiles")
+          .update({
+            name: profile.name.trim(),
+            email: profile.email.trim(),
+            icf_level: profile.icf_level,
+            currency: profile.currency,
+            country: profile.country,
+            updated_at: new Date().toISOString()
+          })
+          .eq("user_id", user.id);
+
+        if (updateError) {
+          setError(updateError.message || 'Failed to update profile');
+          return;
+        }
       }
 
       setSuccess("Profile updated successfully!");
       setTimeout(() => setSuccess(""), 3000);
     } catch (error) {
       console.error('Error updating profile:', error);
-      setError("An unexpected error occurred. Please try again.");
+      setError(`An unexpected error occurred: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setSaving(false);
     }

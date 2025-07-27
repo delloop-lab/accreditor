@@ -14,13 +14,21 @@ export default function Home() {
         const { data, error } = await supabase.auth.getUser();
         
         if (error) {
-          console.error('Auth error:', error);
-          // If it's a mock client error, redirect to login
+          // Handle specific auth errors gracefully
           if (error.message === 'Mock client') {
             setError('Supabase not configured. Please set up your environment variables.');
             setLoading(false);
             return;
           }
+          
+          // For session missing errors (which are expected after logout), just redirect to login
+          if (error.message.includes('Auth session missing') || error.message.includes('session')) {
+            router.replace("/login");
+            return;
+          }
+          
+          // For other errors, log but don't show to user
+          console.warn('Auth check error:', error.message);
           router.replace("/login");
           return;
         }
@@ -31,8 +39,9 @@ export default function Home() {
           router.replace("/login");
         }
       } catch (error) {
-        console.error('Error checking auth:', error);
-        setError('An unexpected error occurred. Please try again.');
+        // Handle unexpected errors gracefully
+        console.warn('Unexpected auth error:', error);
+        router.replace("/login");
       } finally {
         setLoading(false);
       }

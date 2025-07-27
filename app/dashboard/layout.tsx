@@ -33,15 +33,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) {
-        console.error('Error signing out:', error);
-      } else {
-        // Redirect to the root page which will then redirect to login
-        router.push('/');
+        console.warn('Error signing out:', error);
       }
+      // Always redirect to login page directly instead of going through root
+      router.push('/login');
     } catch (error) {
-      console.error('Error during logout:', error);
-      // Fallback: redirect to root page
-      router.push('/');
+      console.warn('Error during logout:', error);
+      // Fallback: redirect to login page
+      router.push('/login');
     }
   };
 
@@ -96,8 +95,22 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </Link>
         </nav>
 
-        {/* Logout Button */}
-        <div className="mt-4 pt-4 border-t">
+        {/* Authentication Buttons */}
+        <div className="mt-4 pt-4 border-t space-y-2">
+          <Link 
+            href="/login"
+            className="flex items-center gap-2 p-2 rounded hover:bg-blue-50 text-blue-600 hover:text-blue-700 w-full text-left"
+            title="Sign in to your account"
+          >
+            <ArrowRightOnRectangleIcon className="h-5 w-5" /> Sign In
+          </Link>
+          <Link 
+            href="/register"
+            className="flex items-center gap-2 p-2 rounded hover:bg-green-50 text-green-600 hover:text-green-700 w-full text-left"
+            title="Create a new account"
+          >
+            <UserIcon className="h-5 w-5" /> Register
+          </Link>
           <button 
             onClick={handleLogout}
             className="flex items-center gap-2 p-2 rounded hover:bg-red-50 text-red-600 hover:text-red-700 w-full text-left"

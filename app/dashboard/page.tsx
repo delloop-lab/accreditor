@@ -99,13 +99,14 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [sessions, setSessions] = useState<any[]>([]);
   const [cpdActivities, setCpdActivities] = useState<any[]>([]);
-  const [cpdHours, setCpdHours] = useState(20); // Placeholder
-  const [thisMonthHours, setThisMonthHours] = useState(2); // Placeholder
+  const [cpdHours, setCpdHours] = useState(0);
+  const [thisMonthHours, setThisMonthHours] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [selectedSession, setSelectedSession] = useState<any>(null);
   const [selectedCpd, setSelectedCpd] = useState<any>(null);
   const [showSessionModal, setShowSessionModal] = useState(false);
   const [showCpdModal, setShowCpdModal] = useState(false);
+  const [showProfileReminder, setShowProfileReminder] = useState(false);
 
   // Currency symbols mapping
   const CURRENCY_SYMBOLS: { [key: string]: string } = {
@@ -234,6 +235,41 @@ export default function DashboardPage() {
         setCpdHours(0);
       }
 
+      // Calculate this month's hours
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+      
+      const thisMonthSessions = mappedSessionData?.filter((session: any) => {
+        if (!session.date) return false;
+        const sessionDate = new Date(session.date);
+        return sessionDate.getMonth() === currentMonth && sessionDate.getFullYear() === currentYear;
+      }) || [];
+      
+      const thisMonthTotalHours = thisMonthSessions.reduce((total: number, session: any) => {
+        return total + (session.duration || 0);
+      }, 0) / 60; // Convert minutes to hours
+      
+      setThisMonthHours(Math.round(thisMonthTotalHours * 10) / 10); // Round to 1 decimal place
+
+      // Check if profile is incomplete and show reminder
+      console.log('Profile data check:', {
+        hasProfileData: !!profileData,
+        profileName: profileData?.name,
+        nameTrimmed: profileData?.name?.trim(),
+        nameLength: profileData?.name?.length
+      });
+      
+      if (profileData && profileData.name && profileData.name.trim() !== '') {
+        // User has a name, don't show reminder
+        console.log('User has name, hiding reminder');
+        setShowProfileReminder(false);
+      } else {
+        // User doesn't have a name, show reminder
+        console.log('User missing name, showing reminder');
+        setShowProfileReminder(true);
+      }
+
     } catch (error) {
       console.error('Error in fetchData:', error);
       setError('An unexpected error occurred. Please try again.');
@@ -255,6 +291,21 @@ export default function DashboardPage() {
     // Cleanup
     return () => {
       window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
+
+  // Also refresh data when the component mounts or when user navigates back
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchData();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
 
@@ -762,6 +813,50 @@ export default function DashboardPage() {
               >
                 Close
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Profile Setup Reminder Modal */}
+      {showProfileReminder && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
+            <div className="p-6">
+              <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full mx-auto mb-4">
+                <UserIcon className="h-6 w-6 text-blue-600" />
+              </div>
+              <h2 className="text-xl font-bold text-center mb-2">Welcome to Your Coaching Log!</h2>
+              <p className="text-gray-600 text-center mb-6">
+                To get the most out of your coaching log and ensure accurate ICF compliance tracking, 
+                please complete your profile setup.
+              </p>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <h3 className="font-semibold text-blue-800 mb-2">Profile Setup Includes:</h3>
+                <ul className="text-sm text-blue-700 space-y-1">
+                  <li>• Your full name and contact information</li>
+                  <li>• Current ICF credential level</li>
+                  <li>• Preferred currency for session tracking</li>
+                  <li>• Professional coaching details</li>
+                </ul>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowProfileReminder(false);
+                    router.push('/dashboard/profile');
+                  }}
+                  className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Complete Profile
+                </button>
+                <button
+                  onClick={() => setShowProfileReminder(false)}
+                  className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors"
+                >
+                  Later
+                </button>
+              </div>
             </div>
           </div>
         </div>

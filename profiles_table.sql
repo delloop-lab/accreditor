@@ -6,6 +6,7 @@ CREATE TABLE profiles (
     email VARCHAR(255),
     icf_level VARCHAR(10) DEFAULT 'none' CHECK (icf_level IN ('none', 'acc', 'pcc', 'mcc')),
     currency VARCHAR(3) DEFAULT 'USD' CHECK (currency IN ('USD', 'EUR', 'GBP', 'CAD', 'AUD', 'CHF', 'JPY', 'SEK', 'NOK', 'DKK')),
+    country VARCHAR(100) DEFAULT 'United States',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -32,6 +33,9 @@ CREATE POLICY "Users can delete their own profile" ON profiles
 -- Add currency column to existing profiles table (run this if the table already exists)
 -- ALTER TABLE profiles ADD COLUMN currency VARCHAR(3) DEFAULT 'USD' CHECK (currency IN ('USD', 'EUR', 'GBP', 'CAD', 'AUD', 'CHF', 'JPY', 'SEK', 'NOK', 'DKK'));
 
+-- Add country column to existing profiles table (run this if the table already exists)
+-- ALTER TABLE profiles ADD COLUMN country VARCHAR(100) DEFAULT 'United States';
+
 -- Sample data (replace user_id with actual user ID)
--- INSERT INTO profiles (user_id, name, email, icf_level, currency) VALUES
--- ('your-user-id-here', 'John Doe', 'john.doe@example.com', 'pcc', 'USD'); 
+-- INSERT INTO profiles (user_id, name, email, icf_level, currency, country) VALUES
+-- ('your-user-id-here', 'John Doe', 'john.doe@example.com', 'pcc', 'USD', 'United States'); 
