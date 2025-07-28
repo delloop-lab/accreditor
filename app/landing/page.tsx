@@ -1,6 +1,29 @@
 "use client";
+import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function LandingPage() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Check current auth state
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsLoggedIn(!!session);
+      setLoading(false);
+    };
+
+    checkAuth();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsLoggedIn(!!session);
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
   return (
     <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex flex-col items-center justify-start p-4 sm:p-6 md:p-8 text-gray-900">
       {/* Header with Logo */}
@@ -18,6 +41,13 @@ export default function LandingPage() {
         <p className="text-base sm:text-lg text-gray-700 max-w-2xl mx-auto leading-relaxed px-4">
           A professional tool to support your coaching practice and ICF credential maintenance.
         </p>
+        
+        {/* Special Launch Offer */}
+        <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-xl sm:rounded-2xl p-3 sm:p-4 mt-4 sm:mt-6 mx-auto max-w-2xl">
+          <p className="text-sm sm:text-base font-semibold text-green-700 text-center">
+            🎉 Special launch offer: First 100 users get their first year completely free, no credit card needed!
+          </p>
+        </div>
       </header>
 
       {/* Hero Section */}
@@ -95,23 +125,45 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="w-full max-w-3xl text-center bg-white/80 backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-xl p-4 sm:p-6 md:p-8 border border-gray-100 mx-4">
-        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-3 sm:mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-          Streamline your ICF compliance process
-        </h2>
-        <p className="text-base sm:text-lg text-gray-700 mb-4 sm:mb-6 leading-relaxed">
-          Begin using ICF Log today to support your professional coaching journey.
-        </p>
-        <div className="flex justify-center items-center">
-          <a
-            href="/login"
-            className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 sm:py-3 px-5 sm:px-6 rounded-xl text-sm sm:text-base font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-          >
-            Access the Application
-          </a>
-        </div>
-      </section>
+      {/* CTA Section - Only show for non-logged-in users */}
+      {!loading && !isLoggedIn && (
+        <section className="w-full max-w-3xl text-center bg-white/80 backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-xl p-4 sm:p-6 md:p-8 border border-gray-100 mx-4">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-3 sm:mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Streamline your ICF compliance process
+          </h2>
+          <p className="text-base sm:text-lg text-gray-700 mb-4 sm:mb-6 leading-relaxed">
+            Begin using ICF Log today to support your professional coaching journey.
+          </p>
+          <div className="flex justify-center items-center">
+            <a
+              href="/login"
+              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 sm:py-3 px-5 sm:px-6 rounded-xl text-sm sm:text-base font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+            >
+              Access the Application
+            </a>
+          </div>
+        </section>
+      )}
+
+      {/* Welcome back section for logged-in users */}
+      {!loading && isLoggedIn && (
+        <section className="w-full max-w-3xl text-center bg-gradient-to-r from-green-50 to-blue-50 backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-xl p-4 sm:p-6 md:p-8 border border-green-200 mx-4">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-3 sm:mb-4 bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+            Welcome back!
+          </h2>
+          <p className="text-base sm:text-lg text-gray-700 mb-4 sm:mb-6 leading-relaxed">
+            You're already logged in. Head to your dashboard to continue managing your coaching practice.
+          </p>
+          <div className="flex justify-center items-center">
+            <a
+              href="/dashboard"
+              className="bg-gradient-to-r from-green-600 to-blue-600 text-white py-2 sm:py-3 px-5 sm:px-6 rounded-xl text-sm sm:text-base font-semibold hover:from-green-700 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+            >
+              Go to Dashboard
+            </a>
+          </div>
+        </section>
+      )}
 
       {/* Footer */}
       <footer className="w-full max-w-4xl text-center mt-8 sm:mt-10 md:mt-12 px-4">

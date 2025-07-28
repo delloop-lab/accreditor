@@ -29,6 +29,7 @@ export default function SessionsPage() {
           duration: session.duration,
           additionalNotes: session.additional_notes || session.notes,
           types: session.types,
+          numberInGroup: session.number_in_group,
           paymentType: session.paymenttype,
           paymentAmount: session.payment_amount,
           focusArea: session.focus_area,
@@ -69,6 +70,7 @@ export default function SessionsPage() {
       duration: data.duration || 0, // Use 0 as default instead of null
       notes: data.additionalNotes || '',
       types: data.types,
+      number_in_group: data.numberInGroup || 1,
       paymenttype: data.paymentType,
       payment_amount: data.paymentAmount || null,
       focus_area: data.focusArea || '',
@@ -101,6 +103,7 @@ export default function SessionsPage() {
         duration: newSession.duration,
         additionalNotes: newSession.additional_notes || newSession.notes,
         types: newSession.types,
+        numberInGroup: newSession.number_in_group,
         paymentType: newSession.paymenttype,
         paymentAmount: newSession.payment_amount,
         focusArea: newSession.focus_area,

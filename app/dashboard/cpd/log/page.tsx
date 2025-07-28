@@ -30,6 +30,7 @@ function CPDLogContent() {
   const [loading, setLoading] = useState(true);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const highlightedRef = useRef<HTMLDivElement>(null);
 
   const toggleCard = (cpdId: string) => {
@@ -41,6 +42,18 @@ function CPDLogContent() {
         newSet.add(cpdId);
       }
       return newSet;
+    });
+  };
+
+  const toggleSortOrder = () => {
+    setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+  };
+
+  const getSortedCPDEntries = () => {
+    return [...cpdEntries].sort((a, b) => {
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
     });
   };
 
@@ -115,33 +128,30 @@ function CPDLogContent() {
   if (loading) return <div className="p-8 text-center">Loading CPD entries...</div>;
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      <div className="flex items-center justify-between mb-6">
+    <div className="max-w-6xl mx-auto p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-2">
           <AcademicCapIcon className="h-6 w-6 text-purple-600" />
-          <h1 className="text-2xl font-bold">CPD Log</h1>
+          <h1 className="text-xl sm:text-2xl font-bold">CPD Log</h1>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <button
-            onClick={() => testExport()}
-            className="flex items-center gap-2 bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors"
+            onClick={toggleSortOrder}
+            className="flex items-center justify-center gap-2 bg-gray-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm"
           >
-            <ArrowDownTrayIcon className="h-4 w-4" />
-            Test Export
+            <CalendarIcon className="h-4 w-4" />
+            <span className="hidden sm:inline">Sort by Date {sortOrder === 'asc' ? '↑' : '↓'}</span>
+            <span className="sm:hidden">Sort {sortOrder === 'asc' ? '↑' : '↓'}</span>
           </button>
-          <button
-            onClick={() => exportCPDToCSV(cpdEntries, `cpd-data-${new Date().toISOString().split('T')[0]}`)}
-            className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-          >
-            <ArrowDownTrayIcon className="h-4 w-4" />
-            Export CSV
-          </button>
+          
+
           <button
             onClick={() => exportCPDToXLSX(cpdEntries, `cpd-data-${new Date().toISOString().split('T')[0]}`)}
-            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            className="flex items-center justify-center gap-2 bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
           >
             <ArrowDownTrayIcon className="h-4 w-4" />
-            Export Excel
+            <span className="hidden sm:inline">Export Excel</span>
+            <span className="sm:hidden">Export</span>
           </button>
         </div>
       </div>
@@ -152,10 +162,10 @@ function CPDLogContent() {
         </div>
       ) : (
         <div className="space-y-4">
-          {cpdEntries.map((entry) => {
+          {getSortedCPDEntries().map((entry, index) => {
             const isHighlighted = highlightedId && (
               entry.id === highlightedId || 
-              `cpd-${cpdEntries.indexOf(entry)}` === highlightedId
+              `cpd-${index}` === highlightedId
             );
             const isExpanded = expandedCards.has(entry.id);
             
@@ -172,53 +182,58 @@ function CPDLogContent() {
               >
                 {/* Compact Header - Always Visible */}
                 <div className="p-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0">
                     <div className="flex-1">
                       <h2 className="text-lg font-bold text-gray-900">{entry.title}</h2>
-                      <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
-                        <span className="flex items-center gap-1">
-                          <CalendarIcon className="h-4 w-4" />
-                          {new Date(entry.date).toLocaleDateString()}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <ClockIcon className="h-4 w-4" />
-                          {entry.hours}h
-                        </span>
-                        <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs font-semibold">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-600 mt-1">
+                        <div className="flex items-center gap-4">
+                          <span className="flex items-center gap-1">
+                            <CalendarIcon className="h-4 w-4" />
+                            {new Date(entry.date).toLocaleDateString()}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <ClockIcon className="h-4 w-4" />
+                            {entry.hours}h
+                          </span>
+                        </div>
+                        <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs font-semibold self-start">
                           {entry.cpdType}
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="text-sm text-gray-600">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                      <div className="text-sm text-gray-600 order-3 sm:order-1">
                         {entry.providerOrganization}
                       </div>
-                      {(entry.supportingDocument || entry.certificateProof) && (
-                        <a 
-                          href={entry.supportingDocument || entry.certificateProof} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm font-medium"
-                          onClick={(e) => e.stopPropagation()}
+                      <div className="flex items-center gap-2 order-1 sm:order-2">
+                        {(entry.supportingDocument || entry.certificateProof) && (
+                          <a 
+                            href={entry.supportingDocument || entry.certificateProof} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm font-medium"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <DocumentIcon className="h-4 w-4" />
+                            <span className="hidden sm:inline">{entry.documentType || "Document"}</span>
+                            <span className="sm:hidden">Doc</span>
+                          </a>
+                        )}
+                        
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(`/dashboard/cpd/edit/${entry.id}`);
+                          }}
+                          className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                          title="Edit CPD"
                         >
-                          <DocumentIcon className="h-4 w-4" />
-                          {entry.documentType || "Document"}
-                        </a>
-                      )}
-                      
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          router.push(`/dashboard/cpd/edit/${entry.id}`);
-                        }}
-                        className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
-                        title="Edit CPD"
-                      >
-                        <PencilIcon className="h-4 w-4" />
-                      </button>
-                      
-                      <div className="text-gray-400">
-                        {isExpanded ? '▼' : '▶'}
+                          <PencilIcon className="h-4 w-4" />
+                        </button>
+                        
+                        <div className="text-gray-400 p-1">
+                          {isExpanded ? '▼' : '▶'}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -227,7 +242,7 @@ function CPDLogContent() {
                 {/* Expanded Details - Only visible when expanded */}
                 {isExpanded && (
                   <div className="px-4 pb-4 border-t bg-gray-50">
-                    <div className="pt-4 space-y-4">
+                    <div className="pt-4 space-y-5">
                       {/* Learning Method */}
                       <div>
                         <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
@@ -289,7 +304,7 @@ function CPDLogContent() {
                         <div className="flex flex-wrap gap-2">
                           {entry.icfCompetencies.length > 0 ? (
                             entry.icfCompetencies.map((competency, idx) => (
-                              <span key={idx} className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm">
+                              <span key={idx} className="bg-purple-100 text-purple-700 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm">
                                 {competency}
                               </span>
                             ))

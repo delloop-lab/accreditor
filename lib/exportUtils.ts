@@ -13,6 +13,111 @@ const formatDuration = (duration: number) => {
   return `${duration} minutes`;
 };
 
+// Helper function to format date in DD/MM/YYYY format
+const formatDateDDMMYYYY = (dateString: string) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+};
+
+// Export Sessions data in ICF Client Coaching Log format
+export const exportSessionsToICFLog = (sessionsData: any[], filename: string = 'ICF-Client-Coaching-Log') => {
+  try {
+    console.log('Exporting Sessions to ICF Log format:', sessionsData);
+    
+    // Create workbook
+    const workbook = XLSX.utils.book_new();
+    
+    // Create worksheet data with ICF format
+    const worksheetData = [
+      // Title row with ICF branding
+      ['ICF Client Coaching Log', '', '', '', '', '', '', ''],
+      ['', '', '', '', '', '', '', ''],
+      
+      // Column headers (bright yellow background, black text, bold)
+      ['Client Name', 'Contact Information', 'Individual/Group', 'Number in Group', 'Start Date', 'End Date', 'Paid hours', 'Pro-bono hours'],
+      
+      // Data rows (white background, black text)
+      ...sessionsData.map(item => [
+        item.clientName || item.client_name || '',
+        item.clientEmail || item.client_email || '',
+        item.sessionType === 'group' ? 'Group' : 'Individual',
+        item.numberInGroup || item.number_in_group || 1,
+        formatDateDDMMYYYY(item.date),
+        formatDateDDMMYYYY(item.finishDate || item.finish_date),
+        item.paymentType === 'paid' ? (item.duration / 60) : 0, // Convert minutes to hours
+        item.paymentType === 'pro-bono' ? (item.duration / 60) : 0 // Convert minutes to hours
+      ])
+    ];
+    
+    // Create worksheet
+    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+    
+    // Set column widths
+    worksheet['!cols'] = [
+      { width: 20 }, // Client Name
+      { width: 25 }, // Contact Information
+      { width: 15 }, // Individual/Group
+      { width: 15 }, // Number in Group
+      { width: 12 }, // Start Date
+      { width: 12 }, // End Date
+      { width: 12 }, // Paid hours
+      { width: 12 }  // Pro-bono hours
+    ];
+    
+    // Apply styling
+    // Title row styling (light blue background)
+    for (let col = 0; col < 8; col++) {
+      const cellRef = XLSX.utils.encode_cell({ r: 0, c: col });
+      if (!worksheet[cellRef]) worksheet[cellRef] = { v: '' };
+      worksheet[cellRef].s = {
+        fill: { fgColor: { rgb: "E6F3FF" } }, // Light blue
+        font: { bold: true, sz: 14 }
+      };
+    }
+    
+    // Header row styling (bright yellow background, black text, bold)
+    for (let col = 0; col < 8; col++) {
+      const cellRef = XLSX.utils.encode_cell({ r: 2, c: col });
+      if (!worksheet[cellRef]) worksheet[cellRef] = { v: '' };
+      worksheet[cellRef].s = {
+        fill: { fgColor: { rgb: "FFFF00" } }, // Bright yellow
+        font: { bold: true, color: { rgb: "000000" } },
+        alignment: { horizontal: "center" }
+      };
+    }
+    
+    // Data rows styling (white background)
+    for (let row = 3; row < worksheetData.length; row++) {
+      for (let col = 0; col < 8; col++) {
+        const cellRef = XLSX.utils.encode_cell({ r: row, c: col });
+        if (!worksheet[cellRef]) worksheet[cellRef] = { v: '' };
+        worksheet[cellRef].s = {
+          fill: { fgColor: { rgb: "FFFFFF" } }, // White background
+          font: { color: { rgb: "000000" } }
+        };
+      }
+    }
+    
+    // Add worksheet to workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'ICF Client Coaching Log');
+    
+    // Write to file
+    const excelBuffer = XLSX.write(workbook, { 
+      bookType: 'xlsx', 
+      type: 'array',
+      cellStyles: true
+    });
+    const blob = new Blob([excelBuffer], { 
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+    });
+    saveAs(blob, `${filename}.xlsx`);
+    console.log('ICF Log format export successful');
+  } catch (error) {
+    console.error('ICF Log format export failed:', error);
+  }
+};
+
 // Test export function to debug issues
 export const testExport = () => {
   try {
@@ -105,6 +210,7 @@ export const exportSessionsToCSV = (sessionsData: any[], filename: string = 'ses
       'End Date',
       'Duration',
       'Session Type',
+      'Number in Group',
       'Payment Type',
       'Payment Amount',
       'Focus Area',
@@ -123,6 +229,7 @@ export const exportSessionsToCSV = (sessionsData: any[], filename: string = 'ses
       formatDate(item.finishDate || item.finish_date),
       formatDuration(item.duration),
       Array.isArray(item.types) ? item.types.join(', ') : item.types || '',
+      item.numberInGroup || item.number_in_group || 1,
       item.paymentType || item.payment_type || '',
       item.paymentAmount || item.payment_amount || '',
       item.focusArea || item.focus_area || '',
@@ -159,6 +266,7 @@ export const exportSessionsToXLSX = (sessionsData: any[], filename: string = 'se
         'End Date': formatDate(item.finishDate || item.finish_date),
         'Duration': formatDuration(item.duration),
         'Session Type': Array.isArray(item.types) ? item.types.join(', ') : item.types || '',
+        'Number in Group': item.numberInGroup || item.number_in_group || 1,
         'Payment Type': item.paymentType || item.payment_type || '',
         'Payment Amount': item.paymentAmount || item.payment_amount || '',
         'Focus Area': item.focusArea || item.focus_area || '',

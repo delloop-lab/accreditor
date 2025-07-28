@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ICF Log Beta 0.9.460 - Coaching Log & CPD Tracker",
+  title: "ICF Log Beta 0.9.480 - Coaching Log & CPD Tracker",
   description: "Professional coaching log and CPD tracking application for ICF accredited coaches",
 };
 

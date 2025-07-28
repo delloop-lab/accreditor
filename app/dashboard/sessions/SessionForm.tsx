@@ -34,8 +34,9 @@ export type SessionData = {
   finishDate: string;
   duration?: number;
   types: string[];
+  numberInGroup?: number;
   paymentType: "paid" | "proBono";
-  paymentAmount?: number;
+  paymentAmount?: number | null;
   focusArea: string;
   keyOutcomes: string;
   clientProgress: string;
@@ -63,6 +64,7 @@ export default function SessionForm({
   const [finishDate, setFinishDate] = useState("");
   const [duration, setDuration] = useState("");
   const [types, setTypes] = useState<string[]>([]);
+  const [numberInGroup, setNumberInGroup] = useState("1");
   const [paymentType, setPaymentType] = useState<"paid" | "proBono">("paid");
   const [paymentAmount, setPaymentAmount] = useState("");
   const [focusArea, setFocusArea] = useState("");
@@ -144,6 +146,7 @@ export default function SessionForm({
       setFinishDate(initialData.finishDate);
       setDuration(initialData.duration?.toString() || "");
       setTypes(initialData.types);
+      setNumberInGroup(initialData.numberInGroup?.toString() || "1");
       setPaymentType(initialData.paymentType);
       setPaymentAmount(initialData.paymentAmount?.toString() || "");
       setFocusArea(initialData.focusArea);
@@ -208,8 +211,9 @@ export default function SessionForm({
       finishDate,
       duration: duration ? Number(duration) : undefined,
       types,
+      numberInGroup: numberInGroup ? Number(numberInGroup) : 1,
       paymentType,
-      paymentAmount: paymentAmount ? Number(paymentAmount) : undefined,
+      paymentAmount: paymentAmount && paymentAmount.trim() !== '' ? Number(paymentAmount) : null,
       focusArea,
       keyOutcomes,
       clientProgress,
@@ -226,6 +230,7 @@ export default function SessionForm({
     setFinishDate("");
     setDuration("");
     setTypes([]);
+    setNumberInGroup("1");
     setPaymentType("paid");
     setPaymentAmount("");
     setFocusArea("");
@@ -238,13 +243,13 @@ export default function SessionForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 bg-white p-8 rounded-xl shadow max-w-2xl mx-auto">
-      <div className="flex items-center justify-between mb-2">
-        <h2 className="text-2xl font-bold">{isEditing ? 'Edit Session' : 'Session Details'}</h2>
+    <form onSubmit={handleSubmit} className="space-y-6 bg-white p-4 sm:p-6 lg:p-8 rounded-xl shadow max-w-2xl mx-auto">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 mb-4">
+        <h2 className="text-xl sm:text-2xl font-bold">{isEditing ? 'Edit Session' : 'Session Details'}</h2>
         <button
           type="button"
           onClick={() => setShowAdvanced(!showAdvanced)}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+          className={`px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
             showAdvanced
               ? 'bg-purple-600 text-white hover:bg-purple-700'
               : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -253,7 +258,7 @@ export default function SessionForm({
           {showAdvanced ? 'Basic Mode' : 'Advanced Mode'}
         </button>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block font-medium mb-1">Client *</label>
           {isEditing ? (
@@ -312,6 +317,17 @@ export default function SessionForm({
           </select>
         </div>
         <div>
+          <label className="block font-medium mb-1">Number in Group</label>
+          <input 
+            type="number" 
+            min="1" 
+            className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+            value={numberInGroup} 
+            onChange={e => setNumberInGroup(e.target.value)} 
+            placeholder="1"
+          />
+        </div>
+        <div>
           <label className="block font-medium mb-1">Payment Type</label>
           <select className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={paymentType} onChange={e => setPaymentType(e.target.value as "paid" | "proBono")}> 
             <option value="paid">Paid</option>
@@ -336,37 +352,54 @@ export default function SessionForm({
       
       {/* Session Content - Only shown in Advanced mode */}
       {showAdvanced && (
-        <div className="border rounded-lg p-4 bg-gray-50">
-          <h3 className="font-semibold mb-2">Session Content</h3>
-          <div className="mb-2">
-            <label className="block font-medium mb-1">Focus Area</label>
-            <input type="text" className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={focusArea} onChange={e => setFocusArea(e.target.value)} />
-          </div>
-          <div className="mb-2">
-            <label className="block font-medium mb-1">Key Outcomes</label>
-            <textarea className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={keyOutcomes} onChange={e => setKeyOutcomes(e.target.value)} />
-          </div>
-          <div>
-            <label className="block font-medium mb-1">Client Progress</label>
-            <textarea className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={clientProgress} onChange={e => setClientProgress(e.target.value)} />
+        <div className="border rounded-lg p-3 sm:p-4 bg-gray-50">
+          <h3 className="font-semibold mb-3 text-sm sm:text-base">Session Content</h3>
+          <div className="space-y-3">
+            <div>
+              <label className="block font-medium mb-1 text-sm">Focus Area</label>
+              <input 
+                type="text" 
+                className="w-full border border-gray-400 rounded px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
+                value={focusArea} 
+                onChange={e => setFocusArea(e.target.value)} 
+              />
+            </div>
+            <div>
+              <label className="block font-medium mb-1 text-sm">Key Outcomes</label>
+              <textarea 
+                className="w-full border border-gray-400 rounded px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
+                rows={3}
+                value={keyOutcomes} 
+                onChange={e => setKeyOutcomes(e.target.value)} 
+              />
+            </div>
+            <div>
+              <label className="block font-medium mb-1 text-sm">Client Progress</label>
+              <textarea 
+                className="w-full border border-gray-400 rounded px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
+                rows={3}
+                value={clientProgress} 
+                onChange={e => setClientProgress(e.target.value)} 
+              />
+            </div>
           </div>
         </div>
       )}
       
       {/* Coaching Tools & Techniques - Only shown in Advanced mode */}
       {showAdvanced && (
-        <div className="border rounded-lg p-4 bg-gray-50">
-          <h3 className="font-semibold mb-2">Coaching Tools & Techniques</h3>
-          <div className="flex gap-2 mb-2">
+        <div className="border rounded-lg p-3 sm:p-4 bg-gray-50">
+          <h3 className="font-semibold mb-3 text-sm sm:text-base">Coaching Tools & Techniques</h3>
+          <div className="flex flex-col sm:flex-row gap-2 mb-3">
             <input
               type="text"
-              className="flex-1 border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="flex-1 border border-gray-400 rounded px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
               placeholder="Add coaching tool or technique"
               value={coachingToolInput}
               onChange={e => setCoachingToolInput(e.target.value)}
             />
             <button
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+              className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded hover:bg-blue-700 transition text-sm whitespace-nowrap"
               onClick={handleAddCoachingTool}
               type="button"
             >
@@ -375,9 +408,9 @@ export default function SessionForm({
           </div>
           <div className="flex flex-wrap gap-2">
             {coachingTools.map(tool => (
-              <span key={tool} className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full flex items-center gap-1">
+              <span key={tool} className="bg-blue-100 text-blue-700 px-2 sm:px-3 py-1 rounded-full flex items-center gap-1 text-xs sm:text-sm">
                 {tool}
-                <button type="button" className="ml-1 text-blue-700 hover:text-red-500" onClick={() => handleRemoveCoachingTool(tool)}>&times;</button>
+                <button type="button" className="ml-1 text-blue-700 hover:text-red-500 text-sm" onClick={() => handleRemoveCoachingTool(tool)}>&times;</button>
               </span>
             ))}
           </div>
@@ -386,17 +419,18 @@ export default function SessionForm({
       
       {/* ICF Core Competencies - Only shown in Advanced mode */}
       {showAdvanced && (
-        <div className="border rounded-lg p-4 bg-gray-50">
-          <h3 className="font-semibold mb-2">ICF Core Competencies Demonstrated</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+        <div className="border rounded-lg p-3 sm:p-4 bg-gray-50">
+          <h3 className="font-semibold mb-3 text-sm sm:text-base">ICF Core Competencies Demonstrated</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
             {ICF_COMPETENCIES.map(comp => (
-              <label key={comp} className="flex items-center gap-2 font-medium">
+              <label key={comp} className="flex items-start gap-2 font-medium text-xs sm:text-sm">
                 <input
                   type="checkbox"
                   checked={icfCompetencies.includes(comp)}
                   onChange={() => handleCompetencyChange(comp)}
+                  className="mt-0.5 flex-shrink-0"
                 />
-                {comp}
+                <span className="leading-tight">{comp}</span>
               </label>
             ))}
           </div>
@@ -404,10 +438,20 @@ export default function SessionForm({
       )}
       {/* Additional Notes */}
       <div>
-        <label className="block font-medium mb-1">Additional Notes</label>
-        <textarea className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={additionalNotes} onChange={e => setAdditionalNotes(e.target.value)} />
+        <label className="block font-medium mb-1 text-sm">Additional Notes</label>
+        <textarea 
+          className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
+          rows={3}
+          value={additionalNotes} 
+          onChange={e => setAdditionalNotes(e.target.value)} 
+        />
       </div>
-      <button type="submit" className="w-full bg-gradient-to-r from-blue-500 to-green-500 text-white py-2 rounded shadow hover:from-blue-600 hover:to-green-600 transition font-semibold text-lg">{isEditing ? 'Update Session' : 'Save Session'}</button>
+      <button 
+        type="submit" 
+        className="w-full bg-gradient-to-r from-blue-500 to-green-500 text-white py-3 sm:py-2 rounded shadow hover:from-blue-600 hover:to-green-600 transition font-semibold text-base sm:text-lg"
+      >
+        {isEditing ? 'Update Session' : 'Save Session'}
+      </button>
     </form>
   );
 } 

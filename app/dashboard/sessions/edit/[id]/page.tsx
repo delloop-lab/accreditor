@@ -23,7 +23,7 @@ export default function EditSessionPage() {
 
         const { data, error } = await supabase
           .from("sessions")
-          .select("id,client_id,client_name,date,finish_date,duration,types,paymenttype,payment_amount,focus_area,key_outcomes,client_progress,coaching_tools,icf_competencies,additional_notes,user_id")
+          .select("id,client_id,client_name,date,finish_date,duration,types,number_in_group,paymenttype,payment_amount,focus_area,key_outcomes,client_progress,coaching_tools,icf_competencies,additional_notes,user_id")
           .eq("id", sessionId)
           .eq("user_id", user.id)
           .single();
@@ -43,6 +43,7 @@ export default function EditSessionPage() {
             finishDate: data.finish_date || '',
             duration: data.duration,
             types: data.types || [],
+            numberInGroup: data.number_in_group,
             paymentType: data.paymenttype,
             paymentAmount: data.payment_amount,
             focusArea: data.focus_area || '',
@@ -80,11 +81,12 @@ export default function EditSessionPage() {
         .update({
           client_name: updatedData.clientName,
           date: updatedData.date,
-          finish_date: updatedData.finishDate,
+          finish_date: updatedData.finishDate || null,
           duration: updatedData.duration,
           types: updatedData.types,
+          number_in_group: updatedData.numberInGroup,
           paymenttype: updatedData.paymentType,
-          payment_amount: updatedData.paymentAmount,
+          payment_amount: updatedData.paymentAmount || null,
           focus_area: updatedData.focusArea,
           key_outcomes: updatedData.keyOutcomes,
           client_progress: updatedData.clientProgress,

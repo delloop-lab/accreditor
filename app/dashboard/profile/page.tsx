@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase, getCurrentUser } from "@/lib/supabaseClient";
 import { UserIcon, EnvelopeIcon, AcademicCapIcon, CheckBadgeIcon } from "@heroicons/react/24/outline";
 
 type Profile = {
@@ -111,7 +111,7 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [showUserExistsModal, setShowUserExistsModal] = useState(false);
+  // const [showUserExistsModal, setShowUserExistsModal] = useState(false); // Removed - no longer needed
   const [badgeUpdateTrigger, setBadgeUpdateTrigger] = useState(0);
   const [profile, setProfile] = useState<Profile>({
     id: "",
@@ -128,7 +128,14 @@ export default function ProfilePage() {
     const fetchProfile = async () => {
       setLoading(true);
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const { user, error: authError } = await getCurrentUser();
+        if (authError) {
+          console.warn('Auth error in profile:', authError);
+          // Don't redirect immediately on auth errors, might be temporary
+          setLoading(false);
+          return;
+        }
+        
         if (!user) {
           router.replace("/login");
           return;
@@ -185,12 +192,15 @@ export default function ProfilePage() {
     setSuccess("");
 
     try {
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      const { user, error: authError } = await getCurrentUser();
       console.log('Auth check result:', { user, authError });
       
       if (authError) {
         console.error('Auth error:', authError);
-        setError(`Authentication error: ${authError.message}`);
+        const errorMessage = authError && typeof authError === 'object' && 'message' in authError 
+          ? (authError as any).message 
+          : 'Session error';
+        setError(`Authentication error: ${errorMessage}`);
         setSaving(false);
         return;
       }
@@ -205,20 +215,22 @@ export default function ProfilePage() {
 
       // Check if email already exists for another user
       console.log('Checking email uniqueness for:', profile.email.trim());
-      const { data: existingProfileWithEmail, error: emailCheckError } = await supabase
-        .from("profiles")
-        .select("user_id, name")
-        .eq("email", profile.email.trim())
-        .neq("user_id", user.id)
-        .single();
+      // REMOVED: Email uniqueness check due to RLS policy restrictions
+      // Users can only query their own profile data, not other users' profiles
+      // const { data: existingProfileWithEmail, error: emailCheckError } = await supabase
+      //   .from("profiles")
+      //   .select("user_id, name")
+      //   .eq("email", profile.email.trim())
+      //   .neq("user_id", user.id)
+      //   .single();
 
-      console.log('Email check result:', { existingProfileWithEmail, emailCheckError });
+      // console.log('Email check result:', { existingProfileWithEmail, emailCheckError });
 
-      if (!emailCheckError && existingProfileWithEmail) {
-        setShowUserExistsModal(true);
-        setSaving(false);
-        return;
-      }
+      // if (!emailCheckError && existingProfileWithEmail) {
+      //   setShowUserExistsModal(true);
+      //   setSaving(false);
+      //   return;
+      // }
 
       // Check if profile exists first
       console.log('Checking if profile exists for user:', user.id);
@@ -596,44 +608,7 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* User Exists Modal */}
-      {showUserExistsModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-lg p-6 max-w-md w-full mx-4">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="bg-red-100 p-2 rounded-full">
-                <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-gray-900">User Already Exists</h3>
-            </div>
-            
-            <p className="text-gray-600 mb-6">
-              An account with the email address <strong>{profile.email}</strong> already exists. 
-              Please use a different email address or contact support if you believe this is an error.
-            </p>
-            
-            <div className="flex gap-3 justify-end">
-              <button
-                onClick={() => setShowUserExistsModal(false)}
-                className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                Close
-              </button>
-              <button
-                onClick={() => {
-                  setShowUserExistsModal(false);
-                  setProfile(prev => ({ ...prev, email: "" }));
-                }}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Use Different Email
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* User Exists Modal - REMOVED: No longer needed after removing email uniqueness check */}
     </div>
   );
 } 
