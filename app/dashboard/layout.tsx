@@ -16,10 +16,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   const handleHomeClick = () => {
-    // Navigate to dashboard and refresh data
-    console.log('Home icon clicked - navigating to dashboard');
-    router.push('/dashboard');
-    window.location.reload();
+    // Navigate to landing page
+    console.log('Logo clicked - navigating to landing page');
+    router.push('/landing');
   };
 
   const handleDashboardClick = () => {
@@ -54,7 +53,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           <div 
             className="mb-2 cursor-pointer hover:opacity-80 transition-opacity"
             onClick={handleHomeClick}
-            title="Go to dashboard and refresh data"
+            title="Go to landing page"
           >
             <img 
               src="/icflog.png" 
