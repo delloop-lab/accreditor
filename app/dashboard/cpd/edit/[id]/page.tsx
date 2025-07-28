@@ -75,6 +75,71 @@ export default function EditCPDPage() {
         return;
       }
 
+      let documentUrl = "";
+      
+      // Handle file upload if supporting document is provided and it's a new file
+      if (updatedData.supportingDocument && updatedData.supportingDocument !== "") {
+        const file = updatedData.supportingDocument as any;
+        if (file instanceof File) {
+          try {
+            // Sanitize filename to avoid path issues
+            const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+            const fileName = `${user.id}/${Date.now()}_${sanitizedName}`;
+            console.log('Attempting to upload file:', fileName);
+            console.log('File size:', file.size, 'bytes');
+            console.log('File type:', file.type);
+            
+            // Check file size (limit to 10MB)
+            if (file.size > 10 * 1024 * 1024) {
+              console.error('File too large. Maximum size is 10MB.');
+              setError('File too large. Maximum size is 10MB.');
+              return;
+            }
+            
+            // First check if bucket exists and we have access
+            const { data: bucketData, error: bucketError } = await supabase.storage
+              .from('certificates')
+              .list('', { limit: 1 });
+            
+            if (bucketError) {
+              console.error('Bucket access error:', bucketError);
+              setError(`Storage bucket error: ${bucketError.message}`);
+              return;
+            } else {
+              console.log('Bucket access successful, proceeding with upload...');
+              
+              const { data: uploadData, error: uploadError } = await supabase.storage
+                .from('certificates')
+                .upload(fileName, file, {
+                  cacheControl: '3600',
+                  upsert: false
+                });
+              
+              if (uploadError) {
+                console.error('Upload error details:', uploadError);
+                console.error('Error message:', uploadError.message);
+                setError(`Upload failed: ${uploadError.message}`);
+                return;
+              } else if (uploadData) {
+                console.log('Upload successful, getting public URL...');
+                const { data: urlData } = supabase.storage
+                  .from('certificates')
+                  .getPublicUrl(fileName);
+                documentUrl = urlData.publicUrl;
+                console.log('File uploaded successfully:', documentUrl);
+              }
+            }
+          } catch (error) {
+            console.error('File upload failed with exception:', error);
+            setError(`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            return;
+          }
+        } else if (typeof file === 'string') {
+          // If it's already a URL string, use it as is
+          documentUrl = file;
+        }
+      }
+
       const { error } = await supabase
         .from("cpd")
         .update({
@@ -89,7 +154,8 @@ export default function EditCPDPage() {
           application_to_practice: updatedData.applicationToPractice,
           icf_competencies: updatedData.icfCompetencies,
           document_type: updatedData.documentType,
-          supporting_document: updatedData.supportingDocument,
+          supporting_document: documentUrl,
+          certificate_proof: documentUrl, // Keep for backward compatibility
           updated_at: new Date().toISOString(),
         })
         .eq("id", cpdId)

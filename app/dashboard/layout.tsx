@@ -64,7 +64,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </div>
           <div className="text-xs text-gray-500">ICF Log</div>
           <div className="text-xs text-gray-500">ICF Compliance Made Simple</div>
-          <div className="text-xs text-gray-400 mt-1">Beta 0.9.450</div>
+          <div className="text-xs text-gray-400 mt-1">Beta 0.9.460</div>
         </div>
         {/* Navigation */}
         <nav className="flex-1 space-y-2">

@@ -165,7 +165,7 @@ export default function CPDForm({
           <label className="block font-medium mb-1">Activity Title *</label>
           <input 
             type="text" 
-            className="w-full border rounded px-3 py-2" 
+            className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
             placeholder="Enter the title of your learning activity"
             value={title} 
             onChange={e => setTitle(e.target.value)} 
@@ -176,7 +176,7 @@ export default function CPDForm({
           <label className="block font-medium mb-1">Activity Date *</label>
           <input 
             type="date" 
-            className="w-full border rounded px-3 py-2" 
+            className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
             value={activityDate} 
             onChange={e => setActivityDate(e.target.value)} 
             required 
@@ -188,16 +188,16 @@ export default function CPDForm({
             type="number" 
             min="0.1" 
             step="0.1" 
-            className="w-full border rounded px-3 py-2" 
+            className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
             value={hours} 
             onChange={e => setHours(e.target.value)} 
-            required 
+            required
           />
         </div>
         <div>
           <label className="block font-medium mb-1">CPD Type *</label>
           <select 
-            className="w-full border rounded px-3 py-2" 
+            className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
             value={cpdType} 
             onChange={e => setCpdType(e.target.value)} 
             required
@@ -211,7 +211,7 @@ export default function CPDForm({
         <div>
           <label className="block font-medium mb-1">Learning Method</label>
           <select 
-            className="w-full border rounded px-3 py-2" 
+            className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
             value={learningMethod} 
             onChange={e => setLearningMethod(e.target.value)}
           >
@@ -225,7 +225,7 @@ export default function CPDForm({
           <label className="block font-medium mb-1">Provider/Organization</label>
           <input 
             type="text" 
-            className="w-full border rounded px-3 py-2" 
+            className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
             placeholder="Name of the training provider or organization"
             value={providerOrganization} 
             onChange={e => setProviderOrganization(e.target.value)} 
@@ -242,7 +242,7 @@ export default function CPDForm({
               <div>
                 <label className="block font-medium mb-1">Description</label>
                 <textarea 
-                  className="w-full border rounded px-3 py-2 h-24 resize-none" 
+                  className="w-full border border-gray-400 rounded px-3 py-2 h-24 resize-none bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
                   placeholder="Describe the learning activity, objectives, and content covered."
                   value={description} 
                   onChange={e => setDescription(e.target.value)} 
@@ -251,7 +251,7 @@ export default function CPDForm({
               <div>
                 <label className="block font-medium mb-1">Key Learnings</label>
                 <textarea 
-                  className="w-full border rounded px-3 py-2 h-24 resize-none" 
+                  className="w-full border border-gray-400 rounded px-3 py-2 h-24 resize-none bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
                   placeholder="What were your key insights and learnings from this activity?"
                   value={keyLearnings} 
                   onChange={e => setKeyLearnings(e.target.value)} 
@@ -260,7 +260,7 @@ export default function CPDForm({
               <div>
                 <label className="block font-medium mb-1">Application to Practice</label>
                 <textarea 
-                  className="w-full border rounded px-3 py-2 h-24 resize-none" 
+                  className="w-full border border-gray-400 rounded px-3 py-2 h-24 resize-none bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
                   placeholder="How will you apply these learnings to your coaching practice?"
                   value={applicationToPractice} 
                   onChange={e => setApplicationToPractice(e.target.value)} 
@@ -295,7 +295,7 @@ export default function CPDForm({
           <select
             value={documentType}
             onChange={(e) => setDocumentType(e.target.value)}
-            className="w-full border rounded px-3 py-2"
+            className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option value="">Select document type...</option>
             {DOCUMENT_TYPES.map(type => (

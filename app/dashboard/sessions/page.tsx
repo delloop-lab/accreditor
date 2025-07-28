@@ -48,30 +48,71 @@ export default function SessionsPage() {
 
   // Add session to Supabase
   const addSession = async (data: SessionData) => {
+    console.log('Adding session with data:', data);
+    
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) {
+      console.error('No user found');
+      return;
+    }
+    
+    // Validate required fields
+    if (!data.clientName || !data.date || !data.types || data.types.length === 0) {
+      console.error('Missing required fields:', { clientName: data.clientName, date: data.date, types: data.types });
+      return;
+    }
+    
+    const sessionData = {
+      client_name: data.clientName,
+      date: data.date,
+      finish_date: data.finishDate || null,
+      duration: data.duration || 0, // Use 0 as default instead of null
+      notes: data.additionalNotes || '',
+      types: data.types,
+      paymenttype: data.paymentType,
+      payment_amount: data.paymentAmount || null,
+      focus_area: data.focusArea || '',
+      key_outcomes: data.keyOutcomes || '',
+      client_progress: data.clientProgress || '',
+      coaching_tools: data.coachingTools || [],
+      icf_competencies: data.icfCompetencies || [],
+      user_id: user.id
+    };
+    
+    console.log('Inserting session data:', sessionData);
+    
     const { data: newSession, error } = await supabase
       .from("sessions")
-      .insert([{ 
-        client_id: data.clientId,
-        client_name: data.clientName,
-        date: data.date,
-        finish_date: data.finishDate,
-        duration: data.duration,
-        notes: data.additionalNotes,
-        types: data.types,
-        paymenttype: data.paymentType,
-        payment_amount: data.paymentAmount,
-        focus_area: data.focusArea,
-        key_outcomes: data.keyOutcomes,
-        client_progress: data.clientProgress,
-        coaching_tools: data.coachingTools,
-        icf_competencies: data.icfCompetencies,
-        user_id: user.id
-      }])
+      .insert([sessionData])
       .select()
       .single();
-    if (!error && newSession) setSessions(prev => [newSession, ...prev]);
+      
+    if (error) {
+      console.error('Error inserting session:', error);
+      return;
+    }
+    
+    if (newSession) {
+      console.log('Session saved successfully:', newSession);
+      // Map the new session to match the expected format
+      const mappedSession = {
+        clientName: newSession.client_name,
+        date: newSession.date,
+        duration: newSession.duration,
+        additionalNotes: newSession.additional_notes || newSession.notes,
+        types: newSession.types,
+        paymentType: newSession.paymenttype,
+        paymentAmount: newSession.payment_amount,
+        focusArea: newSession.focus_area,
+        keyOutcomes: newSession.key_outcomes,
+        clientProgress: newSession.client_progress,
+        coachingTools: newSession.coaching_tools || [],
+        icfCompetencies: newSession.icf_competencies || [],
+        user_id: newSession.user_id,
+        id: newSession.id,
+      };
+      setSessions(prev => [mappedSession, ...prev]);
+    }
   };
 
   // Delete session from Supabase

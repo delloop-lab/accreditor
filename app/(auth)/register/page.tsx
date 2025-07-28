@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
-import { testSupabaseConnection, testAuthSettings } from "@/lib/supabaseTest";
+
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -11,7 +11,7 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [lastAttempt, setLastAttempt] = useState(0);
-  const [diagnosticInfo, setDiagnosticInfo] = useState<string | null>(null);
+
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,34 +80,7 @@ export default function RegisterPage() {
     }
   };
 
-  const runDiagnostics = async () => {
-    setDiagnosticInfo("Running diagnostics...");
-    
-    const connectionTest = await testSupabaseConnection();
-    const authTest = await testAuthSettings();
-    
-    let diagnostic = "=== Supabase Diagnostics ===\n\n";
-    diagnostic += `Connection Test: ${connectionTest.success ? '✅ PASS' : '❌ FAIL'}\n`;
-    if (!connectionTest.success) {
-      diagnostic += `Error: ${connectionTest.error}\n`;
-      diagnostic += `Details: ${connectionTest.details}\n\n`;
-    }
-    
-    diagnostic += `Auth Test: ${authTest.success ? '✅ PASS' : '❌ FAIL'}\n`;
-    if (!authTest.success) {
-      diagnostic += `Error: ${authTest.error}\n`;
-      diagnostic += `Details: ${authTest.details}\n\n`;
-    }
-    
-    diagnostic += "=== Common Solutions ===\n";
-    diagnostic += "1. Check your .env.local file has correct Supabase credentials\n";
-    diagnostic += "2. Ensure your Supabase project is active\n";
-    diagnostic += "3. Check if email confirmation is enabled in Supabase Auth settings\n";
-    diagnostic += "4. Verify the 'profiles' table exists in your database\n";
-    diagnostic += "5. Check Row Level Security (RLS) policies\n";
-    
-    setDiagnosticInfo(diagnostic);
-  };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -123,7 +96,7 @@ export default function RegisterPage() {
         <input
           type="email"
           placeholder="Email"
-          className="w-full px-4 py-2 border rounded focus:outline-none focus:ring"
+          className="w-full px-4 py-2 border border-gray-400 rounded bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           value={email}
           onChange={e => setEmail(e.target.value)}
           autoComplete="email"
@@ -132,7 +105,7 @@ export default function RegisterPage() {
         <input
           type="password"
           placeholder="Password"
-          className="w-full px-2 py-2 border rounded focus:outline-none focus:ring"
+          className="w-full px-2 py-2 border border-gray-400 rounded bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           value={password}
           onChange={e => setPassword(e.target.value)}
           autoComplete="new-password"
@@ -158,21 +131,7 @@ export default function RegisterPage() {
           </div>
         )}
         
-        {/* Diagnostic button */}
-        <button
-          type="button"
-          onClick={runDiagnostics}
-          className="w-full mt-4 bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-600 transition text-sm"
-        >
-          Run Supabase Diagnostics
-        </button>
-        
-        {/* Diagnostic results */}
-        {diagnosticInfo && (
-          <div className="mt-4 p-3 bg-gray-100 border border-gray-300 rounded text-xs">
-            <pre className="whitespace-pre-wrap text-gray-800">{diagnosticInfo}</pre>
-          </div>
-        )}
+
       </form>
     </div>
   );

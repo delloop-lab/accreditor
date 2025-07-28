@@ -1,6 +1,6 @@
 {
   "name": "coaching-log",
-  "version": "0.9.450-beta",
+  "version": "0.9.460",
   "private": true,
   "scripts": {
     "dev": "next dev",

@@ -32,7 +32,7 @@ export type SessionData = {
   clientName: string;
   date: string;
   finishDate: string;
-  duration: number;
+  duration?: number;
   types: string[];
   paymentType: "paid" | "proBono";
   paymentAmount?: number;
@@ -142,7 +142,7 @@ export default function SessionForm({
       setClientName(initialData.clientName);
       setDate(initialData.date);
       setFinishDate(initialData.finishDate);
-      setDuration(initialData.duration.toString());
+      setDuration(initialData.duration?.toString() || "");
       setTypes(initialData.types);
       setPaymentType(initialData.paymentType);
       setPaymentAmount(initialData.paymentAmount?.toString() || "");
@@ -194,13 +194,19 @@ export default function SessionForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!clientId || !date || !duration || types.length === 0) return;
-    onSubmit({
+    console.log('Form submission - clientId:', clientId, 'clientName:', clientName, 'date:', date, 'types:', types);
+    
+    if (!clientName || !date || types.length === 0) {
+      console.error('Form validation failed:', { clientName, date, types });
+      return;
+    }
+    
+    const sessionData = {
       clientId,
       clientName,
       date,
       finishDate,
-      duration: Number(duration),
+      duration: duration ? Number(duration) : undefined,
       types,
       paymentType,
       paymentAmount: paymentAmount ? Number(paymentAmount) : undefined,
@@ -210,7 +216,10 @@ export default function SessionForm({
       coachingTools,
       icfCompetencies,
       additionalNotes,
-    });
+    };
+    
+    console.log('Submitting session data:', sessionData);
+    onSubmit(sessionData);
     setClientId("");
     setClientName("");
     setDate("");
@@ -247,44 +256,55 @@ export default function SessionForm({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block font-medium mb-1">Client *</label>
-          <select
-            className="w-full border rounded px-3 py-2"
-            value={clientId || ""}
-            onChange={handleClientChange}
-            required
-          >
-            <option value="" disabled>Select a client or add a new one</option>
-            {loading ? (
-              <option value="">Loading clients...</option>
-            ) : clients.length === 0 ? (
-              <option value="new">No clients found. Add a new client.</option>
-            ) : (
-              <>
-                {clients.map(client => (
-                  <option key={client.id} value={client.id}>
-                    {client.name}
-                  </option>
-                ))}
-                <option value="new">Add New Client</option>
-              </>
-            )}
-          </select>
+          {isEditing ? (
+            <input
+              type="text"
+              className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              value={clientName}
+              onChange={e => setClientName(e.target.value)}
+              placeholder="Enter client name"
+              required
+            />
+          ) : (
+            <select
+              className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              value={clientId || ""}
+              onChange={handleClientChange}
+              required
+            >
+              <option value="" disabled>Select a client or add a new one</option>
+              {loading ? (
+                <option value="">Loading clients...</option>
+              ) : clients.length === 0 ? (
+                <option value="new">No clients found. Add a new client.</option>
+              ) : (
+                <>
+                  {clients.map(client => (
+                    <option key={client.id} value={client.id}>
+                      {client.name}
+                    </option>
+                  ))}
+                  <option value="new">Add New Client</option>
+                </>
+              )}
+            </select>
+          )}
         </div>
         <div>
           <label className="block font-medium mb-1">Session Date *</label>
-          <input type="date" className="w-full border rounded px-3 py-2" value={date} onChange={e => setDate(e.target.value)} required />
+          <input type="date" className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={date} onChange={e => setDate(e.target.value)} required />
         </div>
         <div>
-          <label className="block font-medium mb-1">Finish Date *</label>
-          <input type="date" className="w-full border rounded px-3 py-2" value={finishDate} onChange={e => setFinishDate(e.target.value)} required />
+          <label className="block font-medium mb-1">Finish Date</label>
+          <input type="date" className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={finishDate} onChange={e => setFinishDate(e.target.value)} />
         </div>
         <div>
-          <label className="block font-medium mb-1">Duration (minutes) *</label>
-          <input type="number" min="1" className="w-full border rounded px-3 py-2" value={duration} onChange={e => setDuration(e.target.value)} required />
+          <label className="block font-medium mb-1">Duration (minutes)</label>
+          <input type="number" min="1" className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={duration} onChange={e => setDuration(e.target.value)} />
         </div>
         <div>
           <label className="block font-medium mb-1">Session Type *</label>
-          <select className="w-full border rounded px-3 py-2" value={types[0] || ""} onChange={e => setTypes([e.target.value])} required>
+          <select className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={types[0] || ""} onChange={e => setTypes([e.target.value])} required>
             <option value="" disabled>Select session type</option>
             {COACHING_TYPES.map(type => (
               <option key={type.value} value={type.value}>{type.label}</option>
@@ -293,7 +313,7 @@ export default function SessionForm({
         </div>
         <div>
           <label className="block font-medium mb-1">Payment Type</label>
-          <select className="w-full border rounded px-3 py-2" value={paymentType} onChange={e => setPaymentType(e.target.value as "paid" | "proBono")}> 
+          <select className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={paymentType} onChange={e => setPaymentType(e.target.value as "paid" | "proBono")}> 
             <option value="paid">Paid</option>
             <option value="proBono">Pro Bono</option>
           </select>
@@ -305,7 +325,7 @@ export default function SessionForm({
               type="number" 
               min="0" 
               step="0.01" 
-              className="w-full border rounded px-3 py-2" 
+              className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
               value={paymentAmount} 
               onChange={e => setPaymentAmount(e.target.value)} 
               placeholder="0.00"
@@ -320,15 +340,15 @@ export default function SessionForm({
           <h3 className="font-semibold mb-2">Session Content</h3>
           <div className="mb-2">
             <label className="block font-medium mb-1">Focus Area</label>
-            <input type="text" className="w-full border rounded px-3 py-2" value={focusArea} onChange={e => setFocusArea(e.target.value)} />
+            <input type="text" className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={focusArea} onChange={e => setFocusArea(e.target.value)} />
           </div>
           <div className="mb-2">
             <label className="block font-medium mb-1">Key Outcomes</label>
-            <textarea className="w-full border rounded px-3 py-2" value={keyOutcomes} onChange={e => setKeyOutcomes(e.target.value)} />
+            <textarea className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={keyOutcomes} onChange={e => setKeyOutcomes(e.target.value)} />
           </div>
           <div>
             <label className="block font-medium mb-1">Client Progress</label>
-            <textarea className="w-full border rounded px-3 py-2" value={clientProgress} onChange={e => setClientProgress(e.target.value)} />
+            <textarea className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={clientProgress} onChange={e => setClientProgress(e.target.value)} />
           </div>
         </div>
       )}
@@ -340,7 +360,7 @@ export default function SessionForm({
           <div className="flex gap-2 mb-2">
             <input
               type="text"
-              className="flex-1 border rounded px-3 py-2"
+              className="flex-1 border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder="Add coaching tool or technique"
               value={coachingToolInput}
               onChange={e => setCoachingToolInput(e.target.value)}
@@ -385,7 +405,7 @@ export default function SessionForm({
       {/* Additional Notes */}
       <div>
         <label className="block font-medium mb-1">Additional Notes</label>
-        <textarea className="w-full border rounded px-3 py-2" value={additionalNotes} onChange={e => setAdditionalNotes(e.target.value)} />
+        <textarea className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={additionalNotes} onChange={e => setAdditionalNotes(e.target.value)} />
       </div>
       <button type="submit" className="w-full bg-gradient-to-r from-blue-500 to-green-500 text-white py-2 rounded shadow hover:from-blue-600 hover:to-green-600 transition font-semibold text-lg">{isEditing ? 'Update Session' : 'Save Session'}</button>
     </form>

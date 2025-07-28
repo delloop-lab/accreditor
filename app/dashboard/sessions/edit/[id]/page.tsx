@@ -37,7 +37,7 @@ export default function EditSessionPage() {
         if (data) {
           // Transform the data to match SessionData type
           const sessionData: SessionData = {
-            clientId: data.client_id || '',
+            clientId: '', // Don't set clientId for editing - let user select from dropdown
             clientName: data.client_name || '',
             date: data.date,
             finishDate: data.finish_date || '',
@@ -78,7 +78,6 @@ export default function EditSessionPage() {
       const { error } = await supabase
         .from("sessions")
         .update({
-          client_id: updatedData.clientId,
           client_name: updatedData.clientName,
           date: updatedData.date,
           finish_date: updatedData.finishDate,
