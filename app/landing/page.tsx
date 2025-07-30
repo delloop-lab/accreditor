@@ -2,6 +2,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 
+// Force dynamic rendering to prevent build errors
+export const dynamic = 'force-dynamic';
+
 export default function LandingPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -9,9 +12,15 @@ export default function LandingPage() {
   useEffect(() => {
     // Check current auth state
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setIsLoggedIn(!!session);
-      setLoading(false);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setIsLoggedIn(!!session);
+      } catch (error) {
+        console.warn('Auth check failed:', error);
+        // Fail silently for auth errors
+      } finally {
+        setLoading(false);
+      }
     };
 
     checkAuth();
@@ -36,10 +45,10 @@ export default function LandingPage() {
           />
         </div>
         <p className="text-lg sm:text-xl text-gray-600 font-medium mb-2 sm:mb-3">
-          Professional ICF Compliance Made Simple
+          Track your ICF Credentialing requirements in one place with ease.
         </p>
         <p className="text-base sm:text-lg text-gray-700 max-w-2xl mx-auto leading-relaxed px-4">
-          A professional tool to support your coaching practice and ICF credential maintenance.
+          Support your coaching practice and maintain your ICF credentials.
         </p>
         
         {/* Special Launch Offer */}
@@ -55,16 +64,54 @@ export default function LandingPage() {
         <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-3 sm:mb-4 text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
           Designed for ICF-Credentialed Coaches
         </h2>
-        <div className="text-sm sm:text-base md:text-lg text-gray-700 leading-relaxed space-y-2 sm:space-y-3">
+        <div className="text-sm sm:text-base md:text-lg text-gray-700 leading-relaxed">
           <p>
-            ICF Log is a dedicated application built to help you stay organised and compliant with International Coaching Federation (ICF) requirements.
+            ICF Log is a dedicated application built to help you stay organised and compliant with the International Coaching Federation (ICF) credentialing requirements. 
             Log coaching sessions, track Continuing Professional Development (CPD) activities, and generate documentation to support your credential renewal.
-          </p>
-          <p>
-            Whether you're working toward your <span className="font-semibold text-blue-600">ACC</span>, <span className="font-semibold text-purple-600">PCC</span>, or <span className="font-semibold text-indigo-600">MCC</span>, ICF Log simplifies the administrative side of your practice — so you can focus on what matters most: <span className="font-semibold text-green-600">coaching</span>.
+            Whether you're working toward your <span className="font-semibold text-blue-600">ACC</span>, <span className="font-semibold text-purple-600">PCC</span>, or <span className="font-semibold text-indigo-600">MCC</span>, ICF Log simplifies the administrative side of your practice, so you can focus on what matters most: <span className="font-semibold text-green-600">coaching</span>.
           </p>
         </div>
       </section>
+
+      {/* CTA Section - Only show for non-logged-in users */}
+      {!loading && !isLoggedIn && (
+        <section className="w-full max-w-3xl text-center bg-white/80 backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-xl p-4 sm:p-6 md:p-8 mb-6 sm:mb-8 md:mb-12 border border-gray-100 mx-4">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-3 sm:mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Streamline your ICF compliance process
+          </h2>
+          <p className="text-base sm:text-lg text-gray-700 mb-4 sm:mb-6 leading-relaxed">
+            Begin using ICF Log today to support your professional coaching journey.
+          </p>
+          <div className="flex justify-center items-center">
+            <a
+              href="/login"
+              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 sm:py-3 px-5 sm:px-6 rounded-xl text-sm sm:text-base font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+            >
+              Access the Application
+            </a>
+          </div>
+        </section>
+      )}
+
+      {/* Welcome back section for logged-in users */}
+      {!loading && isLoggedIn && (
+        <section className="w-full max-w-3xl text-center bg-gradient-to-r from-green-50 to-blue-50 backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-xl p-4 sm:p-6 md:p-8 mb-6 sm:mb-8 md:mb-12 border border-green-200 mx-4">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-3 sm:mb-4 bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+            Welcome back!
+          </h2>
+          <p className="text-base sm:text-lg text-gray-700 mb-4 sm:mb-6 leading-relaxed">
+            You're already logged in. Head to your dashboard to continue managing your coaching practice.
+          </p>
+          <div className="flex justify-center items-center">
+            <a
+              href="/dashboard"
+              className="bg-gradient-to-r from-green-600 to-blue-600 text-white py-2 sm:py-3 px-5 sm:px-6 rounded-xl text-sm sm:text-base font-semibold hover:from-green-700 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+            >
+              Go to Dashboard
+            </a>
+          </div>
+        </section>
+      )}
 
       {/* Features Grid */}
       <section className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8 md:mb-12 px-4">
@@ -124,46 +171,6 @@ export default function LandingPage() {
           </p>
         </div>
       </section>
-
-      {/* CTA Section - Only show for non-logged-in users */}
-      {!loading && !isLoggedIn && (
-        <section className="w-full max-w-3xl text-center bg-white/80 backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-xl p-4 sm:p-6 md:p-8 border border-gray-100 mx-4">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-3 sm:mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Streamline your ICF compliance process
-          </h2>
-          <p className="text-base sm:text-lg text-gray-700 mb-4 sm:mb-6 leading-relaxed">
-            Begin using ICF Log today to support your professional coaching journey.
-          </p>
-          <div className="flex justify-center items-center">
-            <a
-              href="/login"
-              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 sm:py-3 px-5 sm:px-6 rounded-xl text-sm sm:text-base font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-            >
-              Access the Application
-            </a>
-          </div>
-        </section>
-      )}
-
-      {/* Welcome back section for logged-in users */}
-      {!loading && isLoggedIn && (
-        <section className="w-full max-w-3xl text-center bg-gradient-to-r from-green-50 to-blue-50 backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-xl p-4 sm:p-6 md:p-8 border border-green-200 mx-4">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-3 sm:mb-4 bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-            Welcome back!
-          </h2>
-          <p className="text-base sm:text-lg text-gray-700 mb-4 sm:mb-6 leading-relaxed">
-            You're already logged in. Head to your dashboard to continue managing your coaching practice.
-          </p>
-          <div className="flex justify-center items-center">
-            <a
-              href="/dashboard"
-              className="bg-gradient-to-r from-green-600 to-blue-600 text-white py-2 sm:py-3 px-5 sm:px-6 rounded-xl text-sm sm:text-base font-semibold hover:from-green-700 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-            >
-              Go to Dashboard
-            </a>
-          </div>
-        </section>
-      )}
 
       {/* Footer */}
       <footer className="w-full max-w-4xl text-center mt-8 sm:mt-10 md:mt-12 px-4">

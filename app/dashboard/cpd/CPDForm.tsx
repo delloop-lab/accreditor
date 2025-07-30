@@ -5,11 +5,9 @@ import { AcademicCapIcon, ArrowUpTrayIcon } from "@heroicons/react/24/outline";
 const CPD_TYPES = [
   "Workshop",
   "Course", 
-  "Supervision",
   "Reading",
   "Conference",
   "Webinar",
-  "Mentoring",
   "Other",
 ];
 

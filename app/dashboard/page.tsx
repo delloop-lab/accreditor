@@ -1,8 +1,11 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase, getCurrentUser } from "@/lib/supabaseClient";
 import { PlusIcon, ClipboardDocumentListIcon, UserIcon, ClockIcon, AcademicCapIcon, LockClosedIcon, BookOpenIcon, ChartBarIcon, CheckBadgeIcon, XMarkIcon } from "@heroicons/react/24/outline";
+
+// Force dynamic rendering to prevent build errors
+export const dynamic = 'force-dynamic';
 
 // Helper for session type badge color
 const typeColor = (type: string) => {
@@ -103,6 +106,8 @@ export default function DashboardPage() {
   const [totalSessionHours, setTotalSessionHours] = useState(0);
   const [totalSessionsCount, setTotalSessionsCount] = useState(0);
   const [thisMonthHours, setThisMonthHours] = useState(0);
+  const [mentoringHours, setMentoringHours] = useState(0);
+  const [supervisionHours, setSupervisionHours] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [selectedSession, setSelectedSession] = useState<any>(null);
   const [selectedCpd, setSelectedCpd] = useState<any>(null);
@@ -289,6 +294,40 @@ export default function DashboardPage() {
         setCpdHours(totalCpdHours);
       } else {
         setCpdHours(0);
+      }
+
+      // Fetch mentoring and supervision data
+      const { data: mentoringData, error: mentoringError } = await supabase
+        .from("mentoring_supervision")
+        .select("session_type, duration")
+        .eq("user_id", user.id);
+        
+      if (mentoringError && mentoringError.message !== 'Mock client') {
+        console.error('Mentoring/Supervision fetch error:', mentoringError);
+      }
+      
+      // Calculate mentoring and supervision hours
+      if (mentoringData && mentoringData.length > 0) {
+        const mentoringSessions = mentoringData.filter(session => session.session_type === 'mentoring');
+        const supervisionSessions = mentoringData.filter(session => session.session_type === 'supervision');
+        
+        const totalMentoringHours = mentoringSessions.reduce((sum: number, session: any) => {
+          const duration = session.duration || 0;
+          // Duration is stored in minutes, convert to hours
+          return sum + (duration / 60);
+        }, 0);
+        
+        const totalSupervisionHours = supervisionSessions.reduce((sum: number, session: any) => {
+          const duration = session.duration || 0;
+          // Duration is stored in minutes, convert to hours
+          return sum + (duration / 60);
+        }, 0);
+        
+        setMentoringHours(Math.round(totalMentoringHours * 10) / 10); // Round to 1 decimal place
+        setSupervisionHours(Math.round(totalSupervisionHours * 10) / 10); // Round to 1 decimal place
+      } else {
+        setMentoringHours(0);
+        setSupervisionHours(0);
       }
 
       // Calculate this month's hours
@@ -518,12 +557,12 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       {/* Welcome and Actions */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6 md:mb-8 gap-4 md:gap-6">
         <div>
-          <div className="flex items-center gap-3 mb-2">
-            <h1 className="text-3xl font-bold">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3">
+            <h1 className="text-3xl lg:text-4xl font-bold text-gray-900">
               Welcome back, {profile?.name ? profile.name.split(' ')[0] : 'Coach'}
             </h1>
             {profile?.icf_level && (
@@ -533,25 +572,25 @@ export default function DashboardPage() {
               </div>
             )}
           </div>
-          <p className="text-gray-500">Track your coaching journey and maintain ICF compliance</p>
-          <p className="text-xs text-gray-400 mt-1">BETA V0.9.002</p>
+          <p className="text-gray-600 text-lg">Track your coaching journey and maintain ICF compliance</p>
+          <p className="text-xs text-gray-400 mt-2">BETA V0.9.460</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
           <button 
             onClick={() => router.push('/dashboard/cpd')}
-            className="flex items-center gap-2 bg-white border px-4 py-2 rounded shadow hover:bg-gray-50"
+            className="flex items-center justify-center gap-2 bg-white border border-gray-200 px-5 py-3 rounded-lg shadow-sm hover:bg-gray-50 hover:shadow-md transition-all duration-200 text-sm font-medium"
           >
             <AcademicCapIcon className="h-5 w-5" /> Add CPD
           </button>
           <button 
             onClick={() => router.push('/dashboard/sessions')}
-            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700"
+            className="flex items-center justify-center gap-2 bg-blue-600 text-white px-5 py-3 rounded-lg shadow-sm hover:bg-blue-700 hover:shadow-md transition-all duration-200 text-sm font-medium"
           >
             <PlusIcon className="h-5 w-5" /> Log Session
           </button>
           <button 
             onClick={() => router.push('/dashboard/reports')}
-            className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded shadow hover:bg-purple-700"
+            className="flex items-center justify-center gap-2 bg-purple-600 text-white px-5 py-3 rounded-lg shadow-sm hover:bg-purple-700 hover:shadow-md transition-all duration-200 text-sm font-medium"
           >
             <ChartBarIcon className="h-5 w-5" /> View Reports
           </button>
@@ -559,41 +598,57 @@ export default function DashboardPage() {
       </div>
       
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white rounded-xl shadow p-4 flex items-center gap-4">
-          <div className="bg-blue-100 p-2 rounded-full"><UserIcon className="h-6 w-6 text-blue-600" /></div>
-          <div>
-            <div className="text-xs text-gray-500">Total Sessions</div>
-            <div className="font-bold text-xl">{totalSessionsCount}</div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-6 mb-8">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex items-center gap-4 hover:shadow-md transition-shadow duration-200 min-w-[200px]">
+          <div className="bg-blue-100 p-3 rounded-xl flex-shrink-0"><UserIcon className="h-6 w-6 text-blue-600" /></div>
+          <div className="min-w-0 flex-1">
+            <div className="text-sm text-gray-500 uppercase tracking-wide font-medium">Total Sessions</div>
+            <div className="font-bold text-2xl text-gray-900 mt-1">{totalSessionsCount}</div>
           </div>
         </div>
-        <div className="bg-white rounded-xl shadow p-4 flex items-center gap-4">
-          <div className="bg-blue-100 p-2 rounded-full"><ClockIcon className="h-6 w-6 text-blue-600" /></div>
-          <div>
-            <div className="text-xs text-gray-500">This Month Hours</div>
-            <div className="font-bold text-xl">{thisMonthHours}h</div>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex items-center gap-4 hover:shadow-md transition-shadow duration-200 min-w-[200px]">
+          <div className="bg-blue-100 p-3 rounded-xl flex-shrink-0"><ClockIcon className="h-6 w-6 text-blue-600" /></div>
+          <div className="min-w-0 flex-1">
+            <div className="text-sm text-gray-500 uppercase tracking-wide font-medium">This Month Hours</div>
+            <div className="font-bold text-2xl text-gray-900 mt-1">{thisMonthHours}h</div>
           </div>
         </div>
-        <div className="bg-white rounded-xl shadow p-4 flex items-center gap-4">
-          <div className="bg-purple-100 p-2 rounded-full"><AcademicCapIcon className="h-6 w-6 text-purple-600" /></div>
-          <div>
-            <div className="text-xs text-gray-500">CPD Hours</div>
-            <div className="font-bold text-xl">{cpdHours}h</div>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex items-center gap-4 hover:shadow-md transition-shadow duration-200 min-w-[200px]">
+          <div className="bg-purple-100 p-3 rounded-xl flex-shrink-0"><AcademicCapIcon className="h-6 w-6 text-purple-600" /></div>
+          <div className="min-w-0 flex-1">
+            <div className="text-sm text-gray-500 uppercase tracking-wide font-medium">CPD Hours</div>
+            <div className="font-bold text-2xl text-gray-900 mt-1">{cpdHours}h</div>
           </div>
         </div>
-        <div className="bg-white rounded-xl shadow p-4 flex items-center gap-4">
-          <div className="bg-green-100 p-2 rounded-full"><LockClosedIcon className="h-6 w-6 text-green-600" /></div>
-          <div>
-            <div className="text-xs text-gray-500">ICF Compliance</div>
-            <div className="font-bold text-xl">In Progress</div>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex items-center gap-4 hover:shadow-md transition-shadow duration-200 min-w-[200px]">
+          <div className="bg-emerald-100 p-3 rounded-xl flex-shrink-0"><UserIcon className="h-6 w-6 text-emerald-600" /></div>
+          <div className="min-w-0 flex-1">
+            <div className="text-sm text-gray-500 uppercase tracking-wide font-medium">Mentoring Hours</div>
+            <div className="font-bold text-2xl text-gray-900 mt-1">{mentoringHours}h</div>
+            <div className="text-sm text-gray-400 mt-1">10h/year required</div>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex items-center gap-4 hover:shadow-md transition-shadow duration-200 min-w-[200px]">
+          <div className="bg-indigo-100 p-3 rounded-xl flex-shrink-0"><AcademicCapIcon className="h-6 w-6 text-indigo-600" /></div>
+          <div className="min-w-0 flex-1">
+            <div className="text-sm text-gray-500 uppercase tracking-wide font-medium">Supervision Hours</div>
+            <div className="font-bold text-2xl text-gray-900 mt-1">{supervisionHours}h</div>
+            <div className="text-sm text-gray-400 mt-1">Not required</div>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex items-center gap-4 hover:shadow-md transition-shadow duration-200 min-w-[200px]">
+          <div className="bg-green-100 p-3 rounded-xl flex-shrink-0"><LockClosedIcon className="h-6 w-6 text-green-600" /></div>
+          <div className="min-w-0 flex-1">
+            <div className="text-sm text-gray-500 uppercase tracking-wide font-medium">ICF Compliance</div>
+            <div className="font-bold text-2xl text-gray-900 mt-1">In Progress</div>
           </div>
         </div>
       </div>
 
       {/* ICF Progress Graph */}
-      <div className="bg-white rounded-xl shadow p-6 mb-8">
+      <div className="bg-white rounded-xl shadow p-4 md:p-6 mb-6 md:mb-8">
         <h2 className="font-semibold text-lg mb-4">Progress to Next ICF Level</h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
           {/* Session Hours Progress */}
           <div>
             <div className="flex items-center justify-between mb-3">
@@ -690,11 +745,89 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Mentoring & Supervision Progress */}
+      <div className="bg-white rounded-xl shadow p-4 md:p-6 mb-6 md:mb-8">
+        <h2 className="font-semibold text-lg mb-4">Annual Mentoring & Supervision Hours</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+          {/* Mentoring Hours Progress */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-medium text-gray-700">Mentoring Hours (Required)</h3>
+              <span className="text-sm text-gray-500">
+                {mentoringHours}h / 10h per year
+              </span>
+            </div>
+            <div className="relative pt-1">
+              <div className="flex mb-2 items-center justify-between">
+                <div>
+                  <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-emerald-600 bg-emerald-200">
+                    Annual Requirement
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs font-semibold inline-block text-emerald-600">
+                    {Math.round((mentoringHours / 10) * 100)}%
+                  </span>
+                </div>
+              </div>
+              <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-emerald-200">
+                <div 
+                  style={{ width: `${Math.min(100, (mentoringHours / 10) * 100)}%` }}
+                  className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-emerald-500 transition-all duration-500"
+                ></div>
+              </div>
+            </div>
+            <div className="text-xs text-gray-600">
+              <p>• Current: {mentoringHours} mentoring hours</p>
+              <p>• Required: 10 hours per year for ICF compliance</p>
+              <p>• {mentoringHours >= 10 ? 'Requirement met! ✓' : `Remaining: ${Math.max(0, 10 - mentoringHours)} hours needed`}</p>
+            </div>
+          </div>
+
+          {/* Supervision Hours (Informational) */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-medium text-gray-700">Supervision Hours (Informational)</h3>
+              <span className="text-sm text-gray-500">
+                {supervisionHours}h total
+              </span>
+            </div>
+            <div className="relative pt-1">
+              <div className="flex mb-2 items-center justify-between">
+                <div>
+                  <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-indigo-600 bg-indigo-200">
+                    Optional Tracking
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs font-semibold inline-block text-indigo-600">
+                    {supervisionHours > 0 ? 'Active' : 'None Yet'}
+                  </span>
+                </div>
+              </div>
+              <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-indigo-200">
+                <div 
+                  style={{ width: supervisionHours > 0 ? '100%' : '0%' }}
+                  className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-indigo-500 transition-all duration-500"
+                ></div>
+              </div>
+            </div>
+            <div className="text-xs text-gray-600">
+              <p>• Current: {supervisionHours} supervision hours</p>
+              <p>• Supervision hours are not required for ICF credentials</p>
+              <p>• Useful for professional development and practice improvement</p>
+            </div>
+          </div>
+        </div>
+        
+
+      </div>
       
       {/* Recent Activities - Side by Side */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         {/* Recent Sessions */}
-        <div className="bg-white rounded-xl shadow p-6">
+        <div className="bg-white rounded-xl shadow p-4 md:p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-lg">Recent Sessions</h2>
             <button 
@@ -709,23 +842,26 @@ export default function DashboardPage() {
             {sessions.map((session, idx) => (
               <div 
                 key={session.id || idx} 
-                className="py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2 cursor-pointer hover:bg-gray-50 rounded-lg p-2 transition-colors"
+                className="py-3 md:py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2 cursor-pointer hover:bg-gray-50 rounded-lg p-2 transition-colors min-w-0"
                 onClick={() => handleSessionClick(session.id || `session-${idx}`)}
               >
-                <div>
-                  <div className="font-semibold">{session.client_name || session.clientName}</div>
-                  <div className="text-sm text-gray-500">{session.additionalNotes || session.notes || session.focusArea || 'No notes'}</div>
-                  <div className="flex gap-4 text-xs text-gray-500 mt-1">
-                    <span className="flex items-center gap-1"><ClockIcon className="h-4 w-4" /> {formatDuration(session.duration)}</span>
-                    <span>{session.date && new Date(session.date).toLocaleDateString()}</span>
+                <div className="min-w-0 flex-1">
+                  <div className="font-semibold truncate">{session.client_name || session.clientName}</div>
+                  <div className="text-sm text-gray-500 line-clamp-2 md:line-clamp-1">{session.additionalNotes || session.notes || session.focusArea || 'No notes'}</div>
+                  <div className="flex gap-2 md:gap-4 text-xs text-gray-500 mt-1 flex-wrap">
+                    <span className="flex items-center gap-1 flex-shrink-0"><ClockIcon className="h-3 w-3 md:h-4 md:w-4" /> {formatDuration(session.duration)}</span>
+                    <span className="flex-shrink-0">{session.date && new Date(session.date).toLocaleDateString()}</span>
                   </div>
                 </div>
-                <div className="flex gap-2 flex-wrap">
+                <div className="flex gap-1 md:gap-2 flex-wrap md:flex-shrink-0">
                   {Array.isArray(session.types)
-                    ? session.types.map((type: string) => (
+                    ? session.types.slice(0, 2).map((type: string) => (
                         <span key={type} className={`px-2 py-1 rounded text-xs font-semibold ${typeColor(type)}`}>{type}</span>
                       ))
                     : null}
+                  {Array.isArray(session.types) && session.types.length > 2 && (
+                    <span className="px-2 py-1 rounded text-xs font-semibold bg-gray-100 text-gray-700">+{session.types.length - 2}</span>
+                  )}
                 </div>
               </div>
             ))}
@@ -733,7 +869,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Recent CPD */}
-        <div className="bg-white rounded-xl shadow p-6">
+        <div className="bg-white rounded-xl shadow p-4 md:p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-lg">Recent CPD</h2>
             <button 
@@ -748,18 +884,18 @@ export default function DashboardPage() {
             {cpdActivities.map((cpd, idx) => (
               <div 
                 key={cpd.id || idx} 
-                className="py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2 cursor-pointer hover:bg-gray-50 rounded-lg p-2 transition-colors"
+                className="py-3 md:py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2 cursor-pointer hover:bg-gray-50 rounded-lg p-2 transition-colors min-w-0"
                 onClick={() => handleCpdClick(cpd.id || `cpd-${idx}`)}
               >
-                <div>
-                  <div className="font-semibold">{cpd.title}</div>
-                  <div className="text-sm text-gray-500">{cpd.description}</div>
-                  <div className="flex gap-4 text-xs text-gray-500 mt-1">
-                    <span className="flex items-center gap-1"><BookOpenIcon className="h-4 w-4" /> {cpd.hours}h</span>
-                    <span>{cpd.date && new Date(cpd.date).toLocaleDateString()}</span>
+                <div className="min-w-0 flex-1">
+                  <div className="font-semibold truncate">{cpd.title}</div>
+                  <div className="text-sm text-gray-500 line-clamp-2 md:line-clamp-1">{cpd.description}</div>
+                  <div className="flex gap-2 md:gap-4 text-xs text-gray-500 mt-1 flex-wrap">
+                    <span className="flex items-center gap-1 flex-shrink-0"><BookOpenIcon className="h-3 w-3 md:h-4 md:w-4" /> {cpd.hours}h</span>
+                    <span className="flex-shrink-0">{cpd.date && new Date(cpd.date).toLocaleDateString()}</span>
                   </div>
                 </div>
-                <div className="flex gap-2 flex-wrap">
+                <div className="flex gap-1 md:gap-2 flex-wrap md:flex-shrink-0">
                   <span className={`px-2 py-1 rounded text-xs font-semibold ${cpdTypeColor(cpd.cpdType)}`}>
                     {cpd.cpdType}
                   </span>

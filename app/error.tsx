@@ -1,5 +1,6 @@
 "use client";
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Error({
   error,
@@ -8,6 +9,8 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const router = useRouter();
+
   useEffect(() => {
     console.error(error);
   }, [error]);
@@ -37,7 +40,7 @@ export default function Error({
           </button>
           
           <button
-            onClick={() => window.location.href = "/"}
+            onClick={() => router.push("/")}
             className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
           >
             Go home

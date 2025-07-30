@@ -1,8 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Disable server-side rendering for client components that use browser APIs
+  // Enable strict mode for better error detection
   reactStrictMode: true,
+  
+  // Add compiler options for better debugging
+  compiler: {
+    // Remove console.logs in production
+    removeConsole: process.env.NODE_ENV === "production",
+  },
 };
 
 export default nextConfig;

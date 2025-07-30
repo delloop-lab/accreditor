@@ -4,6 +4,9 @@ import { useRouter } from "next/navigation";
 import { supabase, getCurrentUser } from "@/lib/supabaseClient";
 import { UserIcon, EnvelopeIcon, AcademicCapIcon, CheckBadgeIcon } from "@heroicons/react/24/outline";
 
+// Force dynamic rendering to prevent build errors
+export const dynamic = 'force-dynamic';
+
 type Profile = {
   id: string;
   name: string;
