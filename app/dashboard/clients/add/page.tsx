@@ -40,11 +40,7 @@ export default function AddClientPage() {
         ]);
 
       if (insertError) {
-        if (insertError.code === '23505') { // Unique constraint violation
-          setError("A client with this email already exists.");
-        } else {
-          setError(insertError.message);
-        }
+        setError(insertError.message);
       } else {
         router.push("/dashboard/clients");
       }
@@ -111,6 +107,7 @@ export default function AddClientPage() {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="client@example.com"
             />
+            <p className="text-xs text-gray-500 mt-1">Multiple coaches can share clients with the same email address</p>
           </div>
 
           {/* Phone */}

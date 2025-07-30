@@ -190,10 +190,10 @@ export default function MentoringSupportForm() {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="max-w-4xl mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">
           Mentoring/Supervision Session
         </h1>
         <p className="text-gray-600">
@@ -447,7 +447,7 @@ export default function MentoringSupportForm() {
                   onChange={(e) => handleInputChange('isFormalSupervision', e.target.checked)}
                   className="sr-only"
                 />
-                <div className={`w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer ${formData.isFormalSupervision ? 'bg-emerald-600' : 'bg-gray-200'}`}>
+                <div className={`w-11 h-6 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer transition-colors ${formData.isFormalSupervision ? 'bg-emerald-600' : 'bg-gray-200'}`}>
                   <div className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform ${formData.isFormalSupervision ? 'translate-x-5' : 'translate-x-0'}`}></div>
                 </div>
               </label>

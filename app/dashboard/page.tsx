@@ -114,8 +114,7 @@ export default function DashboardPage() {
   const [showSessionModal, setShowSessionModal] = useState(false);
   const [showCpdModal, setShowCpdModal] = useState(false);
   const [showProfileReminder, setShowProfileReminder] = useState(false);
-  const [showIncompleteSessionsAlert, setShowIncompleteSessionsAlert] = useState(false);
-  const [incompleteSessionsCount, setIncompleteSessionsCount] = useState(0);
+
 
   // Currency symbols mapping
   const CURRENCY_SYMBOLS: { [key: string]: string } = {
@@ -244,18 +243,7 @@ export default function DashboardPage() {
       })) : null;
       
       setSessions(mappedSessionData || []);
-      
-      // Check for incomplete sessions (missing finish dates or duration)
-      const { data: incompleteSessionsData, error: incompleteError } = await supabase
-        .from("sessions")
-        .select("id, client_name, date, finish_date, duration")
-        .eq("user_id", user.id)
-        .or("finish_date.is.null,duration.is.null");
-        
-      if (!incompleteError && incompleteSessionsData) {
-        setIncompleteSessionsCount(incompleteSessionsData.length);
-        setShowIncompleteSessionsAlert(incompleteSessionsData.length > 0);
-      }
+
       
       // Fetch CPD activities (limit 3 recent for display)
       const { data: cpdData, error: cpdError } = await supabase
@@ -557,7 +545,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div className="w-full max-w-7xl mx-auto">
       {/* Welcome and Actions */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6 md:mb-8 gap-4 md:gap-6">
         <div>
@@ -1122,42 +1110,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Incomplete Sessions Alert Modal */}
-      {showIncompleteSessionsAlert && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
-            <div className="p-6">
-              <div className="flex items-center justify-center w-12 h-12 bg-yellow-100 rounded-full mx-auto mb-4">
-                <svg className="h-6 w-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
-              </div>
-              <h2 className="text-xl font-bold text-center mb-2">Incomplete Sessions</h2>
-              <p className="text-gray-600 text-center mb-6">
-                You have {incompleteSessionsCount} session{incompleteSessionsCount !== 1 ? 's' : ''} with missing finish dates or duration.
-                Please complete these records for accurate tracking.
-              </p>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => {
-                    setShowIncompleteSessionsAlert(false);
-                    router.push('/dashboard/sessions/log');
-                  }}
-                  className="flex-1 bg-yellow-600 text-white py-2 px-4 rounded-lg hover:bg-yellow-700 transition-colors"
-                >
-                  View Sessions
-                </button>
-                <button
-                  onClick={() => setShowIncompleteSessionsAlert(false)}
-                  className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors"
-                >
-                  Later
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 } 

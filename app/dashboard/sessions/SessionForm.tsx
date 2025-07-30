@@ -158,6 +158,16 @@ export default function SessionForm({
     }
   }, [initialData, isEditing]);
 
+  // Automatically set finish date to start date for individual sessions
+  useEffect(() => {
+    if (types.includes("individual") && date) {
+      // For new sessions or when finish date is empty/same as start date, auto-set it
+      if (!isEditing || !finishDate || finishDate === date) {
+        setFinishDate(date);
+      }
+    }
+  }, [date, types, isEditing, finishDate]);
+
   const handleClientChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedClientId = e.target.value;
     setClientId(selectedClientId);
@@ -300,14 +310,6 @@ export default function SessionForm({
           <input type="date" className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={date} onChange={e => setDate(e.target.value)} required />
         </div>
         <div>
-          <label className="block font-medium mb-1">Finish Date</label>
-          <input type="date" className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={finishDate} onChange={e => setFinishDate(e.target.value)} />
-        </div>
-        <div>
-          <label className="block font-medium mb-1">Duration (minutes)</label>
-          <input type="number" min="1" className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={duration} onChange={e => setDuration(e.target.value)} />
-        </div>
-        <div>
           <label className="block font-medium mb-1">Session Type *</label>
           <select className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={types[0] || ""} onChange={e => setTypes([e.target.value])} required>
             <option value="" disabled>Select session type</option>
@@ -315,6 +317,15 @@ export default function SessionForm({
               <option key={type.value} value={type.value}>{type.label}</option>
             ))}
           </select>
+        </div>
+        <div>
+          <label className="block font-medium mb-1">Duration (minutes)</label>
+          <input type="number" min="1" className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={duration} onChange={e => setDuration(e.target.value)} />
+        </div>
+        <div>
+          <label className="block font-medium mb-1">Finish Date</label>
+          <input type="date" className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={finishDate} onChange={e => setFinishDate(e.target.value)} />
+          <p className="text-xs text-gray-500 mt-1">For individual sessions, automatically matches session date</p>
         </div>
         <div>
           <label className="block font-medium mb-1">Number in Group</label>
