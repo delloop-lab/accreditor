@@ -29,12 +29,16 @@ export const isSupabaseConfigured = () => {
   return !!(supabaseUrl && supabaseAnonKey);
 };
 
-// Suppress auth session missing errors in console
+// Suppress auth session missing errors and refresh token errors in console
 if (typeof window !== 'undefined') {
   const originalError = console.error;
   console.error = (...args) => {
     const message = args[0];
-    if (typeof message === 'string' && message.includes('AuthSessionMissingError')) {
+    if (typeof message === 'string' && (
+      message.includes('AuthSessionMissingError') ||
+      message.includes('Invalid Refresh Token') ||
+      message.includes('Refresh Token Not Found')
+    )) {
       // Suppress these specific errors - they're not critical
       return;
     }
