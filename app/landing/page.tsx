@@ -53,9 +53,10 @@ export default function LandingPage() {
         
         {/* Special Launch Offer */}
         <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-xl sm:rounded-2xl p-3 sm:p-4 mt-2 sm:mt-3 mx-auto max-w-2xl">
-          <p className="text-sm sm:text-base font-semibold text-green-700 text-center">
-            Special launch offer: First 30 users get their first year completely free, no credit card needed!
-          </p>
+          <div className="text-sm sm:text-base font-semibold text-green-700 text-center">
+            <p className="mb-1">Special Launch Offer</p>
+            <p>First 30 users get their first year completely free, no credit card needed!</p>
+          </div>
         </div>
       </header>
 
