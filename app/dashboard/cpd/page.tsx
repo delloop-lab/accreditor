@@ -182,7 +182,7 @@ export default function CPDPage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h2 className="text-xl font-bold mb-4">CPD Tracker</h2>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">CPD Tracker</h1>
       {uploadError && (
         <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
           <p className="text-red-700 text-sm">{uploadError}</p>

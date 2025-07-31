@@ -131,7 +131,7 @@ export default function SessionsPage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h2 className="text-xl font-bold mb-4">Client Sessions Log</h2>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">Client Sessions Log</h1>
       <SessionForm onSubmit={addSession} />
       {loading ? <div>Loading...</div> : <SessionList sessions={sessions} onDelete={deleteSession} onCardClick={(idx) => {
         const session = sessions[idx];

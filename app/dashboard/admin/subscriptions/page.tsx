@@ -142,50 +142,58 @@ export default function SubscriptionsAdminPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="w-full max-w-7xl mx-auto">
       {/* Header */}
-      <div>
+      <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Subscription Management</h1>
-        <p className="text-gray-600">Manage user subscriptions and billing</p>
+        <p className="text-gray-600 mt-1">Manage user subscriptions and billing</p>
       </div>
 
       {/* Statistics Cards */}
       {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white p-6 rounded-lg shadow border">
-            <div className="flex items-center">
-              <UserGroupIcon className="h-8 w-8 text-blue-600" />
-              <div className="ml-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200">
+            <div className="flex items-center gap-4">
+              <div className="bg-blue-100 p-3 rounded-xl flex-shrink-0">
+                <UserGroupIcon className="h-6 w-6 text-blue-600" />
+              </div>
+              <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-gray-600">Total Users</p>
                 <p className="text-2xl font-bold text-gray-900">{stats.total_users}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow border">
-            <div className="flex items-center">
-              <CheckCircleIcon className="h-8 w-8 text-green-600" />
-              <div className="ml-4">
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200">
+            <div className="flex items-center gap-4">
+              <div className="bg-green-100 p-3 rounded-xl flex-shrink-0">
+                <CheckCircleIcon className="h-6 w-6 text-green-600" />
+              </div>
+              <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-gray-600">Active Subscriptions</p>
                 <p className="text-2xl font-bold text-gray-900">{stats.active_subscriptions}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow border">
-            <div className="flex items-center">
-              <CreditCardIcon className="h-8 w-8 text-purple-600" />
-              <div className="ml-4">
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200">
+            <div className="flex items-center gap-4">
+              <div className="bg-purple-100 p-3 rounded-xl flex-shrink-0">
+                <CreditCardIcon className="h-6 w-6 text-purple-600" />
+              </div>
+              <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-gray-600">Paid Plans</p>
                 <p className="text-2xl font-bold text-gray-900">{stats.starter_users + stats.pro_users}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow border">
-            <div className="flex items-center">
-              <ClockIcon className="h-8 w-8 text-blue-600" />
-              <div className="ml-4">
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200">
+            <div className="flex items-center gap-4">
+              <div className="bg-blue-100 p-3 rounded-xl flex-shrink-0">
+                <ClockIcon className="h-6 w-6 text-blue-600" />
+              </div>
+              <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-gray-600">Trial Users</p>
                 <p className="text-2xl font-bold text-gray-900">{stats.trial_users}</p>
               </div>
@@ -195,70 +203,70 @@ export default function SubscriptionsAdminPage() {
       )}
 
       {/* Search */}
-      <div className="bg-white p-4 rounded-lg shadow border">
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
         <div className="relative">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
           <input
             type="text"
             placeholder="Search users by email or name..."
             value={searchTerm}
             onChange={(e) => handleSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm"
           />
         </div>
       </div>
 
       {/* Users Table */}
-      <div className="bg-white shadow border rounded-lg overflow-hidden">
+      <div className="bg-white shadow-sm border border-gray-100 rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   User
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Plan
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Period End
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {users.map((user) => (
-                <tr key={user.user_id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
+                <tr key={user.user_id} className="hover:bg-gray-50 transition-colors duration-150">
+                  <td className="px-6 py-5 whitespace-nowrap">
                     <div>
                       <div className="text-sm font-medium text-gray-900">{user.name || 'No name'}</div>
                       <div className="text-sm text-gray-500">{user.email}</div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-5 whitespace-nowrap">
                     {getPlanBadge(user.subscription_plan)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-5 whitespace-nowrap">
                     {getStatusBadge(user.subscription_status)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
                     {user.subscription_current_period_end 
                       ? new Date(user.subscription_current_period_end).toLocaleDateString()
                       : 'N/A'
                     }
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <td className="px-6 py-5 whitespace-nowrap text-sm font-medium">
                     <button
                       onClick={() => {
                         setSelectedUser(user);
                         setIsUpdateModalOpen(true);
                       }}
-                      className="text-emerald-600 hover:text-emerald-900"
+                      className="text-emerald-600 hover:text-emerald-900 transition-colors duration-150 px-3 py-1.5 rounded-md hover:bg-emerald-50"
                     >
                       Update Plan
                     </button>
@@ -273,50 +281,58 @@ export default function SubscriptionsAdminPage() {
       {/* Update Plan Modal */}
       {isUpdateModalOpen && selectedUser && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
+          <div className="relative top-20 mx-auto p-6 border w-96 shadow-xl rounded-xl bg-white">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-6">
                 Update Subscription Plan
               </h3>
-              <p className="text-sm text-gray-600 mb-4">
-                User: {selectedUser.name} ({selectedUser.email})
-              </p>
-              <p className="text-sm text-gray-600 mb-4">
-                Current Plan: {selectedUser.subscription_plan}
-              </p>
+              <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-600 mb-1">
+                  <span className="font-medium">User:</span> {selectedUser.name || 'No name'}
+                </p>
+                <p className="text-sm text-gray-600 mb-1">
+                  <span className="font-medium">Email:</span> {selectedUser.email}
+                </p>
+                <p className="text-sm text-gray-600">
+                  <span className="font-medium">Current Plan:</span> {selectedUser.subscription_plan.replace('_', ' ').toUpperCase()}
+                </p>
+              </div>
               
-              <div className="space-y-2">
+              <div className="space-y-3 mb-6">
                 <button
                   onClick={() => handleUpdatePlan('free')}
                   disabled={updating}
-                  className="w-full text-left px-4 py-2 border rounded hover:bg-gray-50 disabled:opacity-50"
+                  className="w-full text-left px-4 py-3 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors duration-150"
                 >
-                  Free Plan
+                  <div className="font-medium">Free Plan</div>
+                  <div className="text-sm text-gray-500">Basic features</div>
                 </button>
                 <button
                   onClick={() => handleUpdatePlan('starter_monthly')}
                   disabled={updating}
-                  className="w-full text-left px-4 py-2 border rounded hover:bg-gray-50 disabled:opacity-50"
+                  className="w-full text-left px-4 py-3 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors duration-150"
                 >
-                  Starter Monthly ($20/month)
+                  <div className="font-medium">Starter Monthly</div>
+                  <div className="text-sm text-gray-500">$20/month - Enhanced features</div>
                 </button>
                 <button
                   onClick={() => handleUpdatePlan('pro_monthly')}
                   disabled={updating}
-                  className="w-full text-left px-4 py-2 border rounded hover:bg-gray-50 disabled:opacity-50"
+                  className="w-full text-left px-4 py-3 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors duration-150"
                 >
-                  Pro Monthly ($50/month)
+                  <div className="font-medium">Pro Monthly</div>
+                  <div className="text-sm text-gray-500">$50/month - All features</div>
                 </button>
               </div>
 
-              <div className="flex gap-4 mt-6">
+              <div className="flex gap-3">
                 <button
                   onClick={() => {
                     setIsUpdateModalOpen(false);
                     setSelectedUser(null);
                   }}
                   disabled={updating}
-                  className="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400 disabled:opacity-50"
+                  className="flex-1 bg-gray-100 text-gray-700 px-4 py-2.5 rounded-lg hover:bg-gray-200 disabled:opacity-50 transition-colors duration-150 font-medium"
                 >
                   Cancel
                 </button>

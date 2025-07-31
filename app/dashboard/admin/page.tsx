@@ -19,7 +19,13 @@ import {
   AcademicCapIcon,
   ShieldCheckIcon,
   UserIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
+  ArrowTrendingUpIcon,
+  CalendarDaysIcon,
+  GlobeAltIcon,
+  StarIcon,
+  FireIcon,
+  BookOpenIcon
 } from "@heroicons/react/24/outline";
 
 // Force dynamic rendering to prevent build errors
@@ -127,9 +133,9 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="w-full max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-12">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             <ShieldCheckIcon className="h-7 w-7 text-blue-600" />
@@ -141,64 +147,258 @@ export default function AdminPage() {
 
       {/* Statistics Cards */}
       {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <UserGroupIcon className="h-8 w-8 text-blue-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Users</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.total_users}</p>
+        <div className="space-y-8 mb-12">
+          {/* Core Metrics */}
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Core Metrics</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow duration-200">
+                <div className="flex items-center gap-4">
+                  <div className="bg-blue-100 p-3 rounded-xl flex-shrink-0">
+                    <UserGroupIcon className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-600">Total Users</p>
+                    <p className="text-2xl font-bold text-gray-900">{stats.total_users}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow duration-200">
+                <div className="flex items-center gap-4">
+                  <div className="bg-green-100 p-3 rounded-xl flex-shrink-0">
+                    <ChartBarIcon className="h-6 w-6 text-green-600" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-600">Active Users (30d)</p>
+                    <p className="text-2xl font-bold text-gray-900">{stats.active_users_30d}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow duration-200">
+                <div className="flex items-center gap-4">
+                  <div className="bg-purple-100 p-3 rounded-xl flex-shrink-0">
+                    <ClockIcon className="h-6 w-6 text-purple-600" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-600">Total Sessions</p>
+                    <p className="text-2xl font-bold text-gray-900">{stats.total_sessions}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow duration-200">
+                <div className="flex items-center gap-4">
+                  <div className="bg-indigo-100 p-3 rounded-xl flex-shrink-0">
+                    <AcademicCapIcon className="h-6 w-6 text-indigo-600" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-600">Total CPD Entries</p>
+                    <p className="text-2xl font-bold text-gray-900">{stats.total_cpd_entries}</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <ChartBarIcon className="h-8 w-8 text-green-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Active Users (30d)</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.active_users_30d}</p>
+          {/* Growth & Engagement */}
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Growth & Engagement</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow duration-200">
+                <div className="flex items-center gap-4">
+                  <div className="bg-emerald-100 p-3 rounded-xl flex-shrink-0">
+                    <ArrowTrendingUpIcon className="h-6 w-6 text-emerald-600" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-600">New Users This Month</p>
+                    <p className="text-2xl font-bold text-gray-900">{stats.new_users_this_month}</p>
+                    <p className={`text-xs font-medium ${stats.growth_rate_percent >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {stats.growth_rate_percent >= 0 ? '+' : ''}{stats.growth_rate_percent}% vs last month
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow duration-200">
+                <div className="flex items-center gap-4">
+                  <div className="bg-blue-100 p-3 rounded-xl flex-shrink-0">
+                    <CalendarDaysIcon className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-600">Active Users (7d)</p>
+                    <p className="text-2xl font-bold text-gray-900">{stats.active_users_7d}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow duration-200">
+                <div className="flex items-center gap-4">
+                  <div className="bg-orange-100 p-3 rounded-xl flex-shrink-0">
+                    <ChartBarIcon className="h-6 w-6 text-orange-600" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-600">Avg Sessions/User</p>
+                    <p className="text-2xl font-bold text-gray-900">{stats.avg_sessions_per_user || 0}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow duration-200">
+                <div className="flex items-center gap-4">
+                  <div className="bg-purple-100 p-3 rounded-xl flex-shrink-0">
+                    <ClockIcon className="h-6 w-6 text-purple-600" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-600">Avg Session Duration</p>
+                    <p className="text-2xl font-bold text-gray-900">{stats.avg_session_duration}m</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <ClockIcon className="h-8 w-8 text-purple-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Sessions</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.total_sessions}</p>
+          {/* ICF Credentials */}
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">ICF Credential Distribution</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow duration-200">
+                <div className="flex items-center gap-4">
+                  <div className="bg-purple-100 p-3 rounded-xl flex-shrink-0">
+                    <StarIcon className="h-6 w-6 text-purple-600" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-600">MCC Coaches</p>
+                    <p className="text-2xl font-bold text-gray-900">{stats.mcc_users}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow duration-200">
+                <div className="flex items-center gap-4">
+                  <div className="bg-blue-100 p-3 rounded-xl flex-shrink-0">
+                    <ShieldCheckIcon className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-600">PCC Coaches</p>
+                    <p className="text-2xl font-bold text-gray-900">{stats.pcc_users}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow duration-200">
+                <div className="flex items-center gap-4">
+                  <div className="bg-green-100 p-3 rounded-xl flex-shrink-0">
+                    <AcademicCapIcon className="h-6 w-6 text-green-600" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-600">ACC Coaches</p>
+                    <p className="text-2xl font-bold text-gray-900">{stats.acc_users}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow duration-200">
+                <div className="flex items-center gap-4">
+                  <div className="bg-gray-100 p-3 rounded-xl flex-shrink-0">
+                    <UserIcon className="h-6 w-6 text-gray-600" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-600">No Credential Set</p>
+                    <p className="text-2xl font-bold text-gray-900">{stats.no_level_users}</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <AcademicCapIcon className="h-8 w-8 text-indigo-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total CPD Entries</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.total_cpd_entries}</p>
+          {/* Performance & Content */}
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Performance & Content</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow duration-200">
+                <div className="flex items-center gap-4">
+                  <div className="bg-indigo-100 p-3 rounded-xl flex-shrink-0">
+                    <ClockIcon className="h-6 w-6 text-indigo-600" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-600">Total Coaching Hours</p>
+                    <p className="text-2xl font-bold text-gray-900">{stats.total_coaching_hours}h</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow duration-200">
+                <div className="flex items-center gap-4">
+                  <div className="bg-emerald-100 p-3 rounded-xl flex-shrink-0">
+                    <BookOpenIcon className="h-6 w-6 text-emerald-600" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-600">Avg CPD Hours/User</p>
+                    <p className="text-2xl font-bold text-gray-900">{stats.avg_cpd_hours_per_user}h</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow duration-200">
+                <div className="flex items-center gap-4">
+                  <div className="bg-orange-100 p-3 rounded-xl flex-shrink-0">
+                    <FireIcon className="h-6 w-6 text-orange-600" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-600">Most Active Day</p>
+                    <p className="text-lg font-bold text-gray-900">{stats.most_active_day}</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <ChartBarIcon className="h-8 w-8 text-orange-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Avg Sessions/User</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.avg_sessions_per_user || 0}</p>
+          {/* Geographic Distribution */}
+          {stats.top_countries && stats.top_countries.length > 0 && (
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Top Countries</h2>
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="bg-blue-100 p-3 rounded-xl flex-shrink-0">
+                    <GlobeAltIcon className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Geographic Distribution</h3>
+                    <p className="text-sm text-gray-600">Users by country</p>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  {stats.top_countries.map((country, index) => (
+                    <div key={country.country} className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-medium text-gray-500">#{index + 1}</span>
+                        <span className="text-sm font-medium text-gray-900">{country.country}</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="bg-gray-200 rounded-full h-2 w-20">
+                          <div 
+                            className="bg-blue-600 h-2 rounded-full" 
+                            style={{ width: `${(country.count / stats.total_users) * 100}%` }}
+                          ></div>
+                        </div>
+                        <span className="text-sm font-bold text-gray-900">{country.count}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       )}
 
       {/* Search and Users Table */}
-      <div className="bg-white rounded-lg shadow">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100">
         <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-medium text-gray-900">User Management</h2>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <h2 className="text-lg font-semibold text-gray-900">User Management</h2>
             <div className="relative">
               <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
               <input
@@ -206,7 +406,7 @@ export default function AdminPage() {
                 placeholder="Search users by name or email..."
                 value={searchTerm}
                 onChange={(e) => handleSearch(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-80"
+                className="pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-80 text-sm"
               />
             </div>
           </div>
@@ -216,36 +416,36 @@ export default function AdminPage() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   User
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   ICF Level
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Role
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Sessions
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   CPD Entries
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Coaching Hours
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Joined
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {users.map((user) => (
-                <tr key={user.user_id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
+                <tr key={user.user_id} className="hover:bg-gray-50 transition-colors duration-150">
+                  <td className="px-6 py-5 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10">
                         <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
@@ -260,35 +460,35 @@ export default function AdminPage() {
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-5 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getICFLevelBadgeColor(user.icf_level)}`}>
                       {user.icf_level === 'none' ? 'Not Set' : user.icf_level}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-5 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleBadgeColor(user.role)}`}>
                       {user.role}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
                     {user.total_sessions}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
                     {user.total_cpd_entries}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
                     {Math.round(user.total_coaching_hours / 60)}h {user.total_coaching_hours % 60}m
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-500">
                     {new Date(user.created_at).toLocaleDateString()}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <td className="px-6 py-5 whitespace-nowrap text-sm font-medium">
                     <button
                       onClick={() => {
                         setSelectedUser(user);
                         setIsRoleModalOpen(true);
                       }}
-                      className="text-blue-600 hover:text-blue-900"
+                      className="text-blue-600 hover:text-blue-900 transition-colors duration-150 px-3 py-1.5 rounded-md hover:bg-blue-50"
                     >
                       Change Role
                     </button>

@@ -24,6 +24,24 @@ export interface UserStats {
   total_sessions: number;
   total_cpd_entries: number;
   avg_sessions_per_user: number;
+  // Growth metrics
+  new_users_this_month: number;
+  growth_rate_percent: number;
+  // Engagement metrics
+  avg_session_duration: number;
+  active_users_7d: number;
+  users_with_sessions_this_month: number;
+  // ICF Level distribution
+  mcc_users: number;
+  pcc_users: number;
+  acc_users: number;
+  no_level_users: number;
+  // Geographic distribution
+  top_countries: Array<{ country: string; count: number }>;
+  // Content metrics
+  total_coaching_hours: number;
+  avg_cpd_hours_per_user: number;
+  most_active_day: string;
 }
 
 /**
@@ -152,47 +170,155 @@ export const getAllUsers = async (): Promise<AdminUser[]> => {
 };
 
 /**
- * Get user statistics (admin only) - simplified version
+ * Get user statistics (admin only) - comprehensive version
  */
 export const getUserStats = async (): Promise<UserStats | null> => {
   try {
-    // Get total users
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const firstOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+
+    // Basic counts
     const { count: totalUsers } = await supabase
       .from('profiles')
       .select('*', { count: 'exact', head: true });
 
-    // Get active users (users with sessions in last 30 days)
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    
-    const { data: activeSessions } = await supabase
-      .from('sessions')
-      .select('user_id')
-      .gte('date', thirtyDaysAgo.toISOString().split('T')[0]);
-
-    const activeUserIds = [...new Set(activeSessions?.map(s => s.user_id) || [])];
-
-    // Get total sessions
     const { count: totalSessions } = await supabase
       .from('sessions')
       .select('*', { count: 'exact', head: true });
 
-    // Get total CPD entries
     const { count: totalCpdEntries } = await supabase
       .from('cpd')
       .select('*', { count: 'exact', head: true });
 
-    // Calculate average sessions per user
+    // Growth metrics
+    const { count: newUsersThisMonth } = await supabase
+      .from('profiles')
+      .select('*', { count: 'exact', head: true })
+      .gte('created_at', firstOfMonth.toISOString());
+
+    const { count: newUsersLastMonth } = await supabase
+      .from('profiles')
+      .select('*', { count: 'exact', head: true })
+      .gte('created_at', firstOfLastMonth.toISOString())
+      .lt('created_at', firstOfMonth.toISOString());
+
+    const growthRate = newUsersLastMonth && newUsersLastMonth > 0 
+      ? Math.round(((newUsersThisMonth || 0) - (newUsersLastMonth || 0)) / (newUsersLastMonth || 1) * 100)
+      : 0;
+
+    // Active users
+    const { data: activeSessions30d } = await supabase
+      .from('sessions')
+      .select('user_id')
+      .gte('date', thirtyDaysAgo.toISOString().split('T')[0]);
+
+    const { data: activeSessions7d } = await supabase
+      .from('sessions')
+      .select('user_id')
+      .gte('date', sevenDaysAgo.toISOString().split('T')[0]);
+
+    const { data: activeSessionsThisMonth } = await supabase
+      .from('sessions')
+      .select('user_id')
+      .gte('date', firstOfMonth.toISOString().split('T')[0]);
+
+    const activeUserIds30d = [...new Set(activeSessions30d?.map(s => s.user_id) || [])];
+    const activeUserIds7d = [...new Set(activeSessions7d?.map(s => s.user_id) || [])];
+    const activeUsersThisMonth = [...new Set(activeSessionsThisMonth?.map(s => s.user_id) || [])];
+
+    // Session duration and coaching hours
+    const { data: allSessions } = await supabase
+      .from('sessions')
+      .select('duration, date');
+
+    const totalCoachingHours = allSessions?.reduce((sum, session) => sum + (session.duration || 0), 0) || 0;
+    const avgSessionDuration = allSessions && allSessions.length > 0 
+      ? Math.round(totalCoachingHours / allSessions.length) 
+      : 0;
+
+    // ICF Level distribution
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('icf_level, country');
+
+    const icfLevels = profiles?.reduce((acc, profile) => {
+      const level = profile.icf_level || 'none';
+      if (level === 'MCC') acc.mcc++;
+      else if (level === 'PCC') acc.pcc++;
+      else if (level === 'ACC') acc.acc++;
+      else acc.no_level++;
+      return acc;
+    }, { mcc: 0, pcc: 0, acc: 0, no_level: 0 }) || { mcc: 0, pcc: 0, acc: 0, no_level: 0 };
+
+    // Geographic distribution
+    const countryCount = profiles?.reduce((acc, profile) => {
+      const country = profile.country || 'Unknown';
+      acc[country] = (acc[country] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>) || {};
+
+    const topCountries = Object.entries(countryCount)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 5)
+      .map(([country, count]) => ({ country, count }));
+
+    // CPD analytics
+    const { data: cpdEntries } = await supabase
+      .from('cpd')
+      .select('hours, user_id');
+
+    const totalCpdHours = cpdEntries?.reduce((sum, entry) => sum + (entry.hours || 0), 0) || 0;
+    const avgCpdHoursPerUser = totalUsers && totalUsers > 0 
+      ? Math.round(totalCpdHours / totalUsers * 100) / 100 
+      : 0;
+
+    // Most active day of week
+    const dayCount = allSessions?.reduce((acc, session) => {
+      const dayOfWeek = new Date(session.date).toLocaleDateString('en-US', { weekday: 'long' });
+      acc[dayOfWeek] = (acc[dayOfWeek] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>) || {};
+
+    const mostActiveDay = Object.entries(dayCount)
+      .sort(([,a], [,b]) => b - a)[0]?.[0] || 'No data';
+
+    // Calculate averages
     const avgSessionsPerUser = totalUsers && totalUsers > 0 
       ? Math.round((totalSessions || 0) / totalUsers * 100) / 100 
       : 0;
 
     return {
+      // Basic metrics
       total_users: totalUsers || 0,
-      active_users_30d: activeUserIds.length,
+      active_users_30d: activeUserIds30d.length,
       total_sessions: totalSessions || 0,
       total_cpd_entries: totalCpdEntries || 0,
-      avg_sessions_per_user: avgSessionsPerUser
+      avg_sessions_per_user: avgSessionsPerUser,
+      
+      // Growth metrics
+      new_users_this_month: newUsersThisMonth || 0,
+      growth_rate_percent: growthRate,
+      
+      // Engagement metrics
+      avg_session_duration: avgSessionDuration,
+      active_users_7d: activeUserIds7d.length,
+      users_with_sessions_this_month: activeUsersThisMonth.length,
+      
+      // ICF Level distribution
+      mcc_users: icfLevels.mcc,
+      pcc_users: icfLevels.pcc,
+      acc_users: icfLevels.acc,
+      no_level_users: icfLevels.no_level,
+      
+      // Geographic and content metrics
+      top_countries: topCountries,
+      total_coaching_hours: Math.round(totalCoachingHours / 60), // Convert minutes to hours
+      avg_cpd_hours_per_user: avgCpdHoursPerUser,
+      most_active_day: mostActiveDay,
     };
   } catch (error) {
     console.error('Error fetching user stats:', error);

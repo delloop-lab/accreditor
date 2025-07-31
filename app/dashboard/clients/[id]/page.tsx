@@ -234,7 +234,7 @@ export default function ClientDetailPage() {
 
   return (
     <>
-      <div className="max-w-4xl mx-auto p-6">
+      <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
@@ -247,7 +247,7 @@ export default function ClientDetailPage() {
             </button>
             <div className="flex items-center gap-2">
               <UserIcon className="h-6 w-6 text-blue-600" />
-              <h1 className="text-2xl font-bold">Client Details</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Client Details</h1>
             </div>
           </div>
           <div className="flex gap-2">

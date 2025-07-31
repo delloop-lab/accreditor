@@ -73,11 +73,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       {/* Mobile Header */}
       <header className="md:hidden bg-white shadow-sm border-b px-4 py-3">
         <div className="flex items-center justify-between">
-          <img
-            src="/icflog.png"
-            alt="ICF Log"
-            className="h-12 w-auto"
-          />
+                      <img
+              src="/icfLOGO3.png"
+              alt="ICF Log"
+              className="h-18 w-auto"
+            />
           <button
             onClick={() => setIsMobileMenuOpen(true)}
             className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
@@ -99,9 +99,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             title="Go to landing page"
           >
             <img 
-              src="/icflog.png" 
+              src="/icfLOGO3.png" 
               alt="ICF Log" 
-              className="h-20 w-auto"
+              className="h-30 w-auto"
             />
           </div>
           
@@ -190,7 +190,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto bg-gray-50">
-          <div className="min-h-full md:p-0">
+          <div className="min-h-full p-4 sm:p-6 lg:p-8">
             {children}
           </div>
         </main>
@@ -209,11 +209,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               {/* Header */}
               <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-emerald-50 to-blue-50">
                 <div className="flex items-center gap-3">
-                  <img
-                    src="/icflog.png"
-                    alt="ICF Log"
-                    className="h-8 w-auto"
-                  />
+                              <img
+              src="/icfLOGO3.png"
+              alt="ICF Log"
+              className="h-12 w-auto"
+            />
 
                 </div>
                 <button
