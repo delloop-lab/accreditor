@@ -44,7 +44,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         <div className="fixed inset-0 z-50 md:hidden">
           {/* Backdrop */}
           <div 
-            className="fixed inset-0 bg-black bg-opacity-50"
+            className="fixed inset-0 bg-black bg-opacity-75 md:bg-opacity-50"
             onClick={closeMobileMenu}
           />
           

@@ -59,7 +59,7 @@ export default function LandingPage() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex flex-col items-center justify-start p-4 sm:p-6 md:p-8 text-gray-900">
       {/* Mobile Header */}
-      <header className="md:hidden bg-white/90 backdrop-blur-sm shadow-sm border-b border-gray-200 px-4 py-4 mb-4 rounded-lg w-full">
+      <header className="md:hidden bg-white md:bg-white/90 md:backdrop-blur-sm shadow-sm border-b border-gray-200 px-4 py-4 mb-4 rounded-lg w-full">
         <div className="flex items-center justify-between">
           <div className="flex-1 flex justify-center">
             <img
@@ -88,7 +88,7 @@ export default function LandingPage() {
         </p>
         
         {/* Mobile Special Launch Offer */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-3 border border-gray-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 mx-auto max-w-md">
+        <div className="bg-white md:bg-white/80 md:backdrop-blur-sm rounded-xl shadow-lg p-3 border border-gray-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 mx-auto max-w-md">
           <div className="text-center">
             <button
               onClick={() => setShowOfferModal(true)}
@@ -285,7 +285,7 @@ export default function LandingPage() {
       </header>
 
       {/* Hero Section */}
-      <section className="w-full max-w-3xl bg-white/80 backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-xl p-4 sm:p-5 md:p-6 mb-3 sm:mb-4 md:mb-6 border border-gray-100 mx-4">
+      <section className="w-full max-w-3xl bg-white md:bg-white/80 md:backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-xl p-4 sm:p-5 md:p-6 mb-3 sm:mb-4 md:mb-6 border border-gray-100 mx-4">
         <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 sm:mb-3 text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
           Designed for ICF-Credentialed Coaches
         </h2>
@@ -300,7 +300,7 @@ export default function LandingPage() {
 
       {/* CTA Section - Only show for non-logged-in users */}
       {!loading && !isLoggedIn && (
-        <section className="w-full max-w-3xl text-center bg-white/80 backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-xl p-3 sm:p-4 md:p-5 mb-3 sm:mb-4 md:mb-6 border border-gray-100 mx-4">
+        <section className="w-full max-w-3xl text-center bg-white md:bg-white/80 md:backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-xl p-3 sm:p-4 md:p-5 mb-3 sm:mb-4 md:mb-6 border border-gray-100 mx-4">
           <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 sm:mb-3 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             Streamline your ICF compliance process
           </h2>
@@ -340,7 +340,7 @@ export default function LandingPage() {
 
       {/* Features Grid */}
       <section className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4 mb-3 sm:mb-4 md:mb-6 px-4">
-        <div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg p-3 sm:p-4 border border-gray-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                  <div className="bg-white md:bg-white/80 md:backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg p-3 sm:p-4 border border-gray-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
           <div className="flex items-center mb-1 sm:mb-2">
             <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-lg sm:rounded-xl flex items-center justify-center mr-2 sm:mr-3">
               <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -354,7 +354,7 @@ export default function LandingPage() {
           </p>
         </div>
 
-        <div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg p-3 sm:p-4 border border-gray-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                  <div className="bg-white md:bg-white/80 md:backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg p-3 sm:p-4 border border-gray-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
           <div className="flex items-center mb-1 sm:mb-2">
             <div className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-100 rounded-lg sm:rounded-xl flex items-center justify-center mr-2 sm:mr-3">
               <svg className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -368,7 +368,7 @@ export default function LandingPage() {
           </p>
         </div>
 
-        <div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg p-3 sm:p-4 border border-gray-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                  <div className="bg-white md:bg-white/80 md:backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg p-3 sm:p-4 border border-gray-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
           <div className="flex items-center mb-1 sm:mb-2">
             <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-100 rounded-lg sm:rounded-xl flex items-center justify-center mr-2 sm:mr-3">
               <svg className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -382,7 +382,7 @@ export default function LandingPage() {
           </p>
         </div>
 
-        <div className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg p-3 sm:p-4 border border-gray-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                  <div className="bg-white md:bg-white/80 md:backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg p-3 sm:p-4 border border-gray-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
           <div className="flex items-center mb-1 sm:mb-2">
             <div className="w-8 h-8 sm:w-10 sm:h-10 bg-orange-100 rounded-lg sm:rounded-xl flex items-center justify-center mr-2 sm:mr-3">
               <svg className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -411,7 +411,7 @@ export default function LandingPage() {
 
       {/* Modal */}
       {showOfferModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-60 md:bg-opacity-30 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl max-w-lg w-full max-h-[70vh] overflow-y-auto shadow-2xl border border-gray-200">
             <div className="p-4">
               <div className="flex justify-between items-center mb-3">
