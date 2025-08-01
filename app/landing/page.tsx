@@ -92,8 +92,7 @@ export default function LandingPage() {
           <div className="text-center">
             <button
               onClick={() => setShowOfferModal(true)}
-              className="text-white py-2 px-6 rounded-lg text-sm font-semibold transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-              style={{ backgroundColor: '#de5d59' }}
+              className="bg-gradient-to-r from-green-600 to-blue-600 text-white py-1.5 sm:py-2 px-4 sm:px-5 rounded-lg text-sm font-semibold hover:from-green-700 hover:to-blue-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
             >
               Special Launch Offer
             </button>
@@ -275,8 +274,7 @@ export default function LandingPage() {
            <div className="text-center">
              <button
                onClick={() => setShowOfferModal(true)}
-               className="text-white py-2 px-6 rounded-lg text-sm font-semibold transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-               style={{ backgroundColor: '#de5d59' }}
+               className="bg-gradient-to-r from-green-600 to-blue-600 text-white py-1.5 sm:py-2 px-4 sm:px-5 rounded-lg text-sm font-semibold hover:from-green-700 hover:to-blue-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
              >
                Special Launch Offer
              </button>
@@ -430,8 +428,8 @@ export default function LandingPage() {
         <div className="fixed inset-0 bg-black bg-opacity-60 md:bg-opacity-30 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl max-w-lg w-full max-h-[70vh] overflow-y-auto shadow-2xl border border-gray-200">
             <div className="p-4">
-              <div className="flex justify-between items-center mb-3">
-                <h3 className="text-lg font-bold text-gray-800">Special Launch Offer</h3>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold text-gray-800">Special Launch Offer</h3>
                 <button
                   onClick={() => setShowOfferModal(false)}
                   className="text-gray-500 hover:text-gray-700 text-xl font-bold"
@@ -439,12 +437,29 @@ export default function LandingPage() {
                   ×
                 </button>
               </div>
-              <div className="text-center">
-                <img 
-                  src="/offer.png" 
-                  alt="Special Launch Offer" 
-                  className="w-full h-auto rounded-lg"
-                />
+              <div className="text-center py-6">
+                <h4 className="text-2xl font-bold text-blue-600 mb-4">
+                  Exclusive Launch offer for ICF Coaches
+                </h4>
+                <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-6 mb-4">
+                  <p className="text-3xl font-bold text-green-600 mb-2">
+                    Get 1 year free access
+                  </p>
+                  <p className="text-lg text-gray-700 font-medium mb-2">
+                    No credit card needed
+                  </p>
+                  <p className="text-sm text-red-600 font-semibold">
+                    Valid for a limited time only
+                  </p>
+                </div>
+                <div className="flex justify-center">
+                  <a
+                    href="/register"
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-8 rounded-xl text-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                  >
+                    Claim Your Free Year
+                  </a>
+                </div>
               </div>
             </div>
           </div>
