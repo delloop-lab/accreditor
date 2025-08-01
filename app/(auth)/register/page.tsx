@@ -95,7 +95,9 @@ export default function RegisterPage() {
             style={{ height: '150px', width: 'auto' }}
             className="mx-auto mb-4"
           />
-          <h1 className="text-2xl font-bold mb-4">Register</h1>
+          <h1 className="text-2xl font-bold mb-2">Register</h1>
+          <h2 className="text-lg font-semibold text-gray-800 mb-1">Create Your ICF Log Account</h2>
+          <p className="text-sm text-gray-600 mb-4">Stay organised. Stay ICF compliant.</p>
         </div>
         <input
           type="email"
