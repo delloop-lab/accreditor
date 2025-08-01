@@ -438,17 +438,17 @@ export default function LandingPage() {
                 </button>
               </div>
               <div className="text-center py-6">
-                <h4 className="text-2xl font-bold text-blue-600 mb-4">
+                <h4 className="text-2xl font-bold text-gray-900 mb-4">
                   Exclusive Launch offer for ICF Coaches
                 </h4>
                 <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-6 mb-4">
-                  <p className="text-3xl font-bold text-green-600 mb-2">
+                  <p className="text-3xl font-bold text-gray-900 mb-2">
                     Get 1 year free access
                   </p>
                   <p className="text-lg text-gray-700 font-medium mb-2">
                     No credit card needed
                   </p>
-                  <p className="text-sm text-red-600 font-semibold">
+                  <p className="text-sm text-gray-600 font-semibold">
                     Valid for a limited time only
                   </p>
                 </div>
