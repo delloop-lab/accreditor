@@ -400,6 +400,22 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="w-full max-w-4xl text-center mt-4 sm:mt-6 md:mt-8 px-4">
         <div className="border-t border-gray-200 pt-4 sm:pt-6">
+          {/* Footer Links */}
+          <div className="flex flex-wrap justify-center gap-4 sm:gap-6 mb-4">
+            <Link href="/privacy" className="text-xs sm:text-sm text-blue-600 hover:text-blue-800 underline">
+              Privacy Policy
+            </Link>
+            <Link href="/terms" className="text-xs sm:text-sm text-blue-600 hover:text-blue-800 underline">
+              Terms & Conditions
+            </Link>
+            <Link href="/disclaimer" className="text-xs sm:text-sm text-blue-600 hover:text-blue-800 underline">
+              Disclaimer
+            </Link>
+            <Link href="/faq" className="text-xs sm:text-sm text-blue-600 hover:text-blue-800 underline">
+              FAQ
+            </Link>
+          </div>
+          
           <p className="text-xs sm:text-sm text-gray-500 mb-2 sm:mb-3">
             &copy; {new Date().getFullYear()} ICF Log. Supporting professional coaches worldwide.
           </p>
