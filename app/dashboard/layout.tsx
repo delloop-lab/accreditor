@@ -72,18 +72,18 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     <div className="min-h-screen flex flex-col bg-gray-50">
       {/* Mobile Header */}
       <header className="md:hidden bg-white shadow-sm border-b px-4 py-3">
-        <div className="flex items-center justify-between">
-                      <img
-              src="/icfLOGO3.png"
-              alt="ICF Log"
-              className="h-18 w-auto"
-            />
+        <div className="flex flex-col items-center space-y-4 py-2">
+          <img
+            src="/icfLOGO3.png"
+            alt="ICF Log"
+            className="h-32 w-auto"
+          />
           <button
             onClick={() => setIsMobileMenuOpen(true)}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             aria-label="Open menu"
           >
-            <Bars3Icon className="h-6 w-6 text-gray-600" />
+            <Bars3Icon className="h-8 w-8 text-gray-700" />
           </button>
         </div>
       </header>
