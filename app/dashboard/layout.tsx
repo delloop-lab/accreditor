@@ -74,7 +74,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       <header className="md:hidden bg-white shadow-sm border-b px-4 py-3">
         <div className="flex flex-col items-center space-y-4 py-2">
           <img
-            src="/icfLOGO3.png"
+            src="/icfLOGO4.png"
             alt="ICF Log"
             className="h-32 w-auto"
           />
@@ -99,7 +99,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             title="Go to landing page"
           >
             <img 
-              src="/icfLOGO3.png" 
+              src="/icfLOGO4.png" 
               alt="ICF Log" 
               className="h-30 w-auto"
             />
@@ -210,7 +210,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-emerald-50 to-blue-50">
                 <div className="flex items-center gap-3">
                               <img
-              src="/icfLOGO3.png"
+              src="/icfLOGO4.png"
               alt="ICF Log"
               className="h-12 w-auto"
             />

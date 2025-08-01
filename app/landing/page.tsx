@@ -63,7 +63,7 @@ export default function LandingPage() {
         <div className="flex items-center justify-between">
           <div className="flex-1 flex justify-center">
             <img
-              src="/icfLOGO3.png"
+              src="/icfLOGO4.png"
               alt="ICF Log"
               className="h-40 w-auto"
             />
@@ -116,7 +116,7 @@ export default function LandingPage() {
             <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-emerald-50 to-blue-50">
               <div className="flex items-center gap-3">
                 <img
-                  src="/icfLOGO3.png"
+                  src="/icfLOGO4.png"
                   alt="ICF Log"
                   className="h-12 w-auto"
                 />
@@ -256,7 +256,7 @@ export default function LandingPage() {
       <header className="hidden md:block w-full max-w-4xl text-center mb-2 sm:mb-4">
         <div className="flex items-center justify-center mb-0">
           <img 
-            src="/icfLOGO3.png" 
+            src="/icfLOGO4.png" 
             alt="ICF Log" 
             className="logo-size-150"
           />

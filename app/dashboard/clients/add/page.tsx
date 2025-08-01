@@ -2,12 +2,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
-import { UserIcon, ArrowLeftIcon } from "@heroicons/react/24/outline";
+import { UserIcon, ArrowLeftIcon, ExclamationTriangleIcon, XMarkIcon } from "@heroicons/react/24/outline";
 
 export default function AddClientPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [consentGiven, setConsentGiven] = useState(false);
+  const [showWarningModal, setShowWarningModal] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -17,8 +19,15 @@ export default function AddClientPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
+
+    // Check if consent checkbox is checked
+    if (!consentGiven) {
+      setShowWarningModal(true);
+      return;
+    }
+
+    setLoading(true);
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -142,6 +151,25 @@ export default function AddClientPage() {
             />
           </div>
 
+          {/* Consent Checkbox */}
+          <div className="border-t border-gray-200 pt-6">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={consentGiven}
+                onChange={(e) => setConsentGiven(e.target.checked)}
+                className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <span className="text-sm text-gray-700">
+                <strong>The client has agreed to have their hours logged</strong>
+                <br />
+                <span className="text-gray-600 text-xs">
+                  Required for ICF accreditation compliance
+                </span>
+              </span>
+            </label>
+          </div>
+
           {/* Error Message */}
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -168,6 +196,45 @@ export default function AddClientPage() {
           </div>
         </form>
       </div>
+
+      {/* Warning Modal */}
+      {showWarningModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <ExclamationTriangleIcon className="h-8 w-8 text-amber-500" />
+              <h3 className="text-lg font-semibold text-gray-900">Client Consent Required</h3>
+              <button
+                onClick={() => setShowWarningModal(false)}
+                className="ml-auto p-1 hover:bg-gray-100 rounded"
+              >
+                <XMarkIcon className="h-5 w-5 text-gray-400" />
+              </button>
+            </div>
+            
+            <div className="text-sm text-gray-700 space-y-3 mb-6">
+              <p>
+                <strong>Clients need to agree to have their hours logged for the International Coaching Federation (ICF) accreditation process.</strong>
+              </p>
+              <p>
+                The ICF requires coaches to maintain a coaching log that includes client names and contact information, along with the dates and number of paid and pro bono hours for each client.
+              </p>
+              <p>
+                Clients must provide consent, which can be verbal, for their information to be included.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowWarningModal(false)}
+                className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                I Understand
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

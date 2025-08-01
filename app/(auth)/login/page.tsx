@@ -42,7 +42,7 @@ export default function LoginPage() {
       <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-sm space-y-6">
         <div className="text-center">
           <img 
-            src="/icfLOGO3.png" 
+            src="/icfLOGO4.png" 
             alt="ICF Log" 
             className="h-30 w-auto mx-auto mb-4"
           />
