@@ -25,7 +25,7 @@ export default function DisclaimerPage() {
             </p>
             
             <p className="text-gray-700 mb-6">
-              For questions, please contact us at: <a href="mailto:help@icflog.com" className="text-blue-600 hover:text-blue-800">help@icflog.com</a>.
+              For questions, please contact us at: <a href="mailto:hello@icflog.com" className="text-blue-600 hover:text-blue-800">hello@icflog.com</a>.
             </p>
           </div>
         </div>
