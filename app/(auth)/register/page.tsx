@@ -90,9 +90,10 @@ export default function RegisterPage() {
       <form onSubmit={handleRegister} className="bg-white p-8 rounded shadow w-full max-w-sm space-y-6">
         <div className="text-center">
           <img 
-            src="/icflog.png" 
+            src="/icfLOGO4.png" 
             alt="ICF Log" 
-            className="h-20 w-auto mx-auto mb-4"
+            style={{ height: '150px', width: 'auto' }}
+            className="mx-auto mb-4"
           />
           <h1 className="text-2xl font-bold mb-4">Register</h1>
         </div>
