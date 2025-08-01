@@ -185,6 +185,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           >
             <ArrowRightOnRectangleIcon className="h-5 w-5 text-red-600" /> Sign Out
           </button>
+          
+          {/* Version Number */}
+          <div className="text-center mt-4 pb-2">
+            <span className="text-xs text-gray-400 font-mono">BETA V0.9.465</span>
+          </div>
         </nav>
       </aside>
 

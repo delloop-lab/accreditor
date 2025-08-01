@@ -561,7 +561,6 @@ export default function DashboardPage() {
             )}
           </div>
           <p className="text-gray-600 text-lg">Track your coaching journey and maintain ICF compliance</p>
-          <p className="text-xs text-gray-400 mt-2">BETA V0.9.460</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
           <button 
