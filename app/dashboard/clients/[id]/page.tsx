@@ -4,6 +4,14 @@ import { useRouter, useParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { UserIcon, EnvelopeIcon, PhoneIcon, ArrowLeftIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
 
+type ClientDocument = {
+  id: string;
+  name: string;
+  file_path: string;
+  file_size: number;
+  created_at: string;
+};
+
 type Client = {
   id: string;
   name: string;
@@ -12,6 +20,18 @@ type Client = {
   notes: string;
   created_at: string;
   user_id: string;
+  documents?: ClientDocument[];
+};
+
+// Helper function to format file size
+const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return '0 Bytes';
+  
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
 export default function ClientDetailPage() {
@@ -27,6 +47,9 @@ export default function ClientDetailPage() {
   const [profile, setProfile] = useState<any>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [documents, setDocuments] = useState<ClientDocument[]>([]);
+  const [uploadLoading, setUploadLoading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -36,6 +59,196 @@ export default function ClientDetailPage() {
     notes: ''
   });
 
+  // Test storage bucket access
+  useEffect(() => {
+    const testStorageAccess = async () => {
+      try {
+        const { data, error } = await supabase.storage
+          .from('certificates')
+          .list('clients', { limit: 1 });
+        
+        if (error) {
+          console.error('Storage bucket test failed:', error);
+          setUploadError(`Storage bucket not accessible: ${error.message}. Please check your Supabase storage configuration.`);
+        } else {
+          console.log('Storage bucket access successful');
+          setUploadError(null);
+        }
+      } catch (error) {
+        console.error('Storage test exception:', error);
+        setUploadError('Storage test failed. Please check your Supabase configuration.');
+      }
+    };
+    
+    testStorageAccess();
+  }, []);
+  
+  // Handle uploading a document
+  const handleUploadDocument = async (file: File) => {
+    setUploadLoading(true);
+    setUploadError(null);
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || !client) {
+        setUploadError('Authentication error or client not found');
+        setUploadLoading(false);
+        return;
+      }
+      
+      // Check file size (limit to 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        setUploadError('File too large. Maximum size is 10MB.');
+        setUploadLoading(false);
+        return;
+      }
+      
+      // Sanitize filename
+      const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const fileName = `clients/${user.id}/${clientId}/${Date.now()}_${sanitizedName}`;
+      
+      // Upload file to storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('certificates')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+      
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        setUploadError(`Upload failed: ${uploadError.message}`);
+        setUploadLoading(false);
+        return;
+      }
+      
+      if (uploadData) {
+        // Get file URL
+        const { data: urlData } = supabase.storage
+          .from('certificates')
+          .getPublicUrl(fileName);
+        
+        // Save document metadata to database
+        const documentData = {
+          client_id: clientId,
+          user_id: user.id,
+          name: file.name,
+          file_path: fileName,
+          file_size: file.size,
+          file_url: urlData.publicUrl,
+          created_at: new Date().toISOString()
+        };
+        
+        const { data, error: dbError } = await supabase
+          .from('client_documents')
+          .insert([documentData])
+          .select();
+        
+        if (dbError) {
+          console.error('Error saving document metadata:', dbError);
+          setUploadError(`Error saving document metadata: ${dbError.message}`);
+        } else if (data) {
+          // Add document to state
+          const newDocument: ClientDocument = {
+            id: data[0].id,
+            name: file.name,
+            file_path: fileName,
+            file_size: file.size,
+            created_at: new Date().toISOString()
+          };
+          
+          setDocuments(prev => [...prev, newDocument]);
+        }
+      }
+    } catch (error) {
+      console.error('Document upload error:', error);
+      setUploadError(`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setUploadLoading(false);
+    }
+  };
+  
+  // Handle downloading a document
+  const handleDownloadDocument = async (document: ClientDocument) => {
+    try {
+      // Get signed URL for download
+      const { data, error } = await supabase.storage
+        .from('certificates')
+        .download(document.file_path);
+      
+      if (error) {
+        console.error('Download error:', error);
+        alert('Error downloading file');
+        return;
+      }
+      
+      // Create download link
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = document.name;
+      document.body.appendChild(a);
+      a.click();
+      URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error downloading document:', error);
+      alert('Failed to download document');
+    }
+  };
+  
+  // Handle deleting a document
+  const handleDeleteDocument = async (documentId: string) => {
+    if (!confirm('Are you sure you want to delete this document? This cannot be undone.')) {
+      return;
+    }
+    
+    try {
+      // First get the document to retrieve the file path
+      const { data: docData, error: docError } = await supabase
+        .from('client_documents')
+        .select('file_path')
+        .eq('id', documentId)
+        .single();
+      
+      if (docError) {
+        console.error('Error retrieving document:', docError);
+        alert('Failed to delete document');
+        return;
+      }
+      
+      // Delete the file from storage
+      const { error: storageError } = await supabase.storage
+        .from('certificates')
+        .remove([docData.file_path]);
+      
+      if (storageError) {
+        console.error('Error deleting file from storage:', storageError);
+        alert('Failed to delete file from storage');
+        return;
+      }
+      
+      // Delete the document metadata from database
+      const { error: dbError } = await supabase
+        .from('client_documents')
+        .delete()
+        .eq('id', documentId);
+      
+      if (dbError) {
+        console.error('Error deleting document metadata:', dbError);
+        alert('Failed to delete document metadata');
+        return;
+      }
+      
+      // Remove document from state
+      setDocuments(prev => prev.filter(doc => doc.id !== documentId));
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      alert('Failed to delete document');
+    }
+  };
+  
+  // Fetch client data and documents
   useEffect(() => {
     const fetchClient = async () => {
       setLoading(true);
@@ -75,6 +288,30 @@ export default function ClientDetailPage() {
             phone: data.phone || '',
             notes: data.notes || ''
           });
+          
+          // Fetch client documents
+          const { data: documentsData, error: documentsError } = await supabase
+            .from('client_documents')
+            .select('*')
+            .eq('client_id', clientId)
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
+          
+          if (!documentsError && documentsData) {
+            // Map to ClientDocument type
+            const mappedDocs: ClientDocument[] = documentsData.map(doc => ({
+              id: doc.id,
+              name: doc.name,
+              file_path: doc.file_path,
+              file_size: doc.file_size,
+              created_at: doc.created_at
+            }));
+            
+            setDocuments(mappedDocs);
+          } else {
+            console.error('Error fetching documents:', documentsError);
+            setDocuments([]);
+          }
         } else {
           // Use mock data for demo
           const mockClient = {
@@ -390,6 +627,99 @@ export default function ClientDetailPage() {
                 {client.notes || 'No notes added'}
               </p>
             )}
+          </div>
+          
+          {/* Documents Section */}
+          <div className="mt-6">
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-700">Client Documents, Contracts etc</label>
+              {editing && (
+                <label 
+                  htmlFor="document-upload" 
+                  className="cursor-pointer bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1 rounded-lg text-sm flex items-center gap-1"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Upload Document
+                  <input 
+                    id="document-upload" 
+                    type="file" 
+                    className="hidden" 
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        handleUploadDocument(e.target.files[0]);
+                      }
+                    }}
+                  />
+                </label>
+              )}
+            </div>
+            
+            {/* Document List */}
+            <div className="border border-gray-200 rounded-lg overflow-hidden">
+              {uploadError && (
+                <div className="bg-red-50 border-b border-red-100 p-3">
+                  <p className="text-sm text-red-600">{uploadError}</p>
+                </div>
+              )}
+              
+              {/* If there are no documents, show a message */}
+              {documents.length === 0 ? (
+                <div className="p-4 text-center text-gray-500">
+                  {uploadLoading ? (
+                    <div className="flex flex-col items-center">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 mb-2"></div>
+                      <p>Uploading document...</p>
+                    </div>
+                  ) : (
+                    'No documents uploaded yet.'
+                  )}
+                </div>
+              ) : (
+                <div>
+                  {documents.map((document) => (
+                    <div key={document.id} className="flex items-center justify-between p-3 border-b border-gray-100 last:border-b-0">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-blue-50 p-2 rounded">
+                          <svg className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">{document.name}</p>
+                          <p className="text-xs text-gray-500">
+                            Uploaded on {new Date(document.created_at).toLocaleDateString()} • {formatFileSize(document.file_size)}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button 
+                          className="p-1 text-blue-600 hover:text-blue-800" 
+                          title="Download"
+                          onClick={() => handleDownloadDocument(document)}
+                        >
+                          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                          </svg>
+                        </button>
+                        {editing && (
+                          <button 
+                            className="p-1 text-red-600 hover:text-red-800" 
+                            title="Delete"
+                            onClick={() => handleDeleteDocument(document.id)}
+                          >
+                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

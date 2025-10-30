@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase, getCurrentUser } from "@/lib/supabaseClient";
+import { formatNumberForDisplay, LocaleInfo } from "@/lib/numberUtils";
 import { PlusIcon, ClipboardDocumentListIcon, UserIcon, ClockIcon, AcademicCapIcon, LockClosedIcon, BookOpenIcon, ChartBarIcon, CheckBadgeIcon, XMarkIcon } from "@heroicons/react/24/outline";
 
 // Force dynamic rendering to prevent build errors
@@ -930,7 +931,7 @@ export default function DashboardPage() {
                 {selectedSession.payment_amount && selectedSession.payment_type === 'paid' && (
                   <div>
                     <label className="text-sm font-medium text-gray-500">Payment Amount</label>
-                    <p>{getCurrencySymbol(profile?.currency || 'USD')}{selectedSession.payment_amount}</p>
+                    <p>{formatNumberForDisplay(selectedSession.payment_amount, { country: profile?.country || 'US', currency: profile?.currency || 'USD' }, { style: 'currency' })}</p>
                   </div>
                 )}
                 <div>

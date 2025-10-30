@@ -9,6 +9,16 @@ const nextConfig: NextConfig = {
     // Remove console.logs in production
     removeConsole: process.env.NODE_ENV === "production",
   },
+  
+  webpack: (config) => {
+    config.module.rules.push({
+      test: /\.js$/,
+      resolve: {
+        fullySpecified: false,
+      },
+    });
+    return config;
+  },
 };
 
 export default nextConfig;

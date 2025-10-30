@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import { updateLastEntryDate, useDatePickerDefault } from "@/lib/dateUtils";
 import { 
   CalendarIcon, 
   ClockIcon, 
@@ -18,6 +19,8 @@ import {
 export default function MentoringSupportForm() {
   const router = useRouter();
   const [sessionType, setSessionType] = useState("mentoring");
+  const datePickerProps = useDatePickerDefault();
+  
   const [formData, setFormData] = useState({
     date: "",
     duration: "",
@@ -44,6 +47,9 @@ export default function MentoringSupportForm() {
     setLoading(true);
     setError("");
     setSuccess("");
+    
+    // Update the last entry date in localStorage when submitting a new entry
+    updateLastEntryDate(formData.date);
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -249,6 +255,7 @@ export default function MentoringSupportForm() {
                 type="date"
                 value={formData.date}
                 onChange={(e) => handleInputChange('date', e.target.value)}
+                onFocus={datePickerProps.onFocus}
                 className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500"
                 required
               />

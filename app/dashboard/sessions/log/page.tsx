@@ -4,11 +4,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { ClockIcon, UserIcon, CalendarIcon, CurrencyDollarIcon, CheckCircleIcon, ArrowDownTrayIcon, PencilIcon, ChevronUpIcon, ChevronDownIcon, ArrowUpTrayIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { exportSessionsToICFLog } from "@/lib/exportUtils";
+import { formatNumberForDisplay, parseNumberFromLocale, parseNumberWithCurrency, LocaleInfo } from "@/lib/numberUtils";
 import * as XLSX from 'xlsx';
 
 type SessionEntry = {
   id: string;
   clientName: string;
+  clientEmail?: string; // Add client email field
   date: string;
   finishDate: string;
   duration: number;
@@ -38,6 +40,7 @@ function SessionsLogContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [sessions, setSessions] = useState<SessionEntry[]>([]);
+  const [filteredSessions, setFilteredSessions] = useState<SessionEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
@@ -49,11 +52,29 @@ function SessionsLogContent() {
   const [importMessage, setImportMessage] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [sessionToDelete, setSessionToDelete] = useState<string | null>(null);
+  const [deleteClientWithSession, setDeleteClientWithSession] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showImportWarning, setShowImportWarning] = useState(false);
   const [pendingImportFile, setPendingImportFile] = useState<File | null>(null);
   const [backupCreated, setBackupCreated] = useState(false);
+  
+  // Search functionality
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchParams1, setSearchParams] = useState({
+    clientName: '',
+    startDate: '',
+    endDate: '',
+    type: '',
+    paymentType: ''
+  });
+  
+  // Bulk delete functionality
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedSessions, setSelectedSessions] = useState<Set<string>>(new Set());
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+  const [deleteAssociatedClients, setDeleteAssociatedClients] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   // Currency symbols mapping
   const CURRENCY_SYMBOLS: { [key: string]: string } = {
@@ -90,8 +111,47 @@ function SessionsLogContent() {
     setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
   };
 
+  const applyFilters = () => {
+    let result = [...sessions];
+    
+    // Apply clientName filter
+    if (searchParams1.clientName.trim()) {
+      result = result.filter(session => 
+        session.clientName.toLowerCase().includes(searchParams1.clientName.toLowerCase())
+      );
+    }
+    
+    // Apply date range filters
+    if (searchParams1.startDate) {
+      result = result.filter(session => session.date >= searchParams1.startDate);
+    }
+    
+    if (searchParams1.endDate) {
+      result = result.filter(session => session.date <= searchParams1.endDate);
+    }
+    
+    // Apply session type filter
+    if (searchParams1.type) {
+      result = result.filter(session => 
+        session.types && session.types.some(t => t.toLowerCase().includes(searchParams1.type.toLowerCase()))
+      );
+    }
+    
+    // Apply payment type filter
+    if (searchParams1.paymentType) {
+      result = result.filter(session => 
+        session.paymentType.toLowerCase() === searchParams1.paymentType.toLowerCase()
+      );
+    }
+    
+    return result;
+  };
+  
   const getSortedSessions = () => {
-    return [...sessions].sort((a, b) => {
+    // First apply filters, then sort
+    const filtered = applyFilters();
+    
+    return filtered.sort((a, b) => {
       const dateA = new Date(a.date).getTime();
       const dateB = new Date(b.date).getTime();
       return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
@@ -154,16 +214,40 @@ function SessionsLogContent() {
       const backupSuccess = await createBackup();
       
       const data = await readExcelFile(pendingImportFile);
-      const importedSessions = await processImportedData(data);
+      const importResult = await processImportedData(data);
       
-      if (importedSessions.length > 0) {
-        await saveImportedSessions(importedSessions);
+      if (importResult.sessions.length > 0) {
+        const { sessionsAdded, clientsAdded, sessionsSkipped } = await saveImportedSessions(importResult);
+        
+        // Construct success message
+        let successMessage = `Successfully imported ${sessionsAdded} sessions!`;
+        
+        // Add information about duplicates if any were skipped
+        if (sessionsSkipped > 0) {
+          successMessage += ` ${sessionsSkipped} duplicate session${sessionsSkipped === 1 ? '' : 's'} ${sessionsSkipped === 1 ? 'was' : 'were'} detected and skipped.`;
+        }
+        
+        if (clientsAdded > 0) {
+          successMessage += ` Added ${clientsAdded} new client${clientsAdded === 1 ? '' : 's'} to your client list.`;
+        }
+        if (backupSuccess) {
+          successMessage += ' A backup of your existing sessions has been created.';
+        } else {
+          successMessage += ' Warning: Backup creation failed.';
+        }
+        
+        // Set message type to warning if we skipped everything
+        const messageType = (sessionsSkipped > 0 && sessionsAdded === 0) ? 'error' : 'success';
+        
         setImportMessage({
-          type: 'success',
-          message: `Successfully imported ${importedSessions.length} sessions! ${backupSuccess ? 'A backup of your existing sessions has been created.' : 'Warning: Backup creation failed.'}`
+          type: messageType,
+          message: successMessage
         });
-        // Refresh the sessions list
-        fetchSessions();
+        
+        // Refresh the sessions list if any were added
+        if (sessionsAdded > 0) {
+          fetchSessions();
+        }
       } else {
         setImportMessage({
           type: 'error',
@@ -235,13 +319,73 @@ function SessionsLogContent() {
     });
   };
 
-  const processImportedData = async (data: any[]): Promise<any[]> => {
+  // Interface for client data extracted from spreadsheet
+interface ImportedClientData {
+  name: string;
+  email: string;
+  contact_info?: string;
+}
+
+// Interface for processed session data with client reference
+interface ProcessedSessionData {
+  client_name: string;
+  date: string;
+  finish_date: string | null;
+  duration: number;
+  types: string[];
+  number_in_group: number;
+  paymenttype: string;
+  payment_amount: number | null;
+  focus_area: string;
+  key_outcomes: string;
+  client_progress: string;
+  coaching_tools: string[];
+  icf_competencies: string[];
+  additional_notes: string;
+  user_id: string;
+}
+
+// Result interface containing both sessions and clients
+interface ImportProcessResult {
+  sessions: ProcessedSessionData[];
+  clients: ImportedClientData[];
+}
+
+const processImportedData = async (data: any[]): Promise<ImportProcessResult> => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
     console.log('Processing imported data:', data);
+    
+    // Track unique clients to avoid duplicates
+    const uniqueClients = new Map<string, ImportedClientData>();
+    
+    // Debug the spreadsheet structure to see what client fields are available
+    if (data.length > 0) {
+      console.log('Sample spreadsheet row:', data[0]);
+      console.log('Available fields:', Object.keys(data[0]));
+      
+      // Specifically check for Contact Information field
+      if (data[0]['Contact Information']) {
+        console.log('Contact Information example:', data[0]['Contact Information']);
+      } else {
+        // Try to find any field that might contain contact info
+        const possibleContactFields = Object.keys(data[0]).filter(key => 
+          key.toLowerCase().includes('contact') || 
+          key.toLowerCase().includes('email') || 
+          key.toLowerCase().includes('phone')
+        );
+        
+        if (possibleContactFields.length > 0) {
+          console.log('Possible contact fields found:', possibleContactFields);
+          possibleContactFields.forEach(field => {
+            console.log(`${field} example:`, data[0][field]);
+          });
+        }
+      }
+    }
 
-    return data
+    const processedSessions = data
       .filter(row => {
         // Filter out rows that don't have required data
         const clientName = row['Client Name'];
@@ -280,20 +424,138 @@ function SessionsLogContent() {
           let paymentType = 'proBono';
           let paymentAmount = null;
           
+          // Look for payment amount in various possible column names
+          const paymentAmountColumns = [
+            'Payment Amount', 'Payment', 'Amount', 'Fee', 'Rate', 'Cost',
+            'Paid Amount', 'Payment Fee', 'Session Fee', 'Hourly Rate'
+          ];
+          
+          let rawPaymentAmount = null;
+          for (const col of paymentAmountColumns) {
+            if (row[col] && row[col] !== '' && row[col] !== null) {
+              rawPaymentAmount = row[col];
+              console.log(`Found payment amount in column '${col}':`, rawPaymentAmount);
+              break;
+            }
+          }
+          
+          // Parse payment amount using locale-aware parsing if found
+          if (rawPaymentAmount !== null) {
+            const localeInfo: LocaleInfo = { 
+              country: profile?.country || 'US', 
+              currency: profile?.currency || 'USD' 
+            };
+            const parseResult = parseNumberWithCurrency(String(rawPaymentAmount), localeInfo);
+            if (parseResult.value !== null && !parseResult.error) {
+              paymentAmount = parseResult.value;
+              console.log(`Parsed payment amount: ${rawPaymentAmount} -> ${paymentAmount} (currency: ${parseResult.currencySymbol || 'none'})`);
+            } else {
+              console.log(`Failed to parse payment amount: ${rawPaymentAmount}, error: ${parseResult.error}`);
+            }
+          }
+          
           if (paidHours > 0 && proBonoHours === 0) {
             paymentType = 'paid';
-            paymentAmount = null; // No payment amount, just duration
+          } else if (paidHours > 0 && proBonoHours > 0) {
+            paymentType = 'paidAndProBono';
           } else if (proBonoHours > 0) {
             paymentType = 'proBono';
-            paymentAmount = null; // No payment amount, just duration
           }
           
           // Determine session type
           const sessionType = row['Individual/Group']?.toLowerCase() || 'individual';
           const numberInGroup = parseInt(row['Number in Group'] || '1');
           
-          const sessionData = {
-            client_name: row['Client Name'],
+          // Extract client information
+          const clientName = row['Client Name']?.trim();
+          
+          // Extract contact information which might contain email
+          let contactInfo = '';
+          let clientEmail = '';
+          
+          // Debug all fields in the row to find where email might be
+          console.log('All row fields for debugging:');
+          Object.entries(row).forEach(([key, value]) => {
+            if (typeof value === 'string' && value.includes('@')) {
+              console.log(`Field '${key}' contains possible email: ${value}`);
+            }
+          });
+          
+          // First try to get Contact Information
+          if (row['Contact Information'] && typeof row['Contact Information'] === 'string') {
+            contactInfo = row['Contact Information'].trim();
+            console.log(`Found Contact Information: "${contactInfo}"`);
+            
+            // Try to extract email from contact information if it looks like an email
+            if (contactInfo.includes('@')) {
+              // Better regex to extract email from text
+              const emailRegex = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/gi;
+              const emailMatch = contactInfo.match(emailRegex);
+              if (emailMatch && emailMatch.length > 0) {
+                clientEmail = emailMatch[0];
+                console.log(`Extracted email: ${clientEmail} from Contact Information`);
+              } else {
+                console.log('No email pattern found in Contact Information despite @ symbol');
+                console.log('Contact Info content:', contactInfo);
+              }
+            }
+          } else {
+            console.log('No Contact Information field found in row:', Object.keys(row));
+          }
+          
+          // If we didn't find an email in Contact Information, try direct email fields
+          if (!clientEmail) {
+            const emailFieldNames = ['Email', 'email', 'Client Email', 'Contact Email', 'E-mail'];
+            for (const fieldName of emailFieldNames) {
+              if (row[fieldName] && typeof row[fieldName] === 'string' && row[fieldName].includes('@')) {
+                clientEmail = row[fieldName].trim();
+                console.log(`Found email in dedicated field '${fieldName}': ${clientEmail}`);
+                break;
+              }
+            }
+          }
+          
+          // Try other possible contact fields if we didn't get anything
+          if (!contactInfo) {
+            const possibleContactFields = ['Contact Info', 'Phone', 'Contact', 'Notes'];
+            for (const field of possibleContactFields) {
+              if (row[field] && typeof row[field] === 'string') {
+                contactInfo = row[field].trim();
+                if (contactInfo) break;
+              }
+            }
+          }
+          
+          // If we still don't have an email, try explicit email fields
+          if (!clientEmail) {
+            const possibleEmailFields = ['Client Email', 'Email', 'email', 'Contact Email', 'E-mail', 'e-mail'];
+            for (const field of possibleEmailFields) {
+              if (row[field] && typeof row[field] === 'string') {
+                clientEmail = row[field].trim();
+                if (clientEmail) break;
+              }
+            }
+          }
+          
+          // Store unique client if we have enough information
+          if (clientName) {
+            // Use email as key if available, otherwise use name
+            const clientKey = clientEmail || clientName;
+            
+            if (!uniqueClients.has(clientKey)) {
+              const clientData = {
+                name: clientName,
+                email: contactInfo, // Use Contact Information directly as the email
+                contact_info: contactInfo
+              };
+              
+              console.log(`Adding client to import list: ${clientName}, email: ${clientEmail || 'none'}`);
+              uniqueClients.set(clientKey, clientData);
+            }
+          }
+          
+          const sessionData: ProcessedSessionData = {
+            client_name: clientName,
             date: startDate,
             finish_date: endDate,
             duration: totalHours * 60, // Convert total hours to minutes
@@ -306,7 +568,7 @@ function SessionsLogContent() {
             client_progress: '',
             coaching_tools: [],
             icf_competencies: [],
-            additional_notes: row['Contact Information'] ? `Contact: ${row['Contact Information']}` : '',
+            additional_notes: contactInfo ? `Contact: ${contactInfo}` : '',
             user_id: user.id
           };
           
@@ -317,7 +579,12 @@ function SessionsLogContent() {
           return null;
         }
       })
-      .filter(session => session !== null); // Remove any null sessions from processing errors
+      .filter(session => session !== null) as ProcessedSessionData[]; // Remove any null sessions from processing errors
+      
+    return {
+      sessions: processedSessions,
+      clients: Array.from(uniqueClients.values())
+    };
   };
 
   const parseDate = (dateStr: string): string => {
@@ -424,16 +691,195 @@ function SessionsLogContent() {
     return new Date().toISOString().split('T')[0];
   };
 
-  const saveImportedSessions = async (sessions: any[]) => {
+  // Check if a client exists and return their ID if found
+const findExistingClient = async (clientName: string, clientEmail: string, userId: string): Promise<string | null> => {
+    try {
+      // First try to find by email if available (more reliable)
+      if (clientEmail) {
+        const { data: emailMatch, error: emailError } = await supabase
+          .from('clients')
+          .select('id')
+          .eq('email', clientEmail)
+          .eq('user_id', userId)
+          .maybeSingle();
+        
+        if (!emailError && emailMatch) {
+          console.log(`Found client by email: ${clientEmail}`);
+          return emailMatch.id;
+        }
+      }
+      
+      // Then try to find by name (less reliable, could have duplicates)
+      const { data: nameMatch, error: nameError } = await supabase
+        .from('clients')
+        .select('id')
+        .eq('name', clientName)
+        .eq('user_id', userId)
+        .maybeSingle();
+      
+      if (!nameError && nameMatch) {
+        console.log(`Found client by name: ${clientName}`);
+        return nameMatch.id;
+      }
+      
+      return null; // Client not found
+    } catch (error) {
+      console.error('Error finding existing client:', error);
+      return null;
+    }
+  };
+  
+  // Check if a session with similar properties already exists
+  const findExistingSession = async (session: ProcessedSessionData, userId: string): Promise<boolean> => {
+    try {
+      // We'll use a combination of client_name, date, and duration to identify potential duplicates
+      const { data, error } = await supabase
+        .from('sessions')
+        .select('id')
+        .eq('client_name', session.client_name)
+        .eq('date', session.date)
+        .eq('duration', session.duration)
+        .eq('user_id', userId);
+        
+      if (error) {
+        console.error('Error checking for existing session:', error);
+        return false; // If there's an error, we'll assume it's not a duplicate
+      }
+      
+      // If we found any sessions matching these criteria, it's likely a duplicate
+      if (data && data.length > 0) {
+        console.log(`Found ${data.length} existing sessions matching: client=${session.client_name}, date=${session.date}, duration=${session.duration}`);
+        return true;
+      }
+      
+      return false; // No duplicates found
+    } catch (error) {
+      console.error('Error finding existing session:', error);
+      return false;
+    }
+  };
+  
+  // Create a new client and return the ID
+  const createNewClient = async (client: ImportedClientData, userId: string): Promise<string | null> => {
+    try {
+      // Ensure we have at least a name
+      if (!client.name) return null;
+      
+      console.log(`Creating new client: ${client.name}`);
+      console.log(`Client email: "${client.email}"`);
+      console.log(`Client contact info: "${client.contact_info}"`);
+      
+      const clientData = {
+        name: client.name,
+        email: client.contact_info || '', // Use contact_info directly as the email
+        notes: `Auto-created from session import on ${new Date().toLocaleDateString()}.`,
+        user_id: userId
+      };
+      
+      console.log('Client data being inserted:', clientData);
+      
+      const { data, error } = await supabase
+        .from('clients')
+        .insert([clientData])
+        .select('id')
+        .single();
+      
+      if (error) {
+        console.error('Error creating client:', error);
+        return null;
+      }
+      
+      console.log(`Created new client: ${client.name} with ID: ${data.id}`);
+      return data.id;
+    } catch (error) {
+      console.error('Error creating new client:', error);
+      return null;
+    }
+  };
+
+  // Process clients and sessions, creating new clients as needed
+  const saveImportedSessions = async (importData: ImportProcessResult): Promise<{sessionsAdded: number, clientsAdded: number, sessionsSkipped: number}> => {
+    const { sessions, clients } = importData;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+    
+    let clientsAdded = 0;
+    let sessionsSkipped = 0;
+    console.log(`Processing ${clients.length} clients from import`);
+    
+    // Process each client
+    for (const client of clients) {
+      // Skip if we don't have a name
+      if (!client.name) {
+        console.log('Skipping client with no name');
+        continue;
+      }
+      
+      console.log(`Processing client: ${client.name}, email: ${client.email || 'none'}`);
+      
+      // Check if client already exists - use contact_info as email
+      const existingClientId = await findExistingClient(client.name, client.contact_info || '', user.id);
+      
+      // If client doesn't exist, create a new one
+      if (!existingClientId) {
+        console.log(`Client ${client.name} not found, creating new record`);
+        const newClientId = await createNewClient(client, user.id);
+        if (newClientId) {
+          console.log(`Successfully created client with ID: ${newClientId}`);
+          clientsAdded++;
+        } else {
+          console.log(`Failed to create client: ${client.name}`);
+        }
+      } else {
+        console.log(`Client ${client.name} already exists with ID: ${existingClientId}`);
+      }
+    }
+    
+    console.log(`Added ${clientsAdded} new clients`);
+    
+    // Filter out duplicate sessions
+    const uniqueSessions = [];
+    for (const session of sessions) {
+      // Check if this session already exists
+      const isDuplicate = await findExistingSession(session, user.id);
+      
+      if (isDuplicate) {
+        console.log(`Skipping duplicate session for ${session.client_name} on ${session.date}`);
+        sessionsSkipped++;
+      } else {
+        uniqueSessions.push(session);
+      }
+    }
+    
+    console.log(`Found ${sessionsSkipped} duplicate sessions that will be skipped`);
+    console.log(`Inserting ${uniqueSessions.length} unique sessions`);
+    
+    // If no unique sessions to insert, just return the stats
+    if (uniqueSessions.length === 0) {
+      return {
+        sessionsAdded: 0,
+        clientsAdded,
+        sessionsSkipped
+      };
+    }
+    
+    // Debug the session structure before inserting
+    console.log('Inserting sessions with structure:', JSON.stringify(uniqueSessions[0], null, 2));
+    
+    // Insert only unique sessions
     const { data, error } = await supabase
       .from('sessions')
-      .insert(sessions);
+      .insert(uniqueSessions);
     
     if (error) {
       throw new Error(`Database error: ${error.message}`);
     }
     
-    return data;
+    return {
+      sessionsAdded: uniqueSessions.length,
+      clientsAdded,
+      sessionsSkipped
+    };
   };
 
   const handleDeleteClick = (sessionId: string) => {
@@ -452,6 +898,14 @@ function SessionsLogContent() {
         return;
       }
 
+      // Find the session to get client name
+      const sessionToDeleteData = sessions.find(s => s.id === sessionToDelete);
+      if (!sessionToDeleteData) {
+        console.error('Session not found');
+        return;
+      }
+
+      // Delete the session
       const { error } = await supabase
         .from("sessions")
         .delete()
@@ -464,9 +918,56 @@ function SessionsLogContent() {
         return;
       }
 
+      // Delete associated client if requested
+      if (deleteClientWithSession && sessionToDeleteData.clientName) {
+        // First find the client ID
+        const { data: clientData } = await supabase
+          .from("clients")
+          .select("id")
+          .eq("name", sessionToDeleteData.clientName)
+          .eq("user_id", user.id);
+        
+        if (clientData && clientData.length > 0) {
+          // Delete all sessions for this client first
+          const { error: sessionsError } = await supabase
+            .from("sessions")
+            .delete()
+            .eq("client_id", clientData[0].id)
+            .eq("user_id", user.id);
+            
+          if (sessionsError) {
+            console.error(`Error deleting sessions for client ${sessionToDeleteData.clientName}:`, sessionsError);
+          }
+          
+          // Then delete the client
+          const { error: clientError } = await supabase
+            .from("clients")
+            .delete()
+            .eq("id", clientData[0].id)
+            .eq("user_id", user.id);
+          
+          if (clientError) {
+            console.error(`Error deleting client ${sessionToDeleteData.clientName}:`, clientError);
+          } else {
+            // Show success message for client deletion
+            setImportMessage({
+              type: 'success',
+              message: `Successfully deleted session and client: ${sessionToDeleteData.clientName}`
+            });
+          }
+        }
+      }
+
       // Remove the session from the local state
       setSessions(prev => prev.filter(session => session.id !== sessionToDelete));
-      console.log('Session deleted successfully');
+      
+      if (!deleteClientWithSession) {
+        // Only show this message if we didn't show the client deletion success message
+        setImportMessage({
+          type: 'success',
+          message: 'Session deleted successfully'
+        });
+      }
     } catch (error) {
       console.error('Error deleting session:', error);
       alert('Failed to delete session');
@@ -474,12 +975,160 @@ function SessionsLogContent() {
       setDeleting(false);
       setShowDeleteModal(false);
       setSessionToDelete(null);
+      setDeleteClientWithSession(false);
     }
   };
 
   const handleDeleteCancel = () => {
     setShowDeleteModal(false);
     setSessionToDelete(null);
+  };
+  
+  // Bulk delete functions
+  const toggleSelectionMode = () => {
+    setSelectionMode(prev => !prev);
+    if (selectionMode) {
+      // Clear selections when exiting selection mode
+      setSelectedSessions(new Set());
+    }
+  };
+  
+  const toggleSessionSelection = (sessionId: string) => {
+    setSelectedSessions(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(sessionId)) {
+        newSet.delete(sessionId);
+      } else {
+        newSet.add(sessionId);
+      }
+      return newSet;
+    });
+  };
+  
+  const selectAllSessions = () => {
+    const allIds = getSortedSessions().map(session => session.id);
+    setSelectedSessions(new Set(allIds));
+  };
+  
+  const clearAllSelections = () => {
+    setSelectedSessions(new Set());
+  };
+  
+  const handleBulkDeleteConfirm = async () => {
+    if (selectedSessions.size === 0) return;
+    
+    setBulkDeleting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.error('No user found');
+        return;
+      }
+      
+      // Get client names from selected sessions if we need to delete clients too
+      let clientsToDelete = new Set<string>();
+      if (deleteAssociatedClients) {
+        const selectedSessionsArray = Array.from(selectedSessions);
+        const selectedSessionsData = sessions.filter(s => selectedSessionsArray.includes(s.id));
+        selectedSessionsData.forEach(session => {
+          if (session.clientName) {
+            clientsToDelete.add(session.clientName);
+          }
+        });
+      }
+      
+      // Delete the selected sessions
+      const { error } = await supabase
+        .from("sessions")
+        .delete()
+        .in("id", Array.from(selectedSessions))
+        .eq("user_id", user.id);
+      
+      if (error) {
+        console.error('Error deleting sessions:', error);
+        alert('Failed to delete sessions');
+        return;
+      }
+      
+      // Delete associated clients if requested
+      if (deleteAssociatedClients && clientsToDelete.size > 0) {
+        for (const clientName of clientsToDelete) {
+          // First find the client ID
+          const { data: clientData } = await supabase
+            .from("clients")
+            .select("id")
+            .eq("name", clientName)
+            .eq("user_id", user.id);
+          
+          if (clientData && clientData.length > 0) {
+            // Delete the client
+            const { error: clientError } = await supabase
+              .from("clients")
+              .delete()
+              .eq("id", clientData[0].id)
+              .eq("user_id", user.id);
+            
+            if (clientError) {
+              console.error(`Error deleting client ${clientName}:`, clientError);
+            }
+          }
+        }
+      }
+      
+      // Remove the deleted sessions from the local state
+      setSessions(prev => prev.filter(session => !selectedSessions.has(session.id)));
+      
+      // Exit selection mode
+      setSelectionMode(false);
+      setSelectedSessions(new Set());
+      
+      // Show success message
+      setImportMessage({
+        type: 'success',
+        message: `Successfully deleted ${selectedSessions.size} sessions${deleteAssociatedClients ? ' and their associated clients' : ''}.`
+      });
+      
+    } catch (error) {
+      console.error('Error in bulk delete:', error);
+      alert('Failed to delete sessions');
+    } finally {
+      setBulkDeleting(false);
+      setShowBulkDeleteModal(false);
+    }
+  };
+  
+  const handleBulkDeleteCancel = () => {
+    setShowBulkDeleteModal(false);
+  };
+  
+  // Function to find client ID by name before navigation
+  const findClientAndNavigate = async (clientName: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      
+      // Search for client by name
+      const { data: clients, error } = await supabase
+        .from('clients')
+        .select('id')
+        .eq('name', clientName)
+        .eq('user_id', user.id);
+      
+      if (error) {
+        console.error('Error finding client:', error);
+        return;
+      }
+      
+      if (clients && clients.length > 0) {
+        // Navigate to the client's page using their ID
+        router.push(`/dashboard/clients/${clients[0].id}`);
+      } else {
+        // If no client found with that name, show a message
+        alert(`No client record found for ${clientName}. Try adding this client first.`);
+      }
+    } catch (error) {
+      console.error('Error navigating to client:', error);
+    }
   };
 
   const fetchSessions = async () => {
@@ -504,17 +1153,39 @@ function SessionsLogContent() {
         setProfile(null);
       }
       
+      // First fetch sessions
       const { data, error } = await supabase
         .from("sessions")
         .select("id,client_name,date,duration,types,number_in_group,paymenttype,payment_amount,focus_area,key_outcomes,client_progress,coaching_tools,icf_competencies,additional_notes,user_id")
         .eq("user_id", user.id)
         .order("date", { ascending: false });
       
+      // Then fetch client emails for each session
+      if (!error && data) {
+        // Get unique client names
+        const clientNames = [...new Set(data.map((session: any) => session.client_name))];
+        
+        // Fetch client data for these names
+        const { data: clientsData } = await supabase
+          .from("clients")
+          .select("name,email")
+          .in("name", clientNames)
+          .eq("user_id", user.id);
+        
+        // Create a map of client names to emails
+        const clientEmailMap = new Map();
+        if (clientsData) {
+          clientsData.forEach((client: any) => {
+            clientEmailMap.set(client.name, client.email);
+          });
+        }
+      
       if (!error && data) {
         // Map snake_case to camelCase with null checks
         const mapped = data.map((session: any) => ({
           id: session.id || null,
           clientName: session.client_name || "",
+          clientEmail: clientEmailMap.get(session.client_name) || "", // Add client email from map
           date: session.date || "",
           finishDate: "",
           duration: session.duration || 0,
@@ -531,6 +1202,7 @@ function SessionsLogContent() {
           user_id: session.user_id || "",
         }));
         setSessions(mapped);
+      }
       }
     } catch (error) {
       console.error('Error fetching sessions:', error);
@@ -557,6 +1229,13 @@ function SessionsLogContent() {
     }
   }, [highlightedId, sessions]);
 
+  // Effect to update filtered sessions when search params or sessions change
+  useEffect(() => {
+    if (!loading) {
+      setFilteredSessions(applyFilters());
+    }
+  }, [searchParams1, sessions, loading]);
+
   useEffect(() => {
     fetchSessions();
   }, []);
@@ -571,43 +1250,278 @@ function SessionsLogContent() {
           <h1 className="text-2xl font-bold text-gray-900">Sessions Log</h1>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
+          {/* Add search toggle button */}
           <button
-            onClick={toggleSortOrder}
-            className="flex items-center justify-center gap-2 bg-gray-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm"
+            onClick={() => setSearchOpen(!searchOpen)}
+            className={`flex items-center justify-center gap-2 px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm ${searchOpen ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
           >
-            <CalendarIcon className="h-4 w-4" />
-            <span className="hidden sm:inline">Sort by Date {sortOrder === 'asc' ? '↑' : '↓'}</span>
-            <span className="sm:hidden">Sort {sortOrder === 'asc' ? '↑' : '↓'}</span>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <span>Advanced Search</span>
           </button>
+          {/* Selection mode toggle */}
+          {sessions.length > 0 && (
+            <button
+              onClick={toggleSelectionMode}
+              className={`flex items-center justify-center gap-2 px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm ${selectionMode ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              <span className="hidden sm:inline">{selectionMode ? "Exit Selection" : "Select Sessions"}</span>
+              <span className="sm:hidden">{selectionMode ? "Exit" : "Select"}</span>
+            </button>
+          )}
           
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".xlsx,.xls,.csv"
-            onChange={handleFileUpload}
-            className="hidden"
-          />
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={importing}
-            className="flex items-center justify-center gap-2 bg-purple-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 text-sm"
-          >
-            <ArrowUpTrayIcon className="h-4 w-4" />
-            <span className="hidden sm:inline">{importing ? "Importing..." : "Import ICF Spreadsheet"}</span>
-            <span className="sm:hidden">{importing ? "Importing..." : "Import"}</span>
-          </button>
+          {/* Bulk delete button - only visible in selection mode */}
+          {selectionMode && selectedSessions.size > 0 && (
+            <button
+              onClick={() => setShowBulkDeleteModal(true)}
+              className="flex items-center justify-center gap-2 bg-red-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm"
+            >
+              <TrashIcon className="h-4 w-4" />
+              <span>Delete ({selectedSessions.size})</span>
+            </button>
+          )}
+          
+          {/* Selection controls - only visible in selection mode */}
+          {selectionMode && sessions.length > 0 && (
+            <div className="flex gap-2">
+              <button
+                onClick={selectAllSessions}
+                className="flex items-center justify-center gap-2 bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors text-sm"
+              >
+                <span className="hidden sm:inline">Select All</span>
+                <span className="sm:hidden">All</span>
+              </button>
+              {selectedSessions.size > 0 && (
+                <button
+                  onClick={clearAllSelections}
+                  className="flex items-center justify-center gap-2 bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors text-sm"
+                >
+                  <span className="hidden sm:inline">Clear</span>
+                  <span className="sm:hidden">Clear</span>
+                </button>
+              )}
+            </div>
+          )}
+          
+          {/* Regular controls - hidden in selection mode */}
+          {!selectionMode && (
+            <>
+              <button
+                onClick={toggleSortOrder}
+                className="flex items-center justify-center gap-2 bg-gray-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm"
+              >
+                <CalendarIcon className="h-4 w-4" />
+                <span className="hidden sm:inline">Sort by Date {sortOrder === 'asc' ? '↑' : '↓'}</span>
+                <span className="sm:hidden">Sort {sortOrder === 'asc' ? '↑' : '↓'}</span>
+              </button>
+              
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={importing}
+                className="flex items-center justify-center gap-2 bg-purple-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 text-sm"
+              >
+                <ArrowUpTrayIcon className="h-4 w-4" />
+                <span className="hidden sm:inline">{importing ? "Importing..." : "Import ICF Spreadsheet"}</span>
+                <span className="sm:hidden">{importing ? "Importing..." : "Import"}</span>
+              </button>
 
-          <button
-            onClick={() => exportSessionsToICFLog(sessions, `ICF-Client-Coaching-Log-${new Date().toISOString().split('T')[0]}`)}
-            className="flex items-center justify-center gap-2 bg-yellow-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors text-sm"
-          >
-            <ArrowDownTrayIcon className="h-4 w-4" />
-            <span className="hidden sm:inline">Export ICF Format</span>
-            <span className="sm:hidden">Export</span>
-          </button>
+              <button
+                onClick={() => exportSessionsToICFLog(sessions, `ICF-Client-Coaching-Log-${new Date().toISOString().split('T')[0]}`)}
+                className="flex items-center justify-center gap-2 bg-yellow-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors text-sm"
+              >
+                <ArrowDownTrayIcon className="h-4 w-4" />
+                <span className="hidden sm:inline">Export ICF Format</span>
+                <span className="sm:hidden">Export</span>
+              </button>
+            </>
+          )}
         </div>
       </div>
 
+      {/* Advanced Search Panel */}
+      {searchOpen && (
+        <div className="fixed inset-0 z-40 bg-gray-800 bg-opacity-75 flex items-start justify-center pt-20">
+          <div className="bg-white rounded-lg shadow-2xl w-full max-w-3xl mx-4">
+            <div className="flex justify-between items-center border-b px-6 py-4">
+              <h2 className="text-xl font-semibold">Advanced Search</h2>
+              <button 
+                onClick={() => setSearchOpen(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Client Name */}
+                <div>
+                  <label htmlFor="clientName" className="block text-sm font-medium text-gray-700 mb-1">
+                    Client Name
+                  </label>
+                  <input
+                    id="clientName"
+                    type="text"
+                    className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Search by client name"
+                    value={searchParams1.clientName}
+                    onChange={(e) => setSearchParams(prev => ({ ...prev, clientName: e.target.value }))}
+                  />
+                </div>
+                
+                {/* Session Type */}
+                <div>
+                  <label htmlFor="sessionType" className="block text-sm font-medium text-gray-700 mb-1">
+                    Session Type
+                  </label>
+                  <input
+                    id="sessionType"
+                    type="text"
+                    className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="e.g. individual, group"
+                    value={searchParams1.type}
+                    onChange={(e) => setSearchParams(prev => ({ ...prev, type: e.target.value }))}
+                  />
+                </div>
+                
+                {/* Date Range */}
+                <div>
+                  <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-1">
+                    Start Date
+                  </label>
+                  <input
+                    id="startDate"
+                    type="date"
+                    className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    value={searchParams1.startDate}
+                    onChange={(e) => setSearchParams(prev => ({ ...prev, startDate: e.target.value }))}
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-1">
+                    End Date
+                  </label>
+                  <input
+                    id="endDate"
+                    type="date"
+                    className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    value={searchParams1.endDate}
+                    onChange={(e) => setSearchParams(prev => ({ ...prev, endDate: e.target.value }))}
+                  />
+                </div>
+                
+                {/* Payment Type */}
+                <div>
+                  <label htmlFor="paymentType" className="block text-sm font-medium text-gray-700 mb-1">
+                    Payment Type
+                  </label>
+                  <select
+                    id="paymentType"
+                    className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    value={searchParams1.paymentType}
+                    onChange={(e) => setSearchParams(prev => ({ ...prev, paymentType: e.target.value }))}
+                  >
+                    <option value="">All Payment Types</option>
+                    <option value="paid">Paid</option>
+                    <option value="proBono">Pro Bono</option>
+                    <option value="paidAndProBono">Paid & Pro Bono</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  onClick={() => {
+                    setSearchParams({
+                      clientName: '',
+                      startDate: '',
+                      endDate: '',
+                      type: '',
+                      paymentType: ''
+                    });
+                  }}
+                  className="px-4 py-2 text-sm text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
+                >
+                  Clear
+                </button>
+                <button
+                  onClick={() => setSearchOpen(false)}
+                  className="px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                >
+                  Apply Filters
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Active Filters Summary */}
+      {(searchParams1.clientName || searchParams1.startDate || searchParams1.endDate || searchParams1.type || searchParams1.paymentType) && (
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-100 rounded-lg">
+          <div className="flex justify-between items-center">
+            <div className="flex-1">
+              <p className="text-sm text-blue-700 font-medium mb-1">Active Filters:</p>
+              <div className="flex flex-wrap gap-2">
+                {searchParams1.clientName && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
+                    Client: {searchParams1.clientName}
+                  </span>
+                )}
+                {searchParams1.type && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
+                    Type: {searchParams1.type}
+                  </span>
+                )}
+                {searchParams1.startDate && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
+                    From: {searchParams1.startDate}
+                  </span>
+                )}
+                {searchParams1.endDate && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
+                    To: {searchParams1.endDate}
+                  </span>
+                )}
+                {searchParams1.paymentType && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
+                    Payment: {searchParams1.paymentType === 'paid' ? 'Paid' : searchParams1.paymentType === 'proBono' ? 'Pro Bono' : 'Paid & Pro Bono'}
+                  </span>
+                )}
+              </div>
+            </div>
+            <button 
+              onClick={() => {
+                setSearchParams({
+                  clientName: '',
+                  startDate: '',
+                  endDate: '',
+                  type: '',
+                  paymentType: ''
+                });
+              }}
+              className="text-blue-600 hover:text-blue-800 text-xs"
+            >
+              Clear All
+            </button>
+          </div>
+        </div>
+      )}
+      
       {importMessage && (
         <div className={`mb-4 p-4 rounded-lg ${
           importMessage.type === 'success' 
@@ -637,8 +1551,9 @@ function SessionsLogContent() {
               </p>
               <ul className="list-disc list-inside text-gray-600 space-y-1 mb-4">
                 <li>Add new sessions to your Sessions Log</li>
+                <li>Automatically add new clients to your client list</li>
                 <li>Create a backup of your existing sessions</li>
-                <li>Not delete any existing sessions</li>
+                <li>Not delete any existing sessions or clients</li>
               </ul>
               <p className="text-sm text-gray-500">
                 <strong>File:</strong> {pendingImportFile?.name}
@@ -668,6 +1583,30 @@ function SessionsLogContent() {
         <div className="text-center py-12">
           <p className="text-gray-500">No sessions logged yet.</p>
         </div>
+      ) : getSortedSessions().length === 0 ? (
+        <div className="text-center py-12 bg-gray-50 rounded-xl border p-6">
+          <div className="mb-4">
+            <svg className="h-12 w-12 text-gray-400 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No matching sessions</h3>
+          <p className="text-gray-500 mb-4">Try adjusting your search criteria</p>
+          <button
+            onClick={() => {
+              setSearchParams({
+                clientName: '',
+                startDate: '',
+                endDate: '',
+                type: '',
+                paymentType: ''
+              });
+            }}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Clear All Filters
+          </button>
+        </div>
       ) : (
         <div className="space-y-4">
           {getSortedSessions().map((session, index) => {
@@ -679,12 +1618,21 @@ function SessionsLogContent() {
               <div 
                 key={session.id} 
                 ref={isHighlighted ? highlightedRef : null}
-                className={`bg-white rounded-xl shadow-lg border transition-all duration-300 cursor-pointer hover:shadow-xl ${
+                className={`bg-white rounded-xl shadow-lg border transition-all duration-300 ${!selectionMode ? 'cursor-pointer' : ''} hover:shadow-xl ${
                   isHighlighted 
                     ? 'ring-4 ring-blue-500 ring-opacity-50 bg-blue-50' 
                     : ''
+                } ${
+                  selectionMode && selectedSessions.has(session.id)
+                    ? 'ring-2 ring-blue-500 bg-blue-50'
+                    : ''
                 }`}
                 onClick={(e) => {
+                  // In selection mode, clicking the card toggles selection
+                  if (selectionMode) {
+                    toggleSessionSelection(session.id);
+                    return;
+                  }
                   console.log('Card clicked, target:', e.target);
                   // Only navigate if the click is not on the client name or edit button
                   const target = (e.target as HTMLElement);
@@ -715,6 +1663,18 @@ function SessionsLogContent() {
               >
                 {/* Compact Header - Always Visible */}
                 <div className="p-4 flex items-center justify-between">
+                  {/* Selection checkbox - only visible in selection mode */}
+                  {selectionMode && (
+                    <div className="mr-3">
+                      <input 
+                        type="checkbox" 
+                        checked={selectedSessions.has(session.id)}
+                        onChange={() => toggleSessionSelection(session.id)}
+                        className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        onClick={(e) => e.stopPropagation()} // Prevent card click handler
+                      />
+                    </div>
+                  )}
                   <div className="flex-1">
                     {/* Client name is a clickable link that opens the client modal */}
                                         <div className="inline-block">
@@ -725,11 +1685,21 @@ function SessionsLogContent() {
                           console.log('Client name clicked:', session.clientName);
                           e.preventDefault();
                           e.stopPropagation(); 
-                          router.push(`/dashboard/clients/${session.clientName}`);
+                          findClientAndNavigate(session.clientName);
                         }}
                       >
                         {session.clientName}
                       </h2>
+                      {session.clientEmail && (
+                        <div className="text-sm text-gray-500 mt-1">
+                          <span className="flex items-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                            {session.clientEmail}
+                          </span>
+                        </div>
+                      )}
                     </div>
                     <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-600 mt-1">
                       <div className="flex items-center gap-4">
@@ -745,10 +1715,16 @@ function SessionsLogContent() {
                       <span className={`px-2 py-1 rounded text-xs font-semibold self-start ${
                         session.paymentType === 'paid' 
                           ? 'bg-green-100 text-green-700' 
-                          : 'bg-blue-100 text-blue-700'
+                          : session.paymentType === 'paidAndProBono'
+                            ? 'bg-purple-100 text-purple-700'
+                            : 'bg-blue-100 text-blue-700'
                       }`}>
-                        {session.paymentType === 'paid' ? 'Paid' : 'Pro Bono'}
-                        {session.paymentAmount && session.paymentType === 'paid' && ` - ${getCurrencySymbol(profile?.currency || 'USD')}${session.paymentAmount}`}
+                        {session.paymentType === 'paid' 
+                          ? 'Paid' 
+                          : session.paymentType === 'paidAndProBono' 
+                            ? 'Paid & ProBono' 
+                            : 'Pro Bono'}
+                        {session.paymentAmount && (session.paymentType === 'paid' || session.paymentType === 'paidAndProBono') && ` - ${formatNumberForDisplay(session.paymentAmount, { country: profile?.country || 'US', currency: profile?.currency || 'USD' }, { style: 'currency' })}`}
                       </span>
                     </div>
                   </div>
@@ -881,7 +1857,23 @@ function SessionsLogContent() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
             <h2 className="text-xl font-bold mb-4 text-red-600">Confirm Deletion</h2>
-            <p className="mb-6">Are you sure you want to delete this session? This action cannot be undone.</p>
+            <p className="mb-4">Are you sure you want to delete this session? This action cannot be undone.</p>
+            
+            <div className="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={deleteClientWithSession}
+                  onChange={(e) => setDeleteClientWithSession(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
+                />
+                <span className="text-sm font-medium">Also delete the client associated with this session</span>
+              </label>
+              <p className="text-xs text-gray-500 mt-2 ml-6">
+                Warning: This will delete the client record associated with this session, including all documents and other sessions for this client.
+              </p>
+            </div>
+            
             <div className="flex justify-end gap-4">
               <button
                 className="px-4 py-2 rounded bg-gray-200 text-gray-700 hover:bg-gray-300"
@@ -896,6 +1888,48 @@ function SessionsLogContent() {
                 disabled={deleting}
               >
                 {deleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Bulk Delete Confirmation Modal */}
+      {showBulkDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
+            <h2 className="text-xl font-bold mb-4 text-red-600">Confirm Bulk Deletion</h2>
+            <p className="mb-4">Are you sure you want to delete {selectedSessions.size} selected sessions? This action cannot be undone.</p>
+            
+            <div className="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={deleteAssociatedClients}
+                  onChange={(e) => setDeleteAssociatedClients(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
+                />
+                <span className="text-sm font-medium">Also delete associated clients</span>
+              </label>
+              <p className="text-xs text-gray-500 mt-2 ml-6">
+                Warning: This will delete all client records associated with these sessions, including any documents and other sessions for those clients.
+              </p>
+            </div>
+            
+            <div className="flex justify-end gap-4">
+              <button
+                className="px-4 py-2 rounded bg-gray-200 text-gray-700 hover:bg-gray-300"
+                onClick={handleBulkDeleteCancel}
+                disabled={bulkDeleting}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700"
+                onClick={handleBulkDeleteConfirm}
+                disabled={bulkDeleting}
+              >
+                {bulkDeleting ? 'Deleting...' : `Delete ${selectedSessions.size} Sessions`}
               </button>
             </div>
           </div>

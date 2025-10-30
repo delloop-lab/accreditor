@@ -1,0 +1,16 @@
+# Environment Variables Setup Instructions
+
+Create a file named '.env.local' in this directory with the following content:
+
+```
+# Supabase configuration
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
+
+# Case sensitivity settings (to prevent issues on Windows)
+NEXT_IGNORE_INCORRECT_CASE_IN_IMPORTS=true
+NODE_PATH=.
+```
+
+Replace the placeholder values with your actual Supabase credentials.
+If you don't have these credentials, you can get them from your Supabase project dashboard.

@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import { updateLastEntryDate, useDatePickerDefault } from "@/lib/dateUtils";
+import { parseNumberFromLocale, parseNumberWithCurrency, formatNumberForDisplay, getNumberInputPlaceholder, LocaleInfo } from "@/lib/numberUtils";
 
 const COACHING_TYPES = [
   { label: "Individual", value: "individual" },
@@ -35,7 +37,7 @@ export type SessionData = {
   duration?: number;
   types: string[];
   numberInGroup?: number;
-  paymentType: "paid" | "proBono";
+  paymentType: "paid" | "proBono" | "paidAndProBono";
   paymentAmount?: number | null;
   focusArea: string;
   keyOutcomes: string;
@@ -58,6 +60,9 @@ export default function SessionForm({
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [userCurrency, setUserCurrency] = useState("USD");
+  const [userCountry, setUserCountry] = useState("US");
+  const [paymentAmountError, setPaymentAmountError] = useState<string | null>(null);
+  const datePickerProps = useDatePickerDefault();
   const [clientId, setClientId] = useState("");
   const [clientName, setClientName] = useState("");
   const [date, setDate] = useState("");
@@ -65,7 +70,7 @@ export default function SessionForm({
   const [duration, setDuration] = useState("");
   const [types, setTypes] = useState<string[]>([]);
   const [numberInGroup, setNumberInGroup] = useState("1");
-  const [paymentType, setPaymentType] = useState<"paid" | "proBono">("paid");
+  const [paymentType, setPaymentType] = useState<"paid" | "proBono" | "paidAndProBono">("paid");
   const [paymentAmount, setPaymentAmount] = useState("");
   const [focusArea, setFocusArea] = useState("");
   const [keyOutcomes, setKeyOutcomes] = useState("");
@@ -105,15 +110,20 @@ export default function SessionForm({
           return;
         }
 
-        // Fetch user profile to get currency preference
+        // Fetch user profile to get currency and country preferences
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
-          .select("currency")
+          .select("currency, country")
           .eq("user_id", user.id)
           .single();
 
-        if (!profileError && profileData?.currency) {
-          setUserCurrency(profileData.currency);
+        if (!profileError && profileData) {
+          if (profileData.currency) {
+            setUserCurrency(profileData.currency);
+          }
+          if (profileData.country) {
+            setUserCountry(profileData.country);
+          }
         }
 
         // Fetch clients
@@ -148,7 +158,7 @@ export default function SessionForm({
       setTypes(initialData.types);
       setNumberInGroup(initialData.numberInGroup?.toString() || "1");
       setPaymentType(initialData.paymentType);
-      setPaymentAmount(initialData.paymentAmount?.toString() || "");
+      setPaymentAmount(initialData.paymentAmount ? formatNumberForDisplay(initialData.paymentAmount, { country: userCountry, currency: userCurrency }, { style: 'decimal' }) : "");
       setFocusArea(initialData.focusArea);
       setKeyOutcomes(initialData.keyOutcomes);
       setClientProgress(initialData.clientProgress);
@@ -205,6 +215,31 @@ export default function SessionForm({
     setCoachingTools(prev => prev.filter(t => t !== tool));
   };
 
+  const handlePaymentAmountChange = (value: string) => {
+    setPaymentAmount(value);
+    setPaymentAmountError(null);
+  };
+
+  const handlePaymentAmountBlur = () => {
+    if (paymentAmount.trim() === '') {
+      setPaymentAmountError(null);
+      return;
+    }
+
+    const localeInfo: LocaleInfo = { country: userCountry, currency: userCurrency };
+    const result = parseNumberWithCurrency(paymentAmount, localeInfo);
+    
+    if (result.error) {
+      setPaymentAmountError(result.error);
+    } else {
+      setPaymentAmountError(null);
+      if (result.value !== null) {
+        // Update the display value to show the normalized format
+        setPaymentAmount(formatNumberForDisplay(result.value, localeInfo, { style: 'decimal' }));
+      }
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Form submission - clientId:', clientId, 'clientName:', clientName, 'date:', date, 'types:', types);
@@ -214,6 +249,19 @@ export default function SessionForm({
       return;
     }
     
+    // Update the last entry date in localStorage when submitting a new entry
+    updateLastEntryDate(date);
+    
+    // Parse payment amount using locale-aware parsing
+    let parsedPaymentAmount: number | null = null;
+    if (paymentAmount && paymentAmount.trim() !== '') {
+      const localeInfo: LocaleInfo = { country: userCountry, currency: userCurrency };
+      const result = parseNumberWithCurrency(paymentAmount, localeInfo);
+      if (result.value !== null && !result.error) {
+        parsedPaymentAmount = result.value;
+      }
+    }
+
     const sessionData = {
       clientId,
       clientName,
@@ -223,7 +271,7 @@ export default function SessionForm({
       types,
       numberInGroup: numberInGroup ? Number(numberInGroup) : 1,
       paymentType,
-      paymentAmount: paymentAmount && paymentAmount.trim() !== '' ? Number(paymentAmount) : null,
+      paymentAmount: parsedPaymentAmount,
       focusArea,
       keyOutcomes,
       clientProgress,
@@ -307,7 +355,14 @@ export default function SessionForm({
         </div>
         <div>
           <label className="block font-medium mb-1">Session Date *</label>
-          <input type="date" className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={date} onChange={e => setDate(e.target.value)} required />
+          <input 
+            type="date" 
+            className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+            value={date} 
+            onChange={e => setDate(e.target.value)}
+            onFocus={datePickerProps.onFocus}
+            required 
+          />
         </div>
         <div>
           <label className="block font-medium mb-1">Session Type *</label>
@@ -324,7 +379,13 @@ export default function SessionForm({
         </div>
         <div>
           <label className="block font-medium mb-1">Finish Date</label>
-          <input type="date" className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={finishDate} onChange={e => setFinishDate(e.target.value)} />
+          <input 
+            type="date" 
+            className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+            value={finishDate} 
+            onChange={e => setFinishDate(e.target.value)}
+            onFocus={datePickerProps.onFocus}
+          />
           <p className="text-xs text-gray-500 mt-1">For individual sessions, automatically matches session date</p>
         </div>
         <div>
@@ -340,23 +401,29 @@ export default function SessionForm({
         </div>
         <div>
           <label className="block font-medium mb-1">Payment Type</label>
-          <select className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={paymentType} onChange={e => setPaymentType(e.target.value as "paid" | "proBono")}> 
+          <select className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={paymentType} onChange={e => setPaymentType(e.target.value as "paid" | "proBono" | "paidAndProBono")}> 
             <option value="paid">Paid</option>
             <option value="proBono">Pro Bono</option>
+            <option value="paidAndProBono">Paid & ProBono</option>
           </select>
         </div>
-        {paymentType === "paid" && (
+        {(paymentType === "paid" || paymentType === "paidAndProBono") && (
           <div>
             <label className="block font-medium mb-1">Payment Amount ({getCurrencySymbol(userCurrency)})</label>
             <input 
-              type="number" 
-              min="0" 
-              step="0.01" 
-              className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+              type="text" 
+              inputMode="decimal"
+              className={`w-full border rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                paymentAmountError ? 'border-red-500' : 'border-gray-400'
+              }`}
               value={paymentAmount} 
-              onChange={e => setPaymentAmount(e.target.value)} 
-              placeholder="0.00"
+              onChange={e => handlePaymentAmountChange(e.target.value)}
+              onBlur={handlePaymentAmountBlur}
+              placeholder={getNumberInputPlaceholder({ country: userCountry, currency: userCurrency })}
             />
+            {paymentAmountError && (
+              <p className="text-red-500 text-sm mt-1">{paymentAmountError}</p>
+            )}
           </div>
         )}
       </div>

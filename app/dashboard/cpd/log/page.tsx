@@ -17,10 +17,15 @@ type CPDEntry = {
   keyLearnings: string;
   applicationToPractice: string;
   icfCompetencies: string[];
-  documentType?: string;
-  supportingDocument?: string;
+  documentType: string;
+  supportingDocument: string;
   certificateProof?: string; // Keep for backward compatibility
   user_id: string;
+  // ICF category fields
+  coreCompetency: boolean;
+  resourceDevelopment: boolean;
+  coreCompetencyHours: number;
+  resourceDevelopmentHours: number;
 };
 
 function CPDLogContent() {
@@ -109,8 +114,15 @@ function CPDLogContent() {
             keyLearnings: item.key_learnings || "",
             applicationToPractice: item.application_to_practice || "",
             icfCompetencies: Array.isArray(item.icf_competencies) ? item.icf_competencies : [],
-            certificateProof: item.certificate_proof || "",
+            documentType: item.document_type || "",
+            supportingDocument: item.supporting_document || "",
+            certificateProof: item.certificate_proof || "", // Keep for backward compatibility
             user_id: item.user_id || "",
+            // ICF category fields
+            coreCompetency: item.core_competency || false,
+            resourceDevelopment: item.resource_development || false,
+            coreCompetencyHours: item.core_competency_hours || 0,
+            resourceDevelopmentHours: item.resource_development_hours || 0,
           }));
           setCpdEntries(mapped);
         } else {
@@ -186,54 +198,89 @@ function CPDLogContent() {
                     <div className="flex-1">
                       <h2 className="text-lg font-bold text-gray-900">{entry.title}</h2>
                       <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-600 mt-1">
-                        <div className="flex items-center gap-4">
+                        <div className="flex flex-wrap items-center gap-4">
+                          {/* Date */}
                           <span className="flex items-center gap-1">
                             <CalendarIcon className="h-4 w-4" />
                             {new Date(entry.date).toLocaleDateString()}
                           </span>
+                          
+                          {/* Hours */}
                           <span className="flex items-center gap-1">
                             <ClockIcon className="h-4 w-4" />
                             {entry.hours}h
                           </span>
+                          
+                          {/* Provider */}
+                          {entry.providerOrganization && (
+                            <span className="flex items-center gap-1">
+                              <BuildingOfficeIcon className="h-4 w-4" />
+                              {entry.providerOrganization}
+                            </span>
+                          )}
                         </div>
-                        <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs font-semibold self-start">
-                          {entry.cpdType}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                      <div className="text-sm text-gray-600 order-3 sm:order-1">
-                        {entry.providerOrganization}
-                      </div>
-                      <div className="flex items-center gap-2 order-1 sm:order-2">
-                        {(entry.supportingDocument || entry.certificateProof) && (
-                          <a 
-                            href={entry.supportingDocument || entry.certificateProof} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm font-medium"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <DocumentIcon className="h-4 w-4" />
-                            <span className="hidden sm:inline">{entry.documentType || "Document"}</span>
-                            <span className="sm:hidden">Doc</span>
-                          </a>
+                        
+                        {/* Type Badge */}
+                        {entry.cpdType && (
+                          <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs font-semibold self-start">
+                            {entry.cpdType}
+                          </span>
                         )}
                         
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            router.push(`/dashboard/cpd/edit/${entry.id}`);
-                          }}
-                          className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
-                          title="Edit CPD"
-                        >
-                          <PencilIcon className="h-4 w-4" />
-                        </button>
-                        
-                        <div className="text-gray-400 p-1">
-                          {isExpanded ? '▼' : '▶'}
+                        {/* ICF Category Badges */}
+                        <div className="flex flex-wrap gap-1">
+                          {entry.coreCompetency && (
+                            <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-semibold">
+                              Core: {entry.coreCompetencyHours}h
+                            </span>
+                          )}
+                          {entry.resourceDevelopment && (
+                            <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-semibold">
+                              Resource: {entry.resourceDevelopmentHours}h
+                            </span>
+                          )}
                         </div>
+                      </div>
+                      
+                      {/* Description Preview */}
+                      {entry.description && !isExpanded && (
+                        <p className="text-sm text-gray-500 mt-1 line-clamp-1">
+                          {entry.description}
+                        </p>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      {/* Document Link */}
+                      {(entry.supportingDocument || entry.certificateProof) && (
+                        <a 
+                          href={entry.supportingDocument || entry.certificateProof} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm font-medium"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <DocumentIcon className="h-4 w-4" />
+                          <span className="hidden sm:inline">{entry.documentType || "Document"}</span>
+                          <span className="sm:hidden">Doc</span>
+                        </a>
+                      )}
+                      
+                      {/* Edit Button */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/dashboard/cpd/edit/${entry.id}`);
+                        }}
+                        className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                        title="Edit CPD"
+                      >
+                        <PencilIcon className="h-4 w-4" />
+                      </button>
+                      
+                      {/* Expand/Collapse Indicator */}
+                      <div className="text-gray-400 p-1">
+                        {isExpanded ? '▼' : '▶'}
                       </div>
                     </div>
                   </div>
@@ -293,6 +340,36 @@ function CPDLogContent() {
                         ) : (
                           <p className="text-gray-500 text-sm">No application to practice specified</p>
                         )}
+                      </div>
+
+                      {/* ICF Categories */}
+                      <div>
+                        <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                          <CheckCircleIcon className="h-4 w-4 text-purple-600" />
+                          ICF Categories
+                        </h3>
+                        <div className="flex flex-wrap gap-3 bg-white p-3 rounded border">
+                          {(entry.coreCompetency || entry.resourceDevelopment) ? (
+                            <>
+                              {entry.coreCompetency && (
+                                <div className="flex items-center gap-2">
+                                  <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
+                                    Core Competency: {entry.coreCompetencyHours}h
+                                  </span>
+                                </div>
+                              )}
+                              {entry.resourceDevelopment && (
+                                <div className="flex items-center gap-2">
+                                  <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">
+                                    Resource Development: {entry.resourceDevelopmentHours}h
+                                  </span>
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            <span className="text-gray-500 text-sm">No ICF categories specified</span>
+                          )}
+                        </div>
                       </div>
 
                       {/* ICF Competencies */}

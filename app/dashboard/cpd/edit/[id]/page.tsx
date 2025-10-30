@@ -51,6 +51,11 @@ export default function EditCPDPage() {
             icfCompetencies: Array.isArray(data.icf_competencies) ? data.icf_competencies : [],
             documentType: data.document_type || '',
             supportingDocument: data.supporting_document || data.certificate_proof || '',
+            // ICF category fields
+            coreCompetency: data.core_competency || false,
+            resourceDevelopment: data.resource_development || false,
+            coreCompetencyHours: data.core_competency_hours || 0,
+            resourceDevelopmentHours: data.resource_development_hours || 0,
           };
           setCpdData(transformedData);
         }
@@ -154,8 +159,13 @@ export default function EditCPDPage() {
           application_to_practice: updatedData.applicationToPractice,
           icf_competencies: updatedData.icfCompetencies,
           document_type: updatedData.documentType,
-          supporting_document: documentUrl,
-          certificate_proof: documentUrl, // Keep for backward compatibility
+          supporting_document: documentUrl || updatedData.supportingDocument,
+          certificate_proof: documentUrl || updatedData.supportingDocument, // Keep for backward compatibility
+          // ICF category fields
+          core_competency: updatedData.coreCompetency,
+          resource_development: updatedData.resourceDevelopment,
+          core_competency_hours: updatedData.coreCompetencyHours,
+          resource_development_hours: updatedData.resourceDevelopmentHours,
           updated_at: new Date().toISOString(),
         })
         .eq("id", cpdId)

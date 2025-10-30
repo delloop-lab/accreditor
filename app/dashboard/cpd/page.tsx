@@ -23,22 +23,27 @@ export default function CPDPage() {
         .eq("user_id", user.id)
         .order("activity_date", { ascending: false });
       if (!error && data) {
-        // Map snake_case to camelCase
+        // Map snake_case to camelCase with consistent field handling
         const mapped = data.map((item: any) => ({
-          title: item.title,
-          activityDate: item.activity_date,
-          hours: item.hours,
-          cpdType: item.cpd_type,
-          learningMethod: item.learning_method,
-          providerOrganization: item.provider_organization,
-          description: item.description,
-          keyLearnings: item.key_learnings,
-          applicationToPractice: item.application_to_practice,
-          icfCompetencies: item.icf_competencies,
-          documentType: item.document_type || "Certificate",
-          supportingDocument: item.supporting_document || item.certificate_proof,
-          user_id: item.user_id,
           id: item.id,
+          title: item.title || "",
+          activityDate: item.activity_date || "",
+          hours: item.hours || 0,
+          cpdType: item.cpd_type || "",
+          learningMethod: item.learning_method || "",
+          providerOrganization: item.provider_organization || "",
+          description: item.description || "",
+          keyLearnings: item.key_learnings || "",
+          applicationToPractice: item.application_to_practice || "",
+          icfCompetencies: Array.isArray(item.icf_competencies) ? item.icf_competencies : [],
+          documentType: item.document_type || "Certificate",
+          supportingDocument: item.supporting_document || item.certificate_proof || "",
+          // ICF category fields
+          coreCompetency: item.core_competency || false,
+          resourceDevelopment: item.resource_development || false,
+          coreCompetencyHours: item.core_competency_hours || 0,
+          resourceDevelopmentHours: item.resource_development_hours || 0,
+          user_id: item.user_id,
         }));
         setCPD(mapped);
       }
@@ -162,11 +167,43 @@ export default function CPDPage() {
         document_type: data.documentType || "Certificate",
         supporting_document: documentUrl || "",
         certificate_proof: documentUrl || "", // Keep for backward compatibility
+        
+        // ICF category fields
+        core_competency: data.coreCompetency || false,
+        resource_development: data.resourceDevelopment || false,
+        core_competency_hours: data.coreCompetencyHours || 0,
+        resource_development_hours: data.resourceDevelopmentHours || 0,
+        
         user_id: user.id
       }])
       .select()
       .single();
-    if (!error && newCPD) setCPD(prev => [newCPD, ...prev]);
+    if (!error && newCPD) {
+      // Map the newly created CPD entry to match the format expected by CPDList
+      const mappedNewCPD = {
+        id: newCPD.id,
+        title: newCPD.title || "",
+        activityDate: newCPD.activity_date || "",
+        hours: newCPD.hours || 0,
+        cpdType: newCPD.cpd_type || "",
+        learningMethod: newCPD.learning_method || "",
+        providerOrganization: newCPD.provider_organization || "",
+        description: newCPD.description || "",
+        keyLearnings: newCPD.key_learnings || "",
+        applicationToPractice: newCPD.application_to_practice || "",
+        icfCompetencies: Array.isArray(newCPD.icf_competencies) ? newCPD.icf_competencies : [],
+        documentType: newCPD.document_type || "",
+        supportingDocument: newCPD.supporting_document || "",
+        // ICF category fields
+        coreCompetency: newCPD.core_competency || false,
+        resourceDevelopment: newCPD.resource_development || false,
+        coreCompetencyHours: newCPD.core_competency_hours || 0,
+        resourceDevelopmentHours: newCPD.resource_development_hours || 0,
+        user_id: newCPD.user_id,
+      };
+      
+      setCPD(prev => [mappedNewCPD, ...prev]);
+    }
   };
 
   // Delete CPD from Supabase

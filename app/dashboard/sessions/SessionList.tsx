@@ -1,7 +1,8 @@
 "use client";
 import { SessionData } from "./SessionForm";
+import { formatNumberForDisplay, LocaleInfo } from "@/lib/numberUtils";
 
-export default function SessionList({ sessions, onDelete, onCardClick }: { sessions: SessionData[]; onDelete: (idx: number) => void; onCardClick?: (idx: number) => void }) {
+export default function SessionList({ sessions, onDelete, onCardClick, profile }: { sessions: SessionData[]; onDelete: (idx: number) => void; onCardClick?: (idx: number) => void; profile?: any }) {
   if (sessions.length === 0) {
     return <div className="text-gray-500 text-center mt-8">No sessions logged yet.</div>;
   }
@@ -19,7 +20,7 @@ export default function SessionList({ sessions, onDelete, onCardClick }: { sessi
             <div className="text-sm text-gray-500">Type: {session.types?.join(", ") || "Not specified"}</div>
             <div className="text-sm text-gray-500">
               Payment: {session.paymentType === "paid" ? "Paid" : "Pro Bono"}
-              {session.paymentAmount && session.paymentType === "paid" && ` - $${session.paymentAmount}`}
+              {session.paymentAmount && session.paymentType === "paid" && ` - ${formatNumberForDisplay(session.paymentAmount, { country: profile?.country || 'US', currency: profile?.currency || 'USD' }, { style: 'currency' })}`}
             </div>
             {session.focusArea && <div className="text-sm text-gray-600 mt-1">Focus: {session.focusArea}</div>}
             {session.keyOutcomes && <div className="text-sm text-gray-600">Outcomes: {session.keyOutcomes}</div>}

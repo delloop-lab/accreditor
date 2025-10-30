@@ -188,7 +188,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           
           {/* Version Number */}
           <div className="text-center mt-4 pb-2">
-            <span className="text-xs text-gray-400 font-mono">BETA V0.9.465</span>
+            <span className="text-xs text-gray-400 font-mono">BETA V0.9.500</span>
           </div>
         </nav>
       </aside>
@@ -235,28 +235,28 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 <Link 
                   href="/landing"
                   onClick={closeMobileMenu}
-                  className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 w-full text-left transition-colors text-sm"
+                  className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 text-gray-800 w-full text-left transition-colors text-sm"
                 >
                   <HomeIcon className="h-4 w-4 text-green-600" /> Home
                 </Link>
                 <Link 
                   href="/dashboard"
                   onClick={closeMobileMenu}
-                  className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 w-full text-left transition-colors text-sm"
+                  className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 text-gray-800 w-full text-left transition-colors text-sm"
                 >
                   <ChartBarIcon className="h-4 w-4 text-blue-600" /> Dashboard
                 </Link>
                 <Link 
                   href="/dashboard/profile" 
                   onClick={closeMobileMenu}
-                  className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 w-full text-left transition-colors text-sm"
+                  className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 text-gray-800 w-full text-left transition-colors text-sm"
                 >
                   <UserIcon className="h-4 w-4 text-purple-600" /> Profile
                 </Link>
                 <Link 
                   href="/dashboard/clients" 
                   onClick={closeMobileMenu}
-                  className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 w-full text-left transition-colors text-sm"
+                  className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 text-gray-800 w-full text-left transition-colors text-sm"
                 >
                   <UserGroupIcon className="h-4 w-4 text-orange-600" /> Clients
                 </Link>
@@ -265,14 +265,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 <Link 
                   href="/dashboard/sessions" 
                   onClick={closeMobileMenu}
-                  className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 w-full text-left transition-colors text-sm"
+                  className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 text-gray-800 w-full text-left transition-colors text-sm"
                 >
                   <ClockIcon className="h-4 w-4 text-teal-600" /> Coaching Sessions
                 </Link>
                 <Link 
                   href="/dashboard/sessions/log" 
                   onClick={closeMobileMenu}
-                  className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 w-full text-left transition-colors text-sm ml-4"
+                  className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 text-gray-800 w-full text-left transition-colors text-sm ml-4"
                 >
                   <ClipboardDocumentListIcon className="h-4 w-4 text-teal-500" /> Sessions Log
                 </Link>
@@ -281,14 +281,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 <Link 
                   href="/dashboard/cpd" 
                   onClick={closeMobileMenu}
-                  className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 w-full text-left transition-colors text-sm"
+                  className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 text-gray-800 w-full text-left transition-colors text-sm"
                 >
                   <AcademicCapIcon className="h-4 w-4 text-indigo-600" /> CPD Learning
                 </Link>
                 <Link 
                   href="/dashboard/cpd/log" 
                   onClick={closeMobileMenu}
-                  className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 w-full text-left transition-colors text-sm ml-4"
+                  className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 text-gray-800 w-full text-left transition-colors text-sm ml-4"
                 >
                   <DocumentTextIcon className="h-4 w-4 text-indigo-500" /> CPD Log
                 </Link>
@@ -297,14 +297,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 <Link 
                   href="/dashboard/mentoring" 
                   onClick={closeMobileMenu}
-                  className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 w-full text-left transition-colors text-sm"
+                  className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 text-gray-800 w-full text-left transition-colors text-sm"
                 >
                   <AcademicCapIcon className="h-4 w-4 text-purple-600" /> Mentoring/Supervision
                 </Link>
                                 <Link 
                   href="/dashboard/mentoring/log"
                   onClick={closeMobileMenu}
-                  className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 w-full text-left transition-colors text-sm ml-4"
+                  className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 text-gray-800 w-full text-left transition-colors text-sm ml-4"
                 >
                   <DocumentTextIcon className="h-4 w-4 text-purple-500" /> Sessions Log
                 </Link>
@@ -312,7 +312,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 <Link 
                   href="/dashboard/reports" 
                   onClick={closeMobileMenu}
-                  className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 w-full text-left transition-colors text-sm"
+                  className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 text-gray-800 w-full text-left transition-colors text-sm"
                 >
                   <PresentationChartLineIcon className="h-4 w-4 text-emerald-600" /> Reports
                 </Link>
@@ -323,14 +323,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                     <Link 
                       href="/dashboard/admin" 
                       onClick={closeMobileMenu}
-                      className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 w-full text-left transition-colors text-sm"
+                      className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 text-gray-800 w-full text-left transition-colors text-sm"
                     >
                       <ViewColumnsIcon className="h-4 w-4 text-red-600" /> Admin Panel
                     </Link>
                     <Link 
                       href="/dashboard/admin/subscriptions" 
                       onClick={closeMobileMenu}
-                      className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 w-full text-left transition-colors text-sm"
+                      className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 text-gray-800 w-full text-left transition-colors text-sm"
                     >
                       <CreditCardIcon className="h-4 w-4 text-purple-600" /> Subscriptions
                     </Link>

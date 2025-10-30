@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { AcademicCapIcon, ArrowUpTrayIcon } from "@heroicons/react/24/outline";
+import { updateLastEntryDate, useDatePickerDefault } from "@/lib/dateUtils";
 
 const CPD_TYPES = [
   "Workshop",
@@ -56,6 +57,11 @@ export type CPDData = {
   icfCompetencies: string[];
   documentType: string;
   supportingDocument: File | string; // Can be File object or URL string
+  // ICF category fields
+  coreCompetency: boolean;
+  resourceDevelopment: boolean;
+  coreCompetencyHours: number;
+  resourceDevelopmentHours: number;
 };
 
 export default function CPDForm({ 
@@ -67,9 +73,10 @@ export default function CPDForm({
   initialData?: CPDData;
   isEditing?: boolean;
 }) {
+  const datePickerProps = useDatePickerDefault();
   const [title, setTitle] = useState("");
   const [activityDate, setActivityDate] = useState("");
-  const [hours, setHours] = useState("2.5");
+  const [hours, setHours] = useState("");
   const [cpdType, setCpdType] = useState("");
   const [learningMethod, setLearningMethod] = useState("");
   const [providerOrganization, setProviderOrganization] = useState("");
@@ -80,6 +87,13 @@ export default function CPDForm({
   const [documentType, setDocumentType] = useState("");
   const [supportingDocument, setSupportingDocument] = useState<File | string>("");
   const [showAdvanced, setShowAdvanced] = useState(false);
+  
+  // ICF category states
+  const [coreCompetency, setCoreCompetency] = useState(true); // Default to Core Competency
+  const [resourceDevelopment, setResourceDevelopment] = useState(false);
+  const [coreCompetencyHours, setCoreCompetencyHours] = useState("");
+  const [resourceDevelopmentHours, setResourceDevelopmentHours] = useState("");
+
 
   // Populate form with initial data when editing
   useEffect(() => {
@@ -96,8 +110,68 @@ export default function CPDForm({
       setIcfCompetencies(initialData.icfCompetencies);
       setDocumentType(initialData.documentType);
       setSupportingDocument(initialData.supportingDocument);
+      
+      // ICF category fields
+      if (initialData.coreCompetency !== undefined) {
+        setCoreCompetency(initialData.coreCompetency);
+      }
+      if (initialData.resourceDevelopment !== undefined) {
+        setResourceDevelopment(initialData.resourceDevelopment);
+      }
+      if (initialData.coreCompetencyHours !== undefined) {
+        setCoreCompetencyHours(initialData.coreCompetencyHours.toString());
+      }
+      if (initialData.resourceDevelopmentHours !== undefined) {
+        setResourceDevelopmentHours(initialData.resourceDevelopmentHours.toString());
+      }
     }
   }, [initialData, isEditing]);
+
+  // Update hours distribution when total hours or categories change
+  useEffect(() => {
+    const totalHours = parseFloat(hours) || 0;
+    
+    // If only one category is selected, all hours go to that category
+    if (coreCompetency && !resourceDevelopment) {
+      setCoreCompetencyHours(hours);
+      setResourceDevelopmentHours("");
+    } else if (!coreCompetency && resourceDevelopment) {
+      setCoreCompetencyHours("");
+      setResourceDevelopmentHours(hours);
+    } 
+    // If both categories are selected but no distribution set yet, split hours equally
+    else if (coreCompetency && resourceDevelopment) {
+      const halfHours = (totalHours / 2).toFixed(1);
+      
+      // Only auto-split if user hasn't manually set values
+      if (!coreCompetencyHours && !resourceDevelopmentHours) {
+        setCoreCompetencyHours(halfHours);
+        setResourceDevelopmentHours(halfHours);
+      }
+    }
+    // If no categories selected, clear hours
+    else {
+      setCoreCompetencyHours("");
+      setResourceDevelopmentHours("");
+    }
+  }, [hours, coreCompetency, resourceDevelopment]);
+  
+  // Validate that split hours don't exceed total hours
+  useEffect(() => {
+    const totalHours = parseFloat(hours) || 0;
+    const coreHours = parseFloat(coreCompetencyHours) || 0;
+    const resourceHours = parseFloat(resourceDevelopmentHours) || 0;
+    
+    // If sum exceeds total, adjust the last changed value
+    if (coreHours + resourceHours > totalHours) {
+      // Determine which was changed last and adjust it
+      // This is a simplification - in a real app you might track which field changed last
+      if (coreCompetency && resourceDevelopment) {
+        const maxAllowed = Math.max(0, totalHours - resourceHours);
+        setCoreCompetencyHours(maxAllowed.toFixed(1));
+      }
+    }
+  }, [hours, coreCompetencyHours, resourceDevelopmentHours]);
 
   const handleCompetencyChange = (competency: string) => {
     setIcfCompetencies(prev =>
@@ -110,6 +184,29 @@ export default function CPDForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !activityDate || !hours || !cpdType) return;
+    
+    // Validate that at least one category is selected
+    if (!coreCompetency && !resourceDevelopment) {
+      alert("Please select at least one ICF category (Core Competency or Resource Development)");
+      return;
+    }
+    
+    // Validate that hours are distributed correctly when both categories are selected
+    if (coreCompetency && resourceDevelopment) {
+      const totalHours = parseFloat(hours) || 0;
+      const coreHours = parseFloat(coreCompetencyHours) || 0;
+      const resourceHours = parseFloat(resourceDevelopmentHours) || 0;
+      
+      // Check if hours add up correctly
+      if (Math.abs((coreHours + resourceHours) - totalHours) > 0.01) { // Using small epsilon for float comparison
+        alert("The sum of Core Competency and Resource Development hours must equal the total hours");
+        return;
+      }
+    }
+    
+    // Update the last entry date in localStorage when submitting a new entry
+    updateLastEntryDate(activityDate);
+    
     onSubmit({
       title,
       activityDate,
@@ -123,10 +220,17 @@ export default function CPDForm({
       icfCompetencies,
       documentType,
       supportingDocument,
+      // ICF category fields
+      coreCompetency,
+      resourceDevelopment,
+      coreCompetencyHours: coreCompetency ? Number(coreCompetencyHours) || Number(hours) : 0,
+      resourceDevelopmentHours: resourceDevelopment ? Number(resourceDevelopmentHours) || Number(hours) : 0,
     });
+    
+    // Reset form fields
     setTitle("");
     setActivityDate("");
-    setHours("2.5");
+    setHours("");
     setCpdType("");
     setLearningMethod("");
     setProviderOrganization("");
@@ -136,6 +240,11 @@ export default function CPDForm({
     setIcfCompetencies([]);
     setDocumentType("");
     setSupportingDocument("");
+    // Reset ICF category fields
+    setCoreCompetency(true);
+    setResourceDevelopment(false);
+    setCoreCompetencyHours("");
+    setResourceDevelopmentHours("");
   };
 
   return (
@@ -176,7 +285,8 @@ export default function CPDForm({
             type="date" 
             className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
             value={activityDate} 
-            onChange={e => setActivityDate(e.target.value)} 
+            onChange={e => setActivityDate(e.target.value)}
+            onFocus={datePickerProps.onFocus}
             required 
           />
         </div>
@@ -187,11 +297,66 @@ export default function CPDForm({
             min="0.1" 
             step="0.1" 
             className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+            placeholder="e.g. 1.5"
             value={hours} 
             onChange={e => setHours(e.target.value)} 
             required
           />
         </div>
+        
+        {/* ICF Category Selection */}
+        <div>
+          <label className="block font-medium mb-2">ICF Category *</label>
+          <div className="flex flex-col gap-2">
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={coreCompetency}
+                onChange={e => setCoreCompetency(e.target.checked)}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span>Core Competency</span>
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={resourceDevelopment}
+                onChange={e => setResourceDevelopment(e.target.checked)}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span>Resource Development</span>
+            </label>
+          </div>
+        </div>
+        
+        {/* Hours Distribution - Only show when both categories are selected */}
+        {coreCompetency && resourceDevelopment && (
+          <>
+            <div>
+              <label className="block font-medium mb-1">Core Competency Hours</label>
+              <input 
+                type="number" 
+                min="0" 
+                step="0.1" 
+                className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                value={coreCompetencyHours} 
+                onChange={e => setCoreCompetencyHours(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block font-medium mb-1">Resource Development Hours</label>
+              <input 
+                type="number" 
+                min="0" 
+                step="0.1" 
+                className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                value={resourceDevelopmentHours} 
+                onChange={e => setResourceDevelopmentHours(e.target.value)}
+              />
+              <p className="text-xs text-gray-500 mt-1">Total hours must equal {hours}</p>
+            </div>
+          </>
+        )}
         <div>
           <label className="block font-medium mb-1">CPD Type *</label>
           <select 

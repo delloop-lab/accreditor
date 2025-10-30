@@ -60,25 +60,16 @@ export default function LandingPage() {
     <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex flex-col items-center justify-start p-4 sm:p-6 md:p-8 text-gray-900">
       {/* Mobile Header */}
       <header className="md:hidden bg-white md:bg-white/90 md:backdrop-blur-sm shadow-sm border-b border-gray-200 px-4 py-4 mb-4 rounded-lg w-full">
-        <div className="flex items-center justify-between">
-          <div className="flex-1 flex justify-center">
-            <img
-              src="/icfLOGO4.png"
-              alt="ICF Log"
-              className="h-40 w-auto"
-            />
-          </div>
-          <button
-            onClick={() => setIsMobileMenuOpen(true)}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors absolute right-4"
-            aria-label="Open menu"
-          >
-            <Bars3Icon className="h-8 w-8 text-gray-700" />
-          </button>
+        <div className="flex items-center justify-center">
+          <img
+            src="/icfLOGO4.png"
+            alt="ICF Log"
+            className="h-40 w-auto"
+          />
         </div>
       </header>
 
-      {/* Mobile Title and Special Launch Offer */}
+      {/* Mobile Title */}
       <div className="md:hidden w-full max-w-4xl text-center mb-4 px-4">
         <p className="text-lg text-gray-600 font-medium mb-2">
           Track your ICF Credentialing requirements in one place with ease.
@@ -86,170 +77,48 @@ export default function LandingPage() {
         <p className="text-base text-gray-700 leading-relaxed mb-4">
           Support your coaching practice and maintain your ICF credentials.
         </p>
-        
-        {/* Mobile Special Launch Offer */}
-        <div className="bg-white md:bg-white/80 md:backdrop-blur-sm rounded-xl shadow-lg p-3 border border-gray-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 mx-auto max-w-md">
-          <div className="text-center">
-            <button
-              onClick={() => setShowOfferModal(true)}
-              className="bg-gradient-to-r from-green-600 to-blue-600 text-white py-1.5 sm:py-2 px-4 sm:px-5 rounded-lg text-sm font-semibold hover:from-green-700 hover:to-blue-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-            >
-              Special Launch Offer
-            </button>
-          </div>
-        </div>
       </div>
-
-      {/* Mobile Menu Overlay */}
-      {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-50 md:hidden">
-          {/* Backdrop */}
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-50"
-            onClick={closeMobileMenu}
-          />
-          
-          {/* Menu Panel */}
-          <div className="relative flex flex-col w-80 h-full bg-white shadow-xl">
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-emerald-50 to-blue-50">
-              <div className="flex items-center gap-3">
-                <img
-                  src="/icfLOGO4.png"
-                  alt="ICF Log"
-                  className="h-12 w-auto"
-                />
-              </div>
-              <button
-                onClick={closeMobileMenu}
-                className="p-1 rounded-lg hover:bg-gray-100 transition-colors"
-                aria-label="Close menu"
-              >
-                <XMarkIcon className="h-4 w-4 text-gray-600" />
-              </button>
-            </div>
-
-            {/* Mobile Navigation */}
-            <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto bg-gradient-to-b from-transparent to-gray-50 min-h-0">
-              <Link 
-                href="/landing"
-                onClick={closeMobileMenu}
-                className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 w-full text-left transition-colors text-sm"
-              >
-                <HomeIcon className="h-4 w-4 text-green-600" /> Home
-              </Link>
-              
-              {!isLoggedIn ? (
-                <>
-                  <Link 
-                    href="/login"
-                    onClick={closeMobileMenu}
-                    className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 w-full text-left transition-colors text-sm"
-                  >
-                    <ArrowRightOnRectangleIcon className="h-4 w-4 text-blue-600" /> Login
-                  </Link>
-                  <Link 
-                    href="/register"
-                    onClick={closeMobileMenu}
-                    className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 w-full text-left transition-colors text-sm"
-                  >
-                    <UserIcon className="h-4 w-4 text-purple-600" /> Register
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <Link 
-                    href="/dashboard"
-                    onClick={closeMobileMenu}
-                    className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 w-full text-left transition-colors text-sm"
-                  >
-                    <ChartBarIcon className="h-4 w-4 text-blue-600" /> Dashboard
-                  </Link>
-                  <Link 
-                    href="/dashboard/profile" 
-                    onClick={closeMobileMenu}
-                    className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 w-full text-left transition-colors text-sm"
-                  >
-                    <UserIcon className="h-4 w-4 text-purple-600" /> Profile
-                  </Link>
-                  <Link 
-                    href="/dashboard/clients" 
-                    onClick={closeMobileMenu}
-                    className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 w-full text-left transition-colors text-sm"
-                  >
-                    <UserGroupIcon className="h-4 w-4 text-orange-600" /> Clients
-                  </Link>
-                  
-                  {/* Sessions Section */}
-                  <Link 
-                    href="/dashboard/sessions" 
-                    onClick={closeMobileMenu}
-                    className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 w-full text-left transition-colors text-sm"
-                  >
-                    <ClockIcon className="h-4 w-4 text-teal-600" /> Coaching Sessions
-                  </Link>
-                  <Link 
-                    href="/dashboard/sessions/log"
-                    onClick={closeMobileMenu}
-                    className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 w-full text-left transition-colors text-sm ml-4"
-                  >
-                    <ClipboardDocumentListIcon className="h-4 w-4 text-teal-500" /> Sessions Log
-                  </Link>
-                  
-                  {/* CPD Section */}
-                  <Link 
-                    href="/dashboard/cpd" 
-                    onClick={closeMobileMenu}
-                    className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 w-full text-left transition-colors text-sm"
-                  >
-                    <AcademicCapIcon className="h-4 w-4 text-indigo-600" /> CPD Learning
-                  </Link>
-                  <Link 
-                    href="/dashboard/cpd/log" 
-                    onClick={closeMobileMenu}
-                    className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 w-full text-left transition-colors text-sm ml-4"
-                  >
-                    <DocumentTextIcon className="h-4 w-4 text-indigo-500" /> CPD Log
-                  </Link>
-
-                  {/* Mentoring/Supervision Section */}
-                  <Link 
-                    href="/dashboard/mentoring" 
-                    onClick={closeMobileMenu}
-                    className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 w-full text-left transition-colors text-sm"
-                  >
-                    <AcademicCapIcon className="h-4 w-4 text-purple-600" /> Mentoring/Supervision
-                  </Link>
-                  <Link 
-                    href="/dashboard/mentoring/log"
-                    onClick={closeMobileMenu}
-                    className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 w-full text-left transition-colors text-sm ml-4"
-                  >
-                    <DocumentTextIcon className="h-4 w-4 text-purple-500" /> Sessions Log
-                  </Link>
-                  
-                  <Link
-                    href="/dashboard/reports" 
-                    onClick={closeMobileMenu}
-                    className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 w-full text-left transition-colors text-sm"
-                  >
-                    <PresentationChartLineIcon className="h-4 w-4 text-emerald-600" /> Reports
-                  </Link>
-                </>
-              )}
-              
-              <a 
-                href="mailto:Hello@icflog.com?subject=ICF Log - Help Request"
-                onClick={closeMobileMenu}
-                className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-blue-50 text-blue-600 hover:text-blue-700 w-full text-left transition-colors text-sm mt-4"
-                title="Contact support"
-              >
-                <EnvelopeIcon className="h-4 w-4 text-blue-600" /> Contact
-              </a>
-            </nav>
+      
+      {/* Welcome back section for logged-in users - Mobile */}
+      {!loading && isLoggedIn && (
+        <section className="md:hidden w-full max-w-md text-center bg-gradient-to-r from-green-50 to-blue-50 backdrop-blur-sm rounded-xl shadow-lg p-2 sm:p-3 md:p-4 mb-4 border border-green-200 mx-auto">
+          <h2 className="text-lg font-bold mb-1 bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+            Welcome back!
+          </h2>
+          <p className="text-sm text-gray-700 mb-2 leading-relaxed">
+            You're already logged in. Head to your dashboard to continue.
+          </p>
+          <div className="flex justify-center items-center">
+            <a
+              href="/dashboard"
+              className="bg-gradient-to-r from-green-600 to-blue-600 text-white py-1.5 px-4 rounded-lg text-sm font-semibold hover:from-green-700 hover:to-blue-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+            >
+              Go to Dashboard
+            </a>
           </div>
-        </div>
+        </section>
       )}
+      
+      {/* CTA Section - Only show for non-logged-in users - Mobile */}
+      {!loading && !isLoggedIn && (
+        <section className="md:hidden w-full max-w-md text-center bg-white rounded-xl shadow-lg p-3 mb-4 border border-gray-100 mx-auto">
+          <h2 className="text-lg font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Streamline your ICF compliance process
+          </h2>
+          <p className="text-sm text-gray-700 mb-3 leading-relaxed">
+            Begin using ICF Log today to support your coaching journey.
+          </p>
+          <div className="flex justify-center items-center">
+            <a
+              href="/login"
+              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-5 rounded-lg text-sm font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+            >
+              Get Started Today
+            </a>
+          </div>
+        </section>
+      )}
+
 
       {/* Desktop Header with Logo */}
       <header className="hidden md:block w-full max-w-4xl text-center mb-2 sm:mb-4">
@@ -266,39 +135,31 @@ export default function LandingPage() {
         <p className="text-base sm:text-lg text-gray-700 max-w-2xl mx-auto leading-relaxed px-4">
           Support your coaching practice and maintain your ICF credentials.
         </p>
-        
-                 {/* Special Launch Offer */}
-         <div 
-           className="bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg p-3 sm:p-4 border border-gray-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 mt-2 sm:mt-3 mx-auto max-w-md"
-         >
-           <div className="text-center">
-             <button
-               onClick={() => setShowOfferModal(true)}
-               className="bg-gradient-to-r from-green-600 to-blue-600 text-white py-1.5 sm:py-2 px-4 sm:px-5 rounded-lg text-sm font-semibold hover:from-green-700 hover:to-blue-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-             >
-               Special Launch Offer
-             </button>
-           </div>
-         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="w-full max-w-3xl bg-white md:bg-white/80 md:backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-xl p-4 sm:p-5 md:p-6 mb-3 sm:mb-4 md:mb-6 border border-gray-100 mx-4">
-        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 sm:mb-3 text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-          Designed for ICF-Credentialed Coaches
-        </h2>
-        <div className="text-sm sm:text-base md:text-lg text-gray-700 leading-relaxed">
-          <p>
-            ICF Log is a dedicated application built to help you stay organised and compliant with the International Coaching Federation (ICF) credentialing requirements. 
-            Log coaching sessions, track Continuing Professional Development (CPD) activities, and generate documentation to support your credential renewal.
-            Whether you're working toward your <span className="font-semibold text-blue-600">ACC</span>, <span className="font-semibold text-purple-600">PCC</span>, or <span className="font-semibold text-indigo-600">MCC</span>, ICF Log simplifies the administrative side of your practice, so you can focus on what matters most: <span className="font-semibold text-green-600">coaching</span>.
+      {/* Welcome back section for logged-in users - Desktop */}
+      {!loading && isLoggedIn && (
+        <section className="w-full max-w-3xl text-center bg-gradient-to-r from-green-50 to-blue-50 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg p-2 sm:p-3 md:p-4 mb-3 sm:mb-4 md:mb-6 border border-green-200 mx-4">
+          <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-1 sm:mb-2 bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+            Welcome back!
+          </h2>
+          <p className="text-sm sm:text-base text-gray-700 mb-2 sm:mb-3 leading-relaxed">
+            You're already logged in. Head to your dashboard to continue managing your coaching practice.
           </p>
-        </div>
-      </section>
+          <div className="flex justify-center items-center">
+            <a
+              href="/dashboard"
+              className="bg-gradient-to-r from-green-600 to-blue-600 text-white py-1.5 sm:py-2 px-4 sm:px-5 rounded-lg text-sm font-semibold hover:from-green-700 hover:to-blue-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+            >
+              Go to Dashboard
+            </a>
+          </div>
+        </section>
+      )}
 
-      {/* CTA Section - Only show for non-logged-in users */}
+      {/* CTA Section - Only show for non-logged-in users - Desktop */}
       {!loading && !isLoggedIn && (
-        <section className="w-full max-w-3xl text-center bg-white md:bg-white/80 md:backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-xl p-3 sm:p-4 md:p-5 mb-3 sm:mb-4 md:mb-6 border border-gray-100 mx-4">
+        <section className="hidden md:block w-full max-w-3xl text-center bg-white md:bg-white/80 md:backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-xl p-3 sm:p-4 md:p-5 mb-3 sm:mb-4 md:mb-6 border border-gray-100 mx-4">
           <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 sm:mb-3 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             Streamline your ICF compliance process
           </h2>
@@ -316,25 +177,47 @@ export default function LandingPage() {
         </section>
       )}
 
-      {/* Welcome back section for logged-in users */}
-      {!loading && isLoggedIn && (
-        <section className="w-full max-w-2xl text-center bg-gradient-to-r from-green-50 to-blue-50 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg p-2 sm:p-3 md:p-4 mb-2 sm:mb-3 md:mb-4 border border-green-200 mx-4">
-          <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-1 sm:mb-2 bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-            Welcome back!
-          </h2>
-          <p className="text-sm sm:text-base text-gray-700 mb-2 sm:mb-3 leading-relaxed">
-            You're already logged in. Head to your dashboard to continue managing your coaching practice.
+      {/* Hero Section */}
+      <section className="w-full max-w-3xl bg-white md:bg-white/80 md:backdrop-blur-sm rounded-2xl sm:rounded-3xl shadow-xl p-4 sm:p-5 md:p-6 mb-3 sm:mb-4 md:mb-6 border border-gray-100 mx-4">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 sm:mb-3 text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          Designed for ICF-Credentialed Coaches
+        </h2>
+        <div className="text-sm sm:text-base md:text-lg text-gray-700 leading-relaxed">
+          <p>
+            ICF Log is a dedicated application built to help you stay organised and compliant with the International Coaching Federation (ICF) credentialing requirements. 
+            Log coaching sessions, track Continuing Professional Development (CPD) activities, and generate documentation to support your credential renewal.
+            Whether you're working toward your <span className="font-semibold text-blue-600">ACC</span>, <span className="font-semibold text-purple-600">PCC</span>, or <span className="font-semibold text-indigo-600">MCC</span>, ICF Log simplifies the administrative side of your practice, so you can focus on what matters most: <span className="font-semibold text-green-600">coaching</span>.
           </p>
-          <div className="flex justify-center items-center">
-            <a
-              href="/dashboard"
-              className="bg-gradient-to-r from-green-600 to-blue-600 text-white py-1.5 sm:py-2 px-4 sm:px-5 rounded-lg text-sm font-semibold hover:from-green-700 hover:to-blue-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-            >
-              Go to Dashboard
-            </a>
-          </div>
-        </section>
-      )}
+        </div>
+      </section>
+      
+      {/* Mobile Special Launch Offer */}
+      <div className="md:hidden w-full max-w-md bg-white rounded-xl shadow-lg p-3 border border-gray-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 mx-auto mb-4">
+        <div className="text-center">
+          <button
+            onClick={() => setShowOfferModal(true)}
+            className="bg-gradient-to-r from-green-600 to-blue-600 text-white py-1.5 sm:py-2 px-4 sm:px-5 rounded-lg text-sm font-semibold hover:from-green-700 hover:to-blue-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+          >
+            Special Launch Offer
+          </button>
+        </div>
+      </div>
+
+      {/* Desktop Special Launch Offer */}
+      <div 
+        className="hidden md:block w-full max-w-3xl bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg p-3 sm:p-4 border border-gray-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 mb-3 sm:mb-4 md:mb-6 mx-auto"
+      >
+        <div className="text-center">
+          <button
+            onClick={() => setShowOfferModal(true)}
+            className="bg-gradient-to-r from-green-600 to-blue-600 text-white py-1.5 sm:py-2 px-4 sm:px-5 rounded-lg text-sm font-semibold hover:from-green-700 hover:to-blue-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+          >
+            Special Launch Offer
+          </button>
+        </div>
+      </div>
+
+
 
       {/* Features Grid */}
       <section className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4 mb-3 sm:mb-4 md:mb-6 px-4">
@@ -442,7 +325,7 @@ export default function LandingPage() {
                 </h4>
                 <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-6 mb-4">
                   <p className="text-3xl font-bold text-gray-900 mb-2">
-                    Get 1 year free access
+                    Get 6 months free access
                   </p>
                   <p className="text-lg text-gray-700 font-medium mb-2">
                     No credit card needed
@@ -456,7 +339,7 @@ export default function LandingPage() {
                     href="/register"
                     className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-8 rounded-xl text-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
                   >
-                    Claim Your Free Year
+                    Claim Your Free 6 Months
                   </a>
                 </div>
               </div>
