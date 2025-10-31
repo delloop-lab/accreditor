@@ -169,12 +169,12 @@ export default function ClientDetailPage() {
   };
   
   // Handle downloading a document
-  const handleDownloadDocument = async (document: ClientDocument) => {
+  const handleDownloadDocument = async (clientDocument: ClientDocument) => {
     try {
       // Get signed URL for download
       const { data, error } = await supabase.storage
         .from('certificates')
-        .download(document.file_path);
+        .download(clientDocument.file_path);
       
       if (error) {
         console.error('Download error:', error);
@@ -186,7 +186,7 @@ export default function ClientDetailPage() {
       const url = URL.createObjectURL(data);
       const a = document.createElement('a');
       a.href = url;
-      a.download = document.name;
+      a.download = clientDocument.name;
       document.body.appendChild(a);
       a.click();
       URL.revokeObjectURL(url);
