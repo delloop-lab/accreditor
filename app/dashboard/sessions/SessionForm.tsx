@@ -168,15 +168,13 @@ export default function SessionForm({
     }
   }, [initialData, isEditing]);
 
-  // Automatically set finish date to start date for individual sessions
+  // Automatically set finish date to match session date when session date changes
   useEffect(() => {
-    if (types.includes("individual") && date) {
-      // For new sessions or when finish date is empty/same as start date, auto-set it
-      if (!isEditing || !finishDate || finishDate === date) {
-        setFinishDate(date);
-      }
+    if (date && !isEditing) {
+      // For new sessions, auto-populate finish date to match session date
+      setFinishDate(date);
     }
-  }, [date, types, isEditing, finishDate]);
+  }, [date, isEditing]);
 
   const handleClientChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedClientId = e.target.value;

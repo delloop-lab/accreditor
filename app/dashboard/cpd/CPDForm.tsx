@@ -291,7 +291,7 @@ export default function CPDForm({
           />
         </div>
         <div>
-          <label className="block font-medium mb-1">Duration (hours) *</label>
+          <label className="block font-medium mb-1">Total Duration (hrs) *</label>
           <input 
             type="number" 
             min="0.1" 
