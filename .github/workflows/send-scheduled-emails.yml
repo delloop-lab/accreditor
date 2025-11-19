@@ -1,6 +1,7 @@
 name: Process Scheduled Emails
 
 # This workflow runs on a schedule to process scheduled reminder emails
+# Updated to ensure GitHub detects the workflow
 on:
   schedule:
     # Run every 15 minutes to check for scheduled emails
