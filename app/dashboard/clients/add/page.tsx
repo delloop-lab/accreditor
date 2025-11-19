@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
-import { UserIcon, ArrowLeftIcon, ExclamationTriangleIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { UserIcon, ArrowLeftIcon, ExclamationTriangleIcon, XMarkIcon, DocumentArrowUpIcon, XCircleIcon } from "@heroicons/react/24/outline";
 
 export default function AddClientPage() {
   const router = useRouter();
@@ -10,6 +10,7 @@ export default function AddClientPage() {
   const [error, setError] = useState("");
   const [consentGiven, setConsentGiven] = useState(false);
   const [showWarningModal, setShowWarningModal] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -36,7 +37,7 @@ export default function AddClientPage() {
         return;
       }
 
-      const { error: insertError } = await supabase
+      const { data: clientData, error: insertError } = await supabase
         .from("clients")
         .insert([
           {
@@ -46,13 +47,91 @@ export default function AddClientPage() {
             notes: formData.notes.trim() || null,
             user_id: user.id
           }
-        ]);
+        ])
+        .select();
 
       if (insertError) {
         setError(insertError.message);
-      } else {
-        router.push("/dashboard/clients");
+        return;
       }
+
+      // If documents were selected, upload them
+      if (selectedFiles.length > 0 && clientData && clientData.length > 0) {
+        const clientId = clientData[0].id;
+        const uploadErrors: string[] = [];
+        
+        // Upload all files
+        for (let i = 0; i < selectedFiles.length; i++) {
+          const file = selectedFiles[i];
+          try {
+            // Check file size (limit to 10MB)
+            if (file.size > 10 * 1024 * 1024) {
+              uploadErrors.push(`${file.name}: File too large. Maximum size is 10MB.`);
+              continue;
+            }
+
+            // Sanitize filename and ensure uniqueness
+            const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+            const fileName = `clients/${user.id}/${clientId}/${Date.now()}_${i}_${sanitizedName}`;
+            
+            // Upload file to storage
+            const { data: uploadData, error: uploadError } = await supabase.storage
+              .from('certificates')
+              .upload(fileName, file, {
+                cacheControl: '3600',
+                upsert: false
+              });
+
+            if (uploadError) {
+              console.error('Upload error:', uploadError);
+              uploadErrors.push(`${file.name}: ${uploadError.message}`);
+              continue;
+            }
+
+            if (uploadData) {
+              // Get file URL
+              const { data: urlData } = supabase.storage
+                .from('certificates')
+                .getPublicUrl(fileName);
+              
+              // Save document metadata to database
+              const documentData = {
+                client_id: clientId,
+                user_id: user.id,
+                name: file.name,
+                file_path: fileName,
+                file_size: file.size,
+                file_url: urlData.publicUrl,
+                created_at: new Date().toISOString()
+              };
+              
+              const { error: dbError } = await supabase
+                .from('client_documents')
+                .insert([documentData]);
+
+              if (dbError) {
+                console.error('Error saving document metadata:', dbError);
+                uploadErrors.push(`${file.name}: Failed to save metadata`);
+              }
+            }
+          } catch (uploadError) {
+            console.error('Document upload error:', uploadError);
+            uploadErrors.push(`${file.name}: Upload failed`);
+          }
+        }
+
+        // Show errors if any, but still redirect since client was created
+        if (uploadErrors.length > 0) {
+          const successCount = selectedFiles.length - uploadErrors.length;
+          if (successCount > 0) {
+            setError(`Client created. ${successCount} document(s) uploaded successfully. Some documents failed: ${uploadErrors.join('; ')}`);
+          } else {
+            setError(`Client created but document uploads failed: ${uploadErrors.join('; ')}`);
+          }
+        }
+      }
+
+      router.push("/dashboard/clients");
     } catch (error) {
       console.error('Error adding client:', error);
       setError("An unexpected error occurred. Please try again.");
@@ -149,6 +228,95 @@ export default function AddClientPage() {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Any additional notes about this client..."
             />
+          </div>
+
+          {/* Document Upload */}
+          <div>
+            <label htmlFor="document" className="block text-sm font-medium text-gray-700 mb-2">
+              Documents (Optional)
+            </label>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <label
+                  htmlFor="document-upload"
+                  className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors text-sm font-medium text-gray-700"
+                >
+                  <DocumentArrowUpIcon className="h-5 w-5 text-blue-600" />
+                  Upload Documents
+                </label>
+                <input
+                  type="file"
+                  id="document-upload"
+                  className="hidden"
+                  accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
+                  multiple
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files || []);
+                    if (files.length > 0) {
+                      // Validate all files
+                      const validFiles: File[] = [];
+                      const errors: string[] = [];
+                      
+                      files.forEach(file => {
+                        // Check file size (limit to 10MB)
+                        if (file.size > 10 * 1024 * 1024) {
+                          errors.push(`${file.name}: File too large. Maximum size is 10MB.`);
+                        } else {
+                          validFiles.push(file);
+                        }
+                      });
+                      
+                      if (errors.length > 0) {
+                        setError(errors.join(' '));
+                      } else {
+                        setError(""); // Clear any previous errors
+                      }
+                      
+                      // Add new files to existing ones
+                      setSelectedFiles(prev => [...prev, ...validFiles]);
+                    }
+                  }}
+                />
+                {selectedFiles.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedFiles([])}
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm"
+                    title="Remove all documents"
+                  >
+                    Clear All
+                  </button>
+                )}
+              </div>
+              {selectedFiles.length > 0 && (
+                <div className="space-y-2">
+                  {selectedFiles.map((file, index) => (
+                    <div key={index} className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <DocumentArrowUpIcon className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-700 truncate">{file.name}</p>
+                        <p className="text-xs text-gray-500">
+                          {(file.size / 1024).toFixed(2)} KB
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+                        }}
+                        className="p-1 text-red-600 hover:bg-red-100 rounded transition-colors flex-shrink-0"
+                        title="Remove this document"
+                      >
+                        <XCircleIcon className="h-5 w-5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <p className="text-xs text-gray-500">
+                Upload multiple supporting documents (PDF, DOC, DOCX, TXT, JPG, PNG). Maximum size per file: 10MB.
+              </p>
+            </div>
           </div>
 
           {/* Consent Checkbox */}

@@ -26,6 +26,8 @@ type CPDEntry = {
   resourceDevelopment: boolean;
   coreCompetencyHours: number;
   resourceDevelopmentHours: number;
+  // ICF CCE Hours
+  icfCceHours?: boolean | null;
 };
 
 function CPDLogContent() {
@@ -123,6 +125,8 @@ function CPDLogContent() {
             resourceDevelopment: item.resource_development || false,
             coreCompetencyHours: item.core_competency_hours || 0,
             resourceDevelopmentHours: item.resource_development_hours || 0,
+            // ICF CCE Hours
+            icfCceHours: item.icf_cce_hours !== null && item.icf_cce_hours !== undefined ? item.icf_cce_hours : true,
           }));
           setCpdEntries(mapped);
         } else {
@@ -237,6 +241,12 @@ function CPDLogContent() {
                           {entry.resourceDevelopment && (
                             <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-semibold">
                               Resource: {entry.resourceDevelopmentHours}h
+                            </span>
+                          )}
+                          {/* Non ICF CCE Hours Badge */}
+                          {entry.icfCceHours === false && (
+                            <span className="bg-amber-100 text-amber-700 px-2 py-1 rounded text-xs font-semibold">
+                              Non ICF CCE Hours
                             </span>
                           )}
                         </div>

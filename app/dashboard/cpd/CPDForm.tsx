@@ -62,6 +62,8 @@ export type CPDData = {
   resourceDevelopment: boolean;
   coreCompetencyHours: number;
   resourceDevelopmentHours: number;
+  // ICF CCE Hours
+  icfCceHours?: boolean | null; // true = yes, false = no, null/undefined = not set
 };
 
 export default function CPDForm({ 
@@ -93,6 +95,8 @@ export default function CPDForm({
   const [resourceDevelopment, setResourceDevelopment] = useState(false);
   const [coreCompetencyHours, setCoreCompetencyHours] = useState("");
   const [resourceDevelopmentHours, setResourceDevelopmentHours] = useState("");
+  // ICF CCE Hours state - default to Yes (true)
+  const [icfCceHours, setIcfCceHours] = useState<boolean | null>(true); // true = yes (default), false = no
 
 
   // Populate form with initial data when editing
@@ -123,6 +127,10 @@ export default function CPDForm({
       }
       if (initialData.resourceDevelopmentHours !== undefined) {
         setResourceDevelopmentHours(initialData.resourceDevelopmentHours.toString());
+      }
+      // ICF CCE Hours
+      if (initialData.icfCceHours !== undefined && initialData.icfCceHours !== null) {
+        setIcfCceHours(initialData.icfCceHours);
       }
     }
   }, [initialData, isEditing]);
@@ -225,6 +233,8 @@ export default function CPDForm({
       resourceDevelopment,
       coreCompetencyHours: coreCompetency ? Number(coreCompetencyHours) || Number(hours) : 0,
       resourceDevelopmentHours: resourceDevelopment ? Number(resourceDevelopmentHours) || Number(hours) : 0,
+      // ICF CCE Hours
+      icfCceHours,
     });
     
     // Reset form fields
@@ -245,6 +255,8 @@ export default function CPDForm({
     setResourceDevelopment(false);
     setCoreCompetencyHours("");
     setResourceDevelopmentHours("");
+    // Reset ICF CCE Hours (default to Yes)
+    setIcfCceHours(true);
   };
 
   return (
@@ -329,32 +341,38 @@ export default function CPDForm({
           </div>
         </div>
         
-        {/* Hours Distribution - Only show when both categories are selected */}
-        {coreCompetency && resourceDevelopment && (
+        {/* Hours Distribution - Show fields based on selected categories */}
+        {(coreCompetency || resourceDevelopment) && (
           <>
-            <div>
-              <label className="block font-medium mb-1">Core Competency Hours</label>
-              <input 
-                type="number" 
-                min="0" 
-                step="0.1" 
-                className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                value={coreCompetencyHours} 
-                onChange={e => setCoreCompetencyHours(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="block font-medium mb-1">Resource Development Hours</label>
-              <input 
-                type="number" 
-                min="0" 
-                step="0.1" 
-                className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                value={resourceDevelopmentHours} 
-                onChange={e => setResourceDevelopmentHours(e.target.value)}
-              />
-              <p className="text-xs text-gray-500 mt-1">Total hours must equal {hours}</p>
-            </div>
+            {coreCompetency && (
+              <div>
+                <label className="block font-medium mb-1">Core Competency Hours</label>
+                <input 
+                  type="number" 
+                  min="0" 
+                  step="0.1" 
+                  className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                  value={coreCompetencyHours} 
+                  onChange={e => setCoreCompetencyHours(e.target.value)}
+                />
+              </div>
+            )}
+            {resourceDevelopment && (
+              <div>
+                <label className="block font-medium mb-1">Resource Development Hours</label>
+                <input 
+                  type="number" 
+                  min="0" 
+                  step="0.1" 
+                  className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                  value={resourceDevelopmentHours} 
+                  onChange={e => setResourceDevelopmentHours(e.target.value)}
+                />
+                {coreCompetency && resourceDevelopment && (
+                  <p className="text-xs text-gray-500 mt-1">Total hours must equal {hours}</p>
+                )}
+              </div>
+            )}
           </>
         )}
         <div>
@@ -370,6 +388,31 @@ export default function CPDForm({
               <option key={t} value={t}>{t}</option>
             ))}
           </select>
+        </div>
+        <div>
+          <label className="block font-medium mb-2">ICF CCE Hours?</label>
+          <div className="flex gap-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name="icfCceHours"
+                checked={icfCceHours === true}
+                onChange={() => setIcfCceHours(true)}
+                className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+              />
+              <span>Yes</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name="icfCceHours"
+                checked={icfCceHours === false}
+                onChange={() => setIcfCceHours(false)}
+                className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+              />
+              <span>No</span>
+            </label>
+          </div>
         </div>
         <div>
           <label className="block font-medium mb-1">Learning Method</label>

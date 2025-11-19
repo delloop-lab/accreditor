@@ -257,7 +257,7 @@ export default function DashboardPage() {
       // Fetch all CPD activities for total hours calculation
       const { data: allCpdData, error: allCpdError } = await supabase
         .from("cpd")
-        .select("hours")
+        .select("hours, icf_cce_hours")
         .eq("user_id", user.id);
         
       if (cpdError && cpdError.message !== 'Mock client') {
@@ -277,9 +277,13 @@ export default function DashboardPage() {
       
       setCpdActivities(mappedCpdData || []);
 
-      // Calculate total CPD hours from all fetched data
+      // Calculate total CPD hours from all fetched data (exclude non-ICF CCE hours)
       if (allCpdData && allCpdData.length > 0) {
-        const totalCpdHours = allCpdData.reduce((sum: number, item: any) => sum + (item.hours || 0), 0);
+        const totalCpdHours = allCpdData.reduce((sum: number, item: any) => {
+          // Only count hours if icf_cce_hours is true or null/undefined (default to true)
+          const isIcfCceHours = item.icf_cce_hours !== false;
+          return sum + (isIcfCceHours ? (item.hours || 0) : 0);
+        }, 0);
         setCpdHours(totalCpdHours);
       } else {
         setCpdHours(0);

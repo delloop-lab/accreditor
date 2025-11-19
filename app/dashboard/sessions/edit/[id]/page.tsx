@@ -21,6 +21,69 @@ export default function EditSessionPage() {
           return;
         }
 
+        // Check if this is a Calendly-only session (not in database yet)
+        const isCalendlyOnly = sessionId.startsWith('calendly-');
+        
+        if (isCalendlyOnly) {
+          // Fetch from Calendly API
+          try {
+            // Get session token for authentication
+            const { data: { session: authSession } } = await supabase.auth.getSession();
+            if (!authSession) {
+              setError('Authentication required');
+              setLoading(false);
+              return;
+            }
+
+            const response = await fetch('/api/calendly/events', {
+              headers: {
+                'Authorization': `Bearer ${authSession.access_token}`
+              }
+            });
+            
+            if (!response.ok) {
+              const errorData = await response.json().catch(() => ({}));
+              throw new Error(errorData.error || 'Failed to fetch Calendly events');
+            }
+            
+            const responseData = await response.json();
+            // The API returns { events: [...] }
+            const calendlySessions = responseData.events || [];
+            const calendlySession = calendlySessions.find((s: any) => s.id === sessionId);
+            
+            if (calendlySession) {
+              // Transform Calendly session to SessionData
+              // Only include data that actually comes from Calendly - don't auto-fill other fields
+              const sessionData: SessionData = {
+                clientId: '',
+                clientName: calendlySession.client_name || '',
+                date: calendlySession.date,
+                finishDate: calendlySession.finish_date || '',
+                duration: calendlySession.duration || 0,
+                types: [], // Leave empty - user will select
+                numberInGroup: undefined,
+                paymentType: '', // Leave empty - user will set payment type
+                paymentAmount: null,
+                focusArea: '',
+                keyOutcomes: '',
+                clientProgress: '',
+                coachingTools: [],
+                icfCompetencies: [],
+                additionalNotes: '', // Leave empty - user will add notes if needed
+              };
+              setSession(sessionData);
+            } else {
+              setError('Calendly session not found');
+            }
+          } catch (calendlyError) {
+            console.error('Error fetching Calendly session:', calendlyError);
+            setError('Failed to load Calendly session');
+          }
+          setLoading(false);
+          return;
+        }
+
+        // Regular database session
         const { data, error } = await supabase
           .from("sessions")
           .select("id,client_id,client_name,date,finish_date,duration,types,number_in_group,paymenttype,payment_amount,focus_area,key_outcomes,client_progress,coaching_tools,icf_competencies,additional_notes,user_id")
@@ -76,6 +139,44 @@ export default function EditSessionPage() {
         return;
       }
 
+      // Check if this is a Calendly-only session (needs to be created, not updated)
+      const isCalendlyOnly = sessionId.startsWith('calendly-');
+      
+      if (isCalendlyOnly) {
+        // Create a new session record in the database
+        const { error } = await supabase
+          .from("sessions")
+          .insert({
+            user_id: user.id,
+            client_name: updatedData.clientName,
+            date: updatedData.date,
+            finish_date: updatedData.finishDate || null,
+            duration: updatedData.duration,
+            types: updatedData.types,
+            number_in_group: updatedData.numberInGroup,
+            paymenttype: updatedData.paymentType,
+            payment_amount: updatedData.paymentAmount || null,
+            focus_area: updatedData.focusArea,
+            key_outcomes: updatedData.keyOutcomes,
+            client_progress: updatedData.clientProgress,
+            coaching_tools: updatedData.coachingTools,
+            icf_competencies: updatedData.icfCompetencies,
+            additional_notes: updatedData.additionalNotes,
+            calendly_booking_id: sessionId.replace('calendly-', ''), // Store the Calendly booking ID
+          });
+
+        if (error) {
+          console.error('Error creating session:', error);
+          setError('Failed to save session');
+          return;
+        }
+
+        // Redirect back to sessions log
+        router.push("/dashboard/sessions/log");
+        return;
+      }
+
+      // Regular update for existing database session
       const { error } = await supabase
         .from("sessions")
         .update({

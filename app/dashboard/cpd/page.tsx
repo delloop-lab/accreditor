@@ -43,6 +43,8 @@ export default function CPDPage() {
           resourceDevelopment: item.resource_development || false,
           coreCompetencyHours: item.core_competency_hours || 0,
           resourceDevelopmentHours: item.resource_development_hours || 0,
+          // ICF CCE Hours
+          icfCceHours: item.icf_cce_hours !== null && item.icf_cce_hours !== undefined ? item.icf_cce_hours : true, // Default to true if not set
           user_id: item.user_id,
         }));
         setCPD(mapped);
@@ -174,6 +176,9 @@ export default function CPDPage() {
         core_competency_hours: data.coreCompetencyHours || 0,
         resource_development_hours: data.resourceDevelopmentHours || 0,
         
+        // ICF CCE Hours (default to true if not set)
+        icf_cce_hours: data.icfCceHours !== null && data.icfCceHours !== undefined ? data.icfCceHours : true,
+        
         user_id: user.id
       }])
       .select()
@@ -199,6 +204,8 @@ export default function CPDPage() {
         resourceDevelopment: newCPD.resource_development || false,
         coreCompetencyHours: newCPD.core_competency_hours || 0,
         resourceDevelopmentHours: newCPD.resource_development_hours || 0,
+        // ICF CCE Hours
+        icfCceHours: newCPD.icf_cce_hours !== null && newCPD.icf_cce_hours !== undefined ? newCPD.icf_cce_hours : true,
         user_id: newCPD.user_id,
       };
       

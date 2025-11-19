@@ -2,7 +2,8 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
-import { UserIcon, EnvelopeIcon, PhoneIcon, ArrowLeftIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
+import CalendlyWidget from "@/app/components/CalendlyWidget";
+import { UserIcon, EnvelopeIcon, PhoneIcon, ArrowLeftIcon, PencilIcon, TrashIcon, CalendarIcon } from "@heroicons/react/24/outline";
 
 type ClientDocument = {
   id: string;
@@ -50,6 +51,8 @@ export default function ClientDetailPage() {
   const [documents, setDocuments] = useState<ClientDocument[]>([]);
   const [uploadLoading, setUploadLoading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [showCalendlyModal, setShowCalendlyModal] = useState(false);
+  const [calendlyUrl, setCalendlyUrl] = useState<string>("");
   
   // Form state
   const [formData, setFormData] = useState({
@@ -268,6 +271,10 @@ export default function ClientDetailPage() {
 
         if (!profileError && profileData) {
           setProfile(profileData);
+          // Set Calendly URL from profile
+          if (profileData.calendly_url) {
+            setCalendlyUrl(profileData.calendly_url);
+          }
         } else {
           setProfile(null);
         }
@@ -534,6 +541,26 @@ export default function ClientDetailPage() {
           </div>
         </div>
 
+        {/* Book Session Button */}
+        {calendlyUrl && client && (
+          <div className="mb-6">
+            <button
+              onClick={() => {
+                // Validate client has at least name or email before opening modal
+                if (!client.name && !client.email) {
+                  setError('Client must have a name or email to book a session');
+                  return;
+                }
+                setShowCalendlyModal(true);
+              }}
+              className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm"
+            >
+              <CalendarIcon className="h-5 w-5" />
+              Book Session with {client.name || 'Client'}
+            </button>
+          </div>
+        )}
+
         {/* Error Message */}
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
@@ -744,6 +771,56 @@ export default function ClientDetailPage() {
               >
                 {deleting ? 'Deleting...' : 'Delete'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Calendly Modal */}
+      {showCalendlyModal && client && calendlyUrl && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
+          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">Book Session</h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  Scheduling with {client.name}
+                </p>
+              </div>
+              <button
+                onClick={() => setShowCalendlyModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-lg"
+              >
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 100px)' }}>
+              {calendlyUrl && calendlyUrl.trim() !== '' ? (
+                <CalendlyWidget
+                  url={calendlyUrl}
+                  prefill={client.name || client.email ? {
+                    name: client.name?.trim() || undefined,
+                    email: client.email?.trim() || undefined,
+                  } : undefined}
+                  utm={{
+                    utmSource: "icflog",
+                    utmMedium: "client_detail",
+                    utmCampaign: "coaching_session",
+                    utmContent: `client_${client.id}`
+                  }}
+                  style={{
+                    minWidth: '100%',
+                    height: '700px'
+                  }}
+                />
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-gray-500 mb-4">Calendly URL is not configured</p>
+                  <p className="text-sm text-gray-400">Please configure your Calendly URL in the Calendar settings</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

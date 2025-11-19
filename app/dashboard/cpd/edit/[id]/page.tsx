@@ -56,6 +56,8 @@ export default function EditCPDPage() {
             resourceDevelopment: data.resource_development || false,
             coreCompetencyHours: data.core_competency_hours || 0,
             resourceDevelopmentHours: data.resource_development_hours || 0,
+            // ICF CCE Hours
+            icfCceHours: data.icf_cce_hours !== null && data.icf_cce_hours !== undefined ? data.icf_cce_hours : true,
           };
           setCpdData(transformedData);
         }
@@ -166,6 +168,8 @@ export default function EditCPDPage() {
           resource_development: updatedData.resourceDevelopment,
           core_competency_hours: updatedData.coreCompetencyHours,
           resource_development_hours: updatedData.resourceDevelopmentHours,
+          // ICF CCE Hours
+          icf_cce_hours: updatedData.icfCceHours !== null && updatedData.icfCceHours !== undefined ? updatedData.icfCceHours : true,
           updated_at: new Date().toISOString(),
         })
         .eq("id", cpdId)

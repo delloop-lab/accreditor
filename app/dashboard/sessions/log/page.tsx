@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
-import { ClockIcon, UserIcon, CalendarIcon, CurrencyDollarIcon, CheckCircleIcon, ArrowDownTrayIcon, PencilIcon, ChevronUpIcon, ChevronDownIcon, ArrowUpTrayIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { ClockIcon, UserIcon, CalendarIcon, CurrencyDollarIcon, CheckCircleIcon, ArrowDownTrayIcon, PencilIcon, ChevronUpIcon, ChevronDownIcon, ArrowUpTrayIcon, TrashIcon, DocumentArrowDownIcon } from "@heroicons/react/24/outline";
 import { exportSessionsToICFLog } from "@/lib/exportUtils";
 import { formatNumberForDisplay, parseNumberFromLocale, parseNumberWithCurrency, LocaleInfo } from "@/lib/numberUtils";
 import * as XLSX from 'xlsx';
@@ -25,6 +25,7 @@ type SessionEntry = {
   icfCompetencies: string[];
   additionalNotes: string;
   user_id: string;
+  is_calendly_only?: boolean;
 };
 
 type Client = {
@@ -1102,7 +1103,7 @@ const findExistingClient = async (clientName: string, clientEmail: string, userI
   };
   
   // Function to find client ID by name before navigation
-  const findClientAndNavigate = async (clientName: string) => {
+  const findClientAndNavigate = async (clientName: string, session?: SessionEntry) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -1123,8 +1124,34 @@ const findExistingClient = async (clientName: string, clientEmail: string, userI
         // Navigate to the client's page using their ID
         router.push(`/dashboard/clients/${clients[0].id}`);
       } else {
-        // If no client found with that name, show a message
-        alert(`No client record found for ${clientName}. Try adding this client first.`);
+        // If it's a Calendly booking, try to create the client automatically
+        if (session?.is_calendly_only && session.clientEmail) {
+          try {
+            const { data: newClient, error: createError } = await supabase
+              .from('clients')
+              .insert({
+                name: clientName,
+                email: session.clientEmail,
+                phone: '',
+                notes: `Created from Calendly booking`,
+                user_id: user.id
+              })
+              .select('id')
+              .single();
+            
+            if (!createError && newClient) {
+              router.push(`/dashboard/clients/${newClient.id}`);
+            } else {
+              alert(`No client record found for ${clientName}. Please add this client manually.`);
+            }
+          } catch (createErr) {
+            console.error('Error creating client:', createErr);
+            alert(`No client record found for ${clientName}. Please add this client manually.`);
+          }
+        } else {
+          // If no client found with that name, show a message
+          alert(`No client record found for ${clientName}. Try adding this client first.`);
+        }
       }
     } catch (error) {
       console.error('Error navigating to client:', error);
@@ -1153,17 +1180,70 @@ const findExistingClient = async (clientName: string, clientEmail: string, userI
         setProfile(null);
       }
       
-      // First fetch sessions
+      // First fetch sessions from database
       const { data, error } = await supabase
         .from("sessions")
-        .select("id,client_name,date,duration,types,number_in_group,paymenttype,payment_amount,focus_area,key_outcomes,client_progress,coaching_tools,icf_competencies,additional_notes,user_id")
+        .select("id,client_name,date,duration,types,number_in_group,paymenttype,payment_amount,focus_area,key_outcomes,client_progress,coaching_tools,icf_competencies,additional_notes,user_id,finish_date,calendly_booking_id")
         .eq("user_id", user.id)
         .order("date", { ascending: false });
       
+      // Also fetch Calendly bookings
+      let calendlySessions: any[] = [];
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          const response = await fetch('/api/calendly/events', {
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`
+            }
+          });
+          
+          if (response.ok) {
+            const calendlyData = await response.json();
+            calendlySessions = (calendlyData.events || []).map((e: any) => ({
+              id: e.id,
+              client_name: e.client_name || 'Calendly Booking',
+              date: e.date,
+              finish_date: e.finish_date || e.date,
+              duration: e.duration || 0,
+              types: [],
+              paymenttype: '',
+              payment_amount: null,
+              focus_area: '',
+              key_outcomes: '',
+              client_progress: '',
+              coaching_tools: [],
+              icf_competencies: [],
+              additional_notes: e.notes || 'Scheduled via Calendly',
+              user_id: user.id,
+              calendly_booking_id: e.calendly_booking_id,
+              is_calendly_only: true
+            }));
+          }
+        }
+      } catch (calendlyError) {
+        // Silently fail - Calendly bookings are optional
+      }
+      
+      // Combine database sessions with Calendly bookings
+      // Filter out Calendly bookings that are already in the database (by calendly_booking_id)
+      const dbCalendlyIds = new Set(
+        (data || [])
+          .filter((s: any) => s.calendly_booking_id)
+          .map((s: any) => s.calendly_booking_id)
+      );
+      
+      const uniqueCalendlySessions = calendlySessions.filter(
+        (cs: any) => !dbCalendlyIds.has(cs.calendly_booking_id)
+      );
+      
+      // Combine all sessions
+      const allSessions = [...(data || []), ...uniqueCalendlySessions];
+      
       // Then fetch client emails for each session
-      if (!error && data) {
+      if (!error && allSessions.length > 0) {
         // Get unique client names
-        const clientNames = [...new Set(data.map((session: any) => session.client_name))];
+        const clientNames = [...new Set(allSessions.map((session: any) => session.client_name))];
         
         // Fetch client data for these names
         const { data: clientsData } = await supabase
@@ -1180,14 +1260,13 @@ const findExistingClient = async (clientName: string, clientEmail: string, userI
           });
         }
       
-      if (!error && data) {
         // Map snake_case to camelCase with null checks
-        const mapped = data.map((session: any) => ({
+        const mapped = allSessions.map((session: any) => ({
           id: session.id || null,
           clientName: session.client_name || "",
-          clientEmail: clientEmailMap.get(session.client_name) || "", // Add client email from map
+          clientEmail: session.email || clientEmailMap.get(session.client_name) || "",
           date: session.date || "",
-          finishDate: "",
+          finishDate: session.finish_date || "",
           duration: session.duration || 0,
           types: Array.isArray(session.types) ? session.types : [],
           numberInGroup: session.number_in_group,
@@ -1200,9 +1279,13 @@ const findExistingClient = async (clientName: string, clientEmail: string, userI
           icfCompetencies: session.icf_competencies || [],
           additionalNotes: session.additional_notes || "",
           user_id: session.user_id || "",
+          is_calendly_only: session.is_calendly_only || false,
         }));
+        
+        // Sort by date descending
+        mapped.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        
         setSessions(mapped);
-      }
       }
     } catch (error) {
       console.error('Error fetching sessions:', error);
@@ -1312,7 +1395,7 @@ const findExistingClient = async (clientName: string, clientEmail: string, userI
             <>
               <button
                 onClick={toggleSortOrder}
-                className="flex items-center justify-center gap-2 bg-gray-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm"
+                className="flex items-center justify-center gap-1.5 bg-gray-600 text-white px-2 sm:px-3 py-2 rounded-lg hover:bg-gray-700 transition-colors text-xs sm:text-sm"
               >
                 <CalendarIcon className="h-4 w-4" />
                 <span className="hidden sm:inline">Sort by Date {sortOrder === 'asc' ? '↑' : '↓'}</span>
@@ -1329,16 +1412,27 @@ const findExistingClient = async (clientName: string, clientEmail: string, userI
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={importing}
-                className="flex items-center justify-center gap-2 bg-purple-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 text-sm"
+                className="flex items-center justify-center gap-1.5 bg-purple-600 text-white px-2 sm:px-3 py-2 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 text-xs sm:text-sm"
               >
                 <ArrowUpTrayIcon className="h-4 w-4" />
                 <span className="hidden sm:inline">{importing ? "Importing..." : "Import ICF Spreadsheet"}</span>
                 <span className="sm:hidden">{importing ? "Importing..." : "Import"}</span>
               </button>
 
+              <a
+                href="https://coachingfederation.org/wp-content/uploads/2024/12/icf-cs-client-coaching-log-template.xlsx"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-1.5 bg-blue-600 text-white px-2 sm:px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors text-xs sm:text-sm"
+              >
+                <DocumentArrowDownIcon className="h-4 w-4" />
+                <span className="hidden sm:inline">Download ICF Sample Spreadsheet</span>
+                <span className="sm:hidden">Sample</span>
+              </a>
+
               <button
                 onClick={() => exportSessionsToICFLog(sessions, `ICF-Client-Coaching-Log-${new Date().toISOString().split('T')[0]}`)}
-                className="flex items-center justify-center gap-2 bg-yellow-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors text-sm"
+                className="flex items-center justify-center gap-1.5 bg-yellow-600 text-white px-2 sm:px-3 py-2 rounded-lg hover:bg-yellow-700 transition-colors text-xs sm:text-sm"
               >
                 <ArrowDownTrayIcon className="h-4 w-4" />
                 <span className="hidden sm:inline">Export ICF Format</span>
@@ -1685,10 +1779,15 @@ const findExistingClient = async (clientName: string, clientEmail: string, userI
                           console.log('Client name clicked:', session.clientName);
                           e.preventDefault();
                           e.stopPropagation(); 
-                          findClientAndNavigate(session.clientName);
+                          findClientAndNavigate(session.clientName, session);
                         }}
                       >
                         {session.clientName}
+                        {(session as any).is_calendly_only && (
+                          <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                            Calendly
+                          </span>
+                        )}
                       </h2>
                       {session.clientEmail && (
                         <div className="text-sm text-gray-500 mt-1">
@@ -1712,20 +1811,22 @@ const findExistingClient = async (clientName: string, clientEmail: string, userI
                           {session.duration}min
                         </span>
                       </div>
-                      <span className={`px-2 py-1 rounded text-xs font-semibold self-start ${
-                        session.paymentType === 'paid' 
-                          ? 'bg-green-100 text-green-700' 
-                          : session.paymentType === 'paidAndProBono'
-                            ? 'bg-purple-100 text-purple-700'
-                            : 'bg-blue-100 text-blue-700'
-                      }`}>
-                        {session.paymentType === 'paid' 
-                          ? 'Paid' 
-                          : session.paymentType === 'paidAndProBono' 
-                            ? 'Paid & ProBono' 
-                            : 'Pro Bono'}
-                        {session.paymentAmount && (session.paymentType === 'paid' || session.paymentType === 'paidAndProBono') && ` - ${formatNumberForDisplay(session.paymentAmount, { country: profile?.country || 'US', currency: profile?.currency || 'USD' }, { style: 'currency' })}`}
-                      </span>
+                      {session.paymentType && session.paymentType.trim() !== '' && (
+                        <span className={`px-2 py-1 rounded text-xs font-semibold self-start ${
+                          session.paymentType === 'paid' 
+                            ? 'bg-green-100 text-green-700' 
+                            : session.paymentType === 'paidAndProBono'
+                              ? 'bg-purple-100 text-purple-700'
+                              : 'bg-blue-100 text-blue-700'
+                        }`}>
+                          {session.paymentType === 'paid' 
+                            ? 'Paid' 
+                            : session.paymentType === 'paidAndProBono' 
+                              ? 'Paid & ProBono' 
+                              : 'Pro Bono'}
+                          {session.paymentAmount && (session.paymentType === 'paid' || session.paymentType === 'paidAndProBono') && ` - ${formatNumberForDisplay(session.paymentAmount, { country: profile?.country || 'US', currency: profile?.currency || 'USD' }, { style: 'currency' })}`}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2">
@@ -1766,7 +1867,7 @@ const findExistingClient = async (clientName: string, clientEmail: string, userI
                           }
                         }}
                         className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
-                        title="Edit Session"
+                        title={session.id?.startsWith('calendly-') ? 'Edit Calendly session (will save to database)' : 'Edit Session'}
                       >
                         <PencilIcon className="h-4 w-4" />
                       </button>

@@ -19,6 +19,8 @@ type CPDListItem = {
   resourceDevelopment?: boolean;
   coreCompetencyHours?: number;
   resourceDevelopmentHours?: number;
+  // ICF CCE Hours
+  icfCceHours?: boolean | null;
 };
 
 export default function CPDList({ cpd, onDelete, onCardClick }: { 
@@ -66,6 +68,14 @@ export default function CPDList({ cpd, onDelete, onCardClick }: {
                     Resource: {item.resourceDevelopmentHours}h
                   </span>
                 )}
+              </div>
+            )}
+            {/* Non ICF CCE Hours indicator */}
+            {item.icfCceHours === false && (
+              <div className="mt-1">
+                <span className="bg-amber-100 text-amber-700 px-2 py-0.5 rounded text-xs font-medium">
+                  Non ICF CCE Hours
+                </span>
               </div>
             )}
           </div>

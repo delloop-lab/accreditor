@@ -4,7 +4,6 @@ import { ReactNode, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import {
-  HomeIcon,
   UserIcon,
   AcademicCapIcon,
   ClipboardDocumentListIcon,
@@ -20,6 +19,7 @@ import {
   PresentationChartLineIcon,
   EnvelopeIcon,
   CreditCardIcon,
+  CalendarIcon,
 } from "@heroicons/react/24/outline";
 import { isCurrentUserAdmin } from "@/lib/adminUtils";
 
@@ -110,13 +110,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         {/* Navigation */}
         <nav className="flex-1 space-y-2">
           <Link 
-            href="/landing"
-            className="flex items-center gap-2 p-2 rounded hover:bg-gray-100 w-full text-left"
-            title="Go to landing page"
-          >
-            <HomeIcon className="h-5 w-5 text-green-600" /> Home
-          </Link>
-          <Link 
             href="/dashboard"
             className="flex items-center gap-2 p-2 rounded hover:bg-gray-100 w-full text-left"
             title="Go to dashboard"
@@ -158,16 +151,15 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             <PresentationChartLineIcon className="h-5 w-5 text-emerald-600" /> Reports
           </Link>
           
+          <Link href="/dashboard/calendar" className="flex items-center gap-2 p-2 rounded hover:bg-gray-100">
+            <CalendarIcon className="h-5 w-5 text-blue-600" /> Calendar
+          </Link>
+          
           {/* Admin-only links */}
           {isAdmin && (
-            <>
-              <Link href="/dashboard/admin" className="flex items-center gap-2 p-2 rounded hover:bg-gray-100">
-                <ViewColumnsIcon className="h-5 w-5 text-red-600" /> Admin Panel
-              </Link>
-              <Link href="/dashboard/admin/subscriptions" className="flex items-center gap-2 p-2 rounded hover:bg-gray-100">
-                <CreditCardIcon className="h-5 w-5 text-purple-600" /> Subscriptions
-              </Link>
-            </>
+            <Link href="/dashboard/admin" className="flex items-center gap-2 p-2 rounded hover:bg-gray-100">
+              <ViewColumnsIcon className="h-5 w-5 text-red-600" /> Admin Panel
+            </Link>
           )}
           
           <a 
@@ -232,13 +224,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
               {/* Mobile Navigation */}
               <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto bg-gradient-to-b from-transparent to-gray-50 min-h-0">
-                <Link 
-                  href="/landing"
-                  onClick={closeMobileMenu}
-                  className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 text-gray-800 w-full text-left transition-colors text-sm"
-                >
-                  <HomeIcon className="h-4 w-4 text-green-600" /> Home
-                </Link>
                 <Link 
                   href="/dashboard"
                   onClick={closeMobileMenu}
@@ -316,6 +301,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 >
                   <PresentationChartLineIcon className="h-4 w-4 text-emerald-600" /> Reports
                 </Link>
+                <Link 
+                  href="/dashboard/calendar" 
+                  onClick={closeMobileMenu}
+                  className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 text-gray-800 w-full text-left transition-colors text-sm"
+                >
+                  <CalendarIcon className="h-4 w-4 text-blue-600" /> Calendar
+                </Link>
                 
                 {/* Admin-only links for mobile */}
                 {isAdmin && (
@@ -326,13 +318,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                       className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 text-gray-800 w-full text-left transition-colors text-sm"
                     >
                       <ViewColumnsIcon className="h-4 w-4 text-red-600" /> Admin Panel
-                    </Link>
-                    <Link 
-                      href="/dashboard/admin/subscriptions" 
-                      onClick={closeMobileMenu}
-                      className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-gray-100 text-gray-800 w-full text-left transition-colors text-sm"
-                    >
-                      <CreditCardIcon className="h-4 w-4 text-purple-600" /> Subscriptions
                     </Link>
                   </>
                 )}

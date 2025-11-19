@@ -48,7 +48,7 @@ export default function SessionsPage() {
   }, []);
 
   // Add session to Supabase
-  const addSession = async (data: SessionData) => {
+  const addSession = async (data: SessionData): Promise<void> => {
     console.log('Adding session with data:', data);
     
     const { data: { user } } = await supabase.auth.getUser();

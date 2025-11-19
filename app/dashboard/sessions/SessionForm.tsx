@@ -37,7 +37,7 @@ export type SessionData = {
   duration?: number;
   types: string[];
   numberInGroup?: number;
-  paymentType: "paid" | "proBono" | "paidAndProBono";
+  paymentType: "paid" | "proBono" | "paidAndProBono" | "";
   paymentAmount?: number | null;
   focusArea: string;
   keyOutcomes: string;
@@ -70,7 +70,7 @@ export default function SessionForm({
   const [duration, setDuration] = useState("");
   const [types, setTypes] = useState<string[]>([]);
   const [numberInGroup, setNumberInGroup] = useState("1");
-  const [paymentType, setPaymentType] = useState<"paid" | "proBono" | "paidAndProBono">("paid");
+  const [paymentType, setPaymentType] = useState<"paid" | "proBono" | "paidAndProBono" | "">("");
   const [paymentAmount, setPaymentAmount] = useState("");
   const [focusArea, setFocusArea] = useState("");
   const [keyOutcomes, setKeyOutcomes] = useState("");
@@ -80,6 +80,7 @@ export default function SessionForm({
   const [icfCompetencies, setIcfCompetencies] = useState<string[]>([]);
   const [additionalNotes, setAdditionalNotes] = useState("");
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
   // Currency symbols mapping
   const CURRENCY_SYMBOLS: { [key: string]: string } = {
@@ -157,7 +158,7 @@ export default function SessionForm({
       setDuration(initialData.duration?.toString() || "");
       setTypes(initialData.types);
       setNumberInGroup(initialData.numberInGroup?.toString() || "1");
-      setPaymentType(initialData.paymentType);
+      setPaymentType(initialData.paymentType || "");
       setPaymentAmount(initialData.paymentAmount ? formatNumberForDisplay(initialData.paymentAmount, { country: userCountry, currency: userCurrency }, { style: 'decimal' }) : "");
       setFocusArea(initialData.focusArea);
       setKeyOutcomes(initialData.keyOutcomes);
@@ -238,7 +239,39 @@ export default function SessionForm({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const resetForm = (keepClientName = false) => {
+    if (!keepClientName) {
+      setClientId("");
+      setClientName("");
+    }
+    // If keeping client name, also keep clientId if it was set (for dropdown selection)
+    // This ensures the dropdown stays selected when "Add Another" is clicked
+    setDate("");
+    setFinishDate("");
+    setDuration("");
+    setTypes([]);
+    setNumberInGroup("1");
+    setPaymentType("");
+    setPaymentAmount("");
+    setFocusArea("");
+    setKeyOutcomes("");
+    setClientProgress("");
+    setCoachingToolInput("");
+    setCoachingTools([]);
+    setIcfCompetencies([]);
+    setAdditionalNotes("");
+    setShowSuccessMessage(false);
+    setPaymentAmountError(null);
+  };
+
+  const handleAddAnother = () => {
+    resetForm(true); // Keep client name
+    setShowSuccessMessage(false);
+    // Scroll to top of form
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Form submission - clientId:', clientId, 'clientName:', clientName, 'date:', date, 'types:', types);
     
@@ -279,23 +312,19 @@ export default function SessionForm({
     };
     
     console.log('Submitting session data:', sessionData);
-    onSubmit(sessionData);
-    setClientId("");
-    setClientName("");
-    setDate("");
-    setFinishDate("");
-    setDuration("");
-    setTypes([]);
-    setNumberInGroup("1");
-    setPaymentType("paid");
-    setPaymentAmount("");
-    setFocusArea("");
-    setKeyOutcomes("");
-    setClientProgress("");
-    setCoachingToolInput("");
-    setCoachingTools([]);
-    setIcfCompetencies([]);
-    setAdditionalNotes("");
+    
+    // Call onSubmit (which will save to database)
+    await onSubmit(sessionData);
+    
+    // Only reset form if not editing (editing should navigate away)
+    if (!isEditing) {
+      // Reset form but keep client name and clientId for "Add Another"
+      resetForm(true);
+      setShowSuccessMessage(true);
+    } else {
+      // For editing, reset everything
+      resetForm(false);
+    }
   };
 
   return (
@@ -399,7 +428,8 @@ export default function SessionForm({
         </div>
         <div>
           <label className="block font-medium mb-1">Payment Type</label>
-          <select className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={paymentType} onChange={e => setPaymentType(e.target.value as "paid" | "proBono" | "paidAndProBono")}> 
+          <select className="w-full border border-gray-400 rounded px-3 py-2 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value={paymentType} onChange={e => setPaymentType(e.target.value as "paid" | "proBono" | "paidAndProBono" | "")}> 
+            <option value="">Select Payment Type</option>
             <option value="paid">Paid</option>
             <option value="proBono">Pro Bono</option>
             <option value="paidAndProBono">Paid & ProBono</option>
@@ -528,6 +558,44 @@ export default function SessionForm({
       >
         {isEditing ? 'Update Session' : 'Save Session'}
       </button>
+
+      {/* Success Message and Add Another Button */}
+      {showSuccessMessage && !isEditing && (
+        <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-green-800 mb-2">
+                Session saved successfully!
+              </p>
+              <button
+                type="button"
+                onClick={handleAddAnother}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Add Another Session
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowSuccessMessage(false)}
+              className="flex-shrink-0 text-green-600 hover:text-green-800"
+              aria-label="Dismiss"
+            >
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
     </form>
   );
 } 

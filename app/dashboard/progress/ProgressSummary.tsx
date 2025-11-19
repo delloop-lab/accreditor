@@ -24,12 +24,16 @@ export default function ProgressSummary() {
         ? sessions.reduce((sum: number, s: any) => sum + ((s.duration || 0) / 60), 0)
         : 0;
       setCoachingHours(coachingTotal);
-      // CPD
+      // CPD (exclude non-ICF CCE hours)
       const { data: cpd } = await supabase
         .from("cpd")
-        .select("hours")
+        .select("hours, icf_cce_hours")
         .eq("user_id", user.id);
-      const cpdTotal = cpd ? cpd.reduce((sum: number, c: any) => sum + (Number(c.hours) || 0), 0) : 0;
+      const cpdTotal = cpd ? cpd.reduce((sum: number, c: any) => {
+        // Only count hours if icf_cce_hours is true or null/undefined (default to true)
+        const isIcfCceHours = c.icf_cce_hours !== false;
+        return sum + (isIcfCceHours ? (Number(c.hours) || 0) : 0);
+      }, 0) : 0;
       setCpdHours(cpdTotal);
       setLoading(false);
     };

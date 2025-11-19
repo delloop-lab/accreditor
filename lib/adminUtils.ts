@@ -269,9 +269,14 @@ export const getUserStats = async (): Promise<UserStats | null> => {
     // CPD analytics
     const { data: cpdEntries } = await supabase
       .from('cpd')
-      .select('hours, user_id');
+      .select('hours, icf_cce_hours, user_id');
 
-    const totalCpdHours = cpdEntries?.reduce((sum, entry) => sum + (entry.hours || 0), 0) || 0;
+    // Exclude non-ICF CCE hours from total
+    const totalCpdHours = cpdEntries?.reduce((sum, entry) => {
+      // Only count hours if icf_cce_hours is true or null/undefined (default to true)
+      const isIcfCceHours = (entry as any).icf_cce_hours !== false;
+      return sum + (isIcfCceHours ? (entry.hours || 0) : 0);
+    }, 0) || 0;
     const avgCpdHoursPerUser = totalUsers && totalUsers > 0 
       ? Math.round(totalCpdHours / totalUsers * 100) / 100 
       : 0;

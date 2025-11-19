@@ -2,13 +2,15 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import CalendlyWidget from "@/app/components/CalendlyWidget";
 import { 
   UserIcon, 
   PlusIcon, 
   EnvelopeIcon, 
   PhoneIcon, 
   CheckIcon, 
-  TrashIcon 
+  TrashIcon,
+  CalendarIcon
 } from "@heroicons/react/24/outline";
 
 type Client = {
@@ -32,6 +34,9 @@ export default function ClientsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOption, setSortOption] = useState("all");
   const [selectedClients, setSelectedClients] = useState<string[]>([]);
+  const [showCalendlyModal, setShowCalendlyModal] = useState(false);
+  const [selectedClientForBooking, setSelectedClientForBooking] = useState<Client | null>(null);
+  const [calendlyUrl, setCalendlyUrl] = useState<string>("");
 
   // Effect for filtering and sorting
   useEffect(() => {
@@ -240,6 +245,10 @@ export default function ClientsPage() {
 
         if (!profileError && profileData) {
           setProfile(profileData);
+          // Set Calendly URL from profile
+          if (profileData.calendly_url) {
+            setCalendlyUrl(profileData.calendly_url);
+          }
         } else {
           setProfile(null);
         }
@@ -461,13 +470,88 @@ export default function ClientsPage() {
                 </div>
               )}
               
-              <div className="mt-4 pt-4 border-t">
+              <div className="mt-4 pt-4 border-t flex items-center justify-between">
                 <p className="text-xs text-gray-500">
                   Added {new Date(client.created_at).toLocaleDateString()}
                 </p>
+                {calendlyUrl && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Validate client has at least name or email before opening modal
+                      if (!client.name && !client.email) {
+                        alert('Client must have a name or email to book a session');
+                        return;
+                      }
+                      setSelectedClientForBooking(client);
+                      setShowCalendlyModal(true);
+                    }}
+                    className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors"
+                    title="Book session with this client"
+                  >
+                    <CalendarIcon className="h-4 w-4" />
+                    Book Session
+                  </button>
+                )}
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Calendly Modal */}
+      {showCalendlyModal && selectedClientForBooking && calendlyUrl && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
+          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">Book Session</h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  Scheduling with {selectedClientForBooking.name}
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowCalendlyModal(false);
+                  setSelectedClientForBooking(null);
+                }}
+                className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-lg"
+              >
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 100px)' }}>
+              {calendlyUrl && calendlyUrl.trim() !== '' ? (
+                <>
+                  <CalendlyWidget
+                    url={calendlyUrl}
+                    prefill={selectedClientForBooking.name || selectedClientForBooking.email ? {
+                      name: selectedClientForBooking.name?.trim() || undefined,
+                      email: selectedClientForBooking.email?.trim() || undefined,
+                    } : undefined}
+                    utm={{
+                      utmSource: "icflog",
+                      utmMedium: "client_card",
+                      utmCampaign: "coaching_session",
+                      utmContent: `client_${selectedClientForBooking.id}`
+                    }}
+                    style={{
+                      minWidth: '100%',
+                      height: '700px'
+                    }}
+                  />
+                  {/* Note: Console warnings from Calendly widget are normal and don't affect functionality */}
+                </>
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-gray-500 mb-4">Calendly URL is not configured</p>
+                  <p className="text-sm text-gray-400">Please configure your Calendly URL in the Calendar settings</p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>

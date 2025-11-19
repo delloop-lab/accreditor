@@ -37,6 +37,7 @@ type CPDEntry = {
   applicationToPractice: string;
   icfCompetencies: string[];
   certificateProof: string;
+  icfCceHours?: boolean | null; // true = yes, false = no, null/undefined = default to true
   user_id: string;
 };
 
@@ -220,7 +221,7 @@ export default function ReportsPage() {
           entries = cpdData.map((item: any) => ({
             id: item.id || "",
             title: item.title || "",
-            date: item.date || "",
+            date: item.date || item.activity_date || "",
             hours: item.hours || 0,
             cpdType: item.cpd_type || "",
             learningMethod: item.learning_method || "",
@@ -230,6 +231,7 @@ export default function ReportsPage() {
             applicationToPractice: item.application_to_practice || "",
             icfCompetencies: Array.isArray(item.icf_competencies) ? item.icf_competencies : [],
             certificateProof: item.certificate_proof || "",
+            icfCceHours: item.icf_cce_hours !== null && item.icf_cce_hours !== undefined ? item.icf_cce_hours : true,
             user_id: item.user_id || "",
           }));
         } else {
@@ -258,13 +260,21 @@ export default function ReportsPage() {
         setCpdEntries(entries);
         setSessions(sessionEntries);
 
-        // Calculate totals and breakdowns
-        const total = entries.reduce((sum: number, entry: CPDEntry) => sum + entry.hours, 0);
+        // Calculate totals and breakdowns (exclude non-ICF CCE hours)
+        const total = entries.reduce((sum: number, entry: CPDEntry) => {
+          // Only count hours if icfCceHours is true or null/undefined (default to true)
+          const isIcfCceHours = entry.icfCceHours !== false;
+          return sum + (isIcfCceHours ? entry.hours : 0);
+        }, 0);
         setTotalHours(total);
 
         const currentYear = new Date().getFullYear();
         const currentYearTotal = entries
-          .filter((entry: CPDEntry) => new Date(entry.date).getFullYear() === currentYear)
+          .filter((entry: CPDEntry) => {
+            const entryYear = new Date(entry.date).getFullYear();
+            const isIcfCceHours = entry.icfCceHours !== false;
+            return entryYear === currentYear && isIcfCceHours;
+          })
           .reduce((sum: number, entry: CPDEntry) => sum + entry.hours, 0);
         setCurrentYearHours(currentYearTotal);
         setCurrentYearCpdHours(currentYearTotal);
