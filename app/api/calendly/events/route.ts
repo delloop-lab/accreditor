@@ -19,15 +19,6 @@ export async function GET(request: NextRequest) {
 
     if (profileError) {
     }
-
-    if (!profile?.calendly_url) {
-      return NextResponse.json({ 
-        error: 'Calendly URL not configured',
-        events: []
-      });
-    }
-
-    const calendlyUrl = profile.calendly_url;
     // Try OAuth token first, fallback to API token
     const hasOAuthToken = !!profile.calendly_access_token;
     const envToken = process.env.CALENDLY_API_TOKEN;
