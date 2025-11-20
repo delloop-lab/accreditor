@@ -50,6 +50,7 @@ export default function CalendarPage() {
         .limit(20);
 
       if (dbError) {
+        console.error('[Calendar] Failed to load DB sessions', dbError);
       }
 
       // Fetch Calendly events via API
@@ -71,10 +72,15 @@ export default function CalendarPage() {
             }));
           } else {
             const errorData = await response.json();
+            console.error('[Calendar] Calendly API error', {
+              status: response.status,
+              error: errorData?.error,
+            });
             setApiError(errorData.error || `API returned status ${response.status}`);
           }
         }
       } catch (calendlyError) {
+        console.error('[Calendar] Calendly fetch failed', calendlyError);
       }
 
       // Combine and filter sessions
@@ -105,6 +111,7 @@ export default function CalendarPage() {
       setApiError(null);
     } catch (error) {
       setUpcomingSessions([]);
+      console.error('[Calendar] Upcoming booking load failed', error);
       setApiError(error instanceof Error ? error.message : 'Unknown error occurred');
     } finally {
       setLoadingUpcoming(false);
