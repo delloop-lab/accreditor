@@ -152,7 +152,7 @@ async function handleInviteeCanceled(event: any) {
     // Find and update the session if it exists
     const { data: session } = await supabase
       .from('sessions')
-      .select('id')
+      .select('id, notes')
       .eq('calendly_invitee_uri', inviteeUri)
       .single();
 

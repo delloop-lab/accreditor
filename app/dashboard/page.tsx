@@ -185,13 +185,6 @@ export default function DashboardPage() {
       
       // Calculate total session hours from all sessions
       if (allSessionData && allSessionData.length > 0) {
-        // Debug: Log sample durations to understand the data format
-          count: allSessionData.length,
-          min: Math.min(...allSessionData.map(s => s.duration || 0)),
-          max: Math.max(...allSessionData.map(s => s.duration || 0)),
-          average: allSessionData.reduce((sum, s) => sum + (s.duration || 0), 0) / allSessionData.length
-        });
-        
         const totalHours = allSessionData.reduce((sum: number, session: any) => {
           const duration = session.duration || 0;
           // Duration is stored in minutes, convert to hours
@@ -333,42 +326,11 @@ export default function DashboardPage() {
         return isCurrentMonth && isCurrentOrNextYear;
       }) || [];
       
-      // Debug logging for this month calculation
-        currentMonth,
-        currentYear,
-        totalSessions: allSessionData?.length || 0,
-        thisMonthSessionsCount: thisMonthSessions.length,
-        sampleSessionDates: thisMonthSessions.slice(0, 3).map(s => ({
-          date: s.date,
-          parsedDate: new Date(s.date),
-          month: new Date(s.date).getMonth(),
-          year: new Date(s.date).getFullYear(),
-          duration: s.duration
-        })),
-        allSessionDates: allSessionData?.slice(0, 5).map(s => ({
-          date: s.date,
-          parsedDate: new Date(s.date),
-          month: new Date(s.date).getMonth(),
-          year: new Date(s.date).getFullYear()
-        })),
-        filterLogic: {
-          currentMonth,
-          currentYear,
-          expectedMonth: 6, // July is month 6 (0-indexed)
-          expectedYear: 2025
-        }
-      });
-      
       const thisMonthTotalHours = thisMonthSessions.reduce((total: number, session: any) => {
         const duration = session.duration || 0;
         // Duration is stored in minutes, convert to hours
         return total + (duration / 60);
       }, 0);
-      
-        thisMonthTotalHours,
-        roundedHours: Math.round(thisMonthTotalHours),
-        sessionCount: thisMonthSessions.length
-      });
       
       // Fallback: If no sessions found for current month, check for July 2025 specifically
       if (thisMonthSessions.length === 0 && allSessionData) {
@@ -384,10 +346,6 @@ export default function DashboardPage() {
             return total + (duration / 60);
           }, 0);
           
-            july2025SessionsCount: july2025Sessions.length,
-            july2025Hours: Math.round(july2025Hours)
-          });
-          
           setThisMonthHours(Math.round(july2025Hours));
         } else {
           setThisMonthHours(Math.round(thisMonthTotalHours));
@@ -396,13 +354,6 @@ export default function DashboardPage() {
         setThisMonthHours(Math.round(thisMonthTotalHours)); // Round to nearest whole hour
       }
 
-      // Check if profile is incomplete and show reminder
-        hasProfileData: !!profileData,
-        profileName: profileData?.name,
-        nameTrimmed: profileData?.name?.trim(),
-        nameLength: profileData?.name?.length
-      });
-      
       if (profileData && profileData.name && profileData.name.trim() !== '') {
         // User has a name, don't show reminder
         setShowProfileReminder(false);

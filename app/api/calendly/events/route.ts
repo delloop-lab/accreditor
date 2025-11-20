@@ -34,15 +34,6 @@ export async function GET(request: NextRequest) {
     const hasEnvToken = !!envToken;
     const calendlyApiToken = (profile.calendly_access_token || envToken)?.trim();
 
-      hasOAuthToken,
-      hasEnvToken,
-      envTokenLength: envToken?.length || 0,
-      envTokenPreview: envToken ? `${envToken.substring(0, 20)}...` : 'none',
-      hasToken: !!calendlyApiToken,
-      tokenLength: calendlyApiToken?.length || 0,
-      calendlyUrl: calendlyUrl ? 'configured' : 'not configured'
-    });
-
     if (!calendlyApiToken) {
       return NextResponse.json({ 
         error: 'Calendly API token not configured. Please set CALENDLY_API_TOKEN in .env.local or connect via OAuth.',
@@ -63,12 +54,6 @@ export async function GET(request: NextRequest) {
 
     if (!userResponse.ok) {
       const errorText = await userResponse.text();
-        status: userResponse.status,
-        statusText: userResponse.statusText,
-        error: errorText,
-        authHeaderLength: authHeader.length,
-        tokenPreview: calendlyApiToken ? `${calendlyApiToken.substring(0, 30)}...` : 'none'
-      });
       return NextResponse.json({ 
         error: `Failed to fetch Calendly user (${userResponse.status}): ${errorText}`,
         events: []
@@ -130,11 +115,7 @@ export async function GET(request: NextRequest) {
           if (inviteesResponse.ok) {
             const inviteesData = await inviteesResponse.json();
             const invitees = inviteesData.collection || [];
-            
-            
             if (invitees.length > 0) {
-              // Log full invitee structure for debugging
-              
               // Get the host email from event_memberships
               const hostEmail = event.event_memberships?.[0]?.user_email;
               
@@ -145,23 +126,19 @@ export async function GET(request: NextRequest) {
                 return inviteeEmail && inviteeEmail !== hostEmail;
               }) || invitees[0]; // Fallback to first invitee if no match
               
-              
               if (invitee) {
                 // Try multiple possible paths for name and email
                 const inviteeName = invitee.name || invitee.invitee?.name || invitee.profile?.name || invitee.text || '';
                 const inviteeEmail = invitee.email || invitee.invitee?.email || invitee.profile?.email || '';
-                
                 
                 if (inviteeName && inviteeName.trim() !== '') {
                   clientName = inviteeName.trim();
                 } else if (inviteeEmail && inviteeEmail.includes('@')) {
                   clientName = inviteeEmail.split('@')[0];
                 }
-                
                 if (inviteeEmail && inviteeEmail.includes('@')) {
                   clientEmail = inviteeEmail.trim();
                 }
-                
               }
             } else {
             }

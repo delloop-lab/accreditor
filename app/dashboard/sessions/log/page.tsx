@@ -397,13 +397,7 @@ const processImportedData = async (data: any[]): Promise<ImportProcessResult> =>
         try {
           // Parse dates
           const startDate = parseDate(row['Start Date']);
-          const endDate = row['End Date'] ? parseDate(row['End Date']) : null;
-          
-            originalStartDate: row['Start Date'],
-            parsedStartDate: startDate,
-            originalEndDate: row['End Date'],
-            parsedEndDate: endDate
-          });
+              const endDate = row['End Date'] ? parseDate(row['End Date']) : null;
           
           // Both Paid hours and Pro-bono hours are duration in hours
           const paidHours = parseFloat(row['Paid hours'] || '0');
@@ -578,14 +572,6 @@ const processImportedData = async (data: any[]): Promise<ImportProcessResult> =>
       const excelEpoch = new Date(1900, 0, 1); // January 1, 1900
       const millisecondsPerDay = 24 * 60 * 60 * 1000;
       const targetDate = new Date(excelEpoch.getTime() + (numericValue - 1) * millisecondsPerDay);
-      
-        originalValue: dateString,
-        numericValue: numericValue,
-        targetDate: targetDate.toISOString(),
-        year: targetDate.getFullYear(),
-        month: targetDate.getMonth() + 1,
-        day: targetDate.getDate()
-      });
       
       // Validate the resulting date
       if (targetDate.getFullYear() >= 1900 && targetDate.getFullYear() <= 2100) {

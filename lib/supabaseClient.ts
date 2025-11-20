@@ -8,6 +8,7 @@ const isBrowser = typeof window !== 'undefined';
 
 if (!supabaseUrl || !supabaseAnonKey) {
   if (isBrowser) {
+    // Environment variables missing; intentionally no console output per requirements
   }
 }
 
@@ -28,20 +29,7 @@ export const isSupabaseConfigured = () => {
   return !!(supabaseUrl && supabaseAnonKey);
 };
 
-// Suppress auth session missing errors and refresh token errors in console
-if (typeof window !== 'undefined') {
-    const message = args[0];
-    if (typeof message === 'string' && (
-      message.includes('AuthSessionMissingError') ||
-      message.includes('Invalid Refresh Token') ||
-      message.includes('Refresh Token Not Found')
-    )) {
-      // Suppress these specific errors - they're not critical
-      return;
-    }
-    originalError.apply(console, args);
-  };
-}
+// Previously suppressed specific Supabase auth errors in console; now omitted to avoid console usage
 
 // Helper function to safely get the current user with error handling
 export const getCurrentUser = async () => {
