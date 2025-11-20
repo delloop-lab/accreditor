@@ -77,7 +77,10 @@ const withPWA = require("next-pwa")({
   fallbacks: {
     document: "/offline",
   },
-  buildExcludes: [/middleware-manifest\.json$/],
+  buildExcludes: [
+    /middleware-manifest\.json$/,
+    /app-build-manifest\.json$/,
+  ],
 });
 
 const nextConfig: NextConfig = {
