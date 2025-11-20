@@ -24,7 +24,6 @@ export const dynamic = 'force-dynamic';
 export default function LandingPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [showOfferModal, setShowOfferModal] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -80,7 +79,7 @@ export default function LandingPage() {
       
       {/* Welcome back section for logged-in users - Mobile */}
       {!loading && isLoggedIn && (
-        <section className="md:hidden w-full max-w-md text-center bg-gradient-to-r from-green-50 to-blue-50 backdrop-blur-sm rounded-xl shadow-lg p-2 sm:p-3 md:p-4 mb-4 border border-green-200 mx-auto">
+        <section className="md:hidden w-full max-w-md text-center bg-gradient-to-r from-green-50 to-blue-50 backdrop-blur-sm rounded-xl shadow-lg p-3 mb-4 border border-green-200 mx-auto">
           <h2 className="text-lg font-bold mb-1 bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
             Welcome back!
           </h2>
@@ -134,27 +133,27 @@ export default function LandingPage() {
         <p className="text-base sm:text-lg text-gray-700 max-w-2xl mx-auto leading-relaxed px-4">
           Support your coaching practice and maintain your ICF credentials.
         </p>
+        {!loading && isLoggedIn && (
+          <section className="mt-4 text-center bg-gradient-to-r from-green-50 to-blue-50 backdrop-blur-sm rounded-2xl shadow-lg p-4 border border-green-200">
+            <h2 className="text-xl md:text-2xl font-bold mb-2 bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
+              Welcome back!
+            </h2>
+            <p className="text-base text-gray-700 mb-3 leading-relaxed">
+              You're already logged in. Head to your dashboard to continue managing your coaching practice.
+            </p>
+            <div className="flex justify-center items-center">
+              <a
+                href="/dashboard"
+                className="bg-gradient-to-r from-green-600 to-blue-600 text-white py-2 px-5 rounded-lg text-sm font-semibold hover:from-green-700 hover:to-blue-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+              >
+                Go to Dashboard
+              </a>
+            </div>
+          </section>
+        )}
       </header>
 
-      {/* Welcome back section for logged-in users - Desktop */}
-      {!loading && isLoggedIn && (
-        <section className="w-full max-w-3xl text-center bg-gradient-to-r from-green-50 to-blue-50 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg p-2 sm:p-3 md:p-4 mb-3 sm:mb-4 md:mb-6 border border-green-200 mx-4">
-          <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-1 sm:mb-2 bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-            Welcome back!
-          </h2>
-          <p className="text-sm sm:text-base text-gray-700 mb-2 sm:mb-3 leading-relaxed">
-            You're already logged in. Head to your dashboard to continue managing your coaching practice.
-          </p>
-          <div className="flex justify-center items-center">
-            <a
-              href="/dashboard"
-              className="bg-gradient-to-r from-green-600 to-blue-600 text-white py-1.5 sm:py-2 px-4 sm:px-5 rounded-lg text-sm font-semibold hover:from-green-700 hover:to-blue-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-            >
-              Go to Dashboard
-            </a>
-          </div>
-        </section>
-      )}
+      {/* CTA Section - Only show for non-logged-in users - Desktop */}
 
       {/* CTA Section - Only show for non-logged-in users - Desktop */}
       {!loading && !isLoggedIn && (
@@ -190,33 +189,6 @@ export default function LandingPage() {
         </div>
       </section>
       
-      {/* Mobile Special Launch Offer */}
-      <div className="md:hidden w-full max-w-md bg-white rounded-xl shadow-lg p-3 border border-gray-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 mx-auto mb-4">
-        <div className="text-center">
-          <button
-            onClick={() => setShowOfferModal(true)}
-            className="bg-gradient-to-r from-green-600 to-blue-600 text-white py-1.5 sm:py-2 px-4 sm:px-5 rounded-lg text-sm font-semibold hover:from-green-700 hover:to-blue-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-          >
-            Special Launch Offer
-          </button>
-        </div>
-      </div>
-
-      {/* Desktop Special Launch Offer */}
-      <div 
-        className="hidden md:block w-full max-w-3xl bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-lg p-3 sm:p-4 border border-gray-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 mb-3 sm:mb-4 md:mb-6 mx-auto"
-      >
-        <div className="text-center">
-          <button
-            onClick={() => setShowOfferModal(true)}
-            className="bg-gradient-to-r from-green-600 to-blue-600 text-white py-1.5 sm:py-2 px-4 sm:px-5 rounded-lg text-sm font-semibold hover:from-green-700 hover:to-blue-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-          >
-            Special Launch Offer
-          </button>
-        </div>
-      </div>
-
-
 
       {/* Features Grid */}
       <section className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4 mb-3 sm:mb-4 md:mb-6 px-4">
@@ -305,47 +277,6 @@ export default function LandingPage() {
         </div>
       </footer>
 
-      {/* Modal */}
-      {showOfferModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 md:bg-opacity-30 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-lg w-full max-h-[70vh] overflow-y-auto shadow-2xl border border-gray-200">
-            <div className="p-4">
-              <div className="flex justify-end items-center mb-4">
-                <button
-                  onClick={() => setShowOfferModal(false)}
-                  className="text-gray-500 hover:text-gray-700 text-xl font-bold"
-                >
-                  Ã—
-                </button>
-              </div>
-              <div className="text-center py-6">
-                <h4 className="text-2xl font-bold text-gray-900 mb-4">
-                  Exclusive Launch offer for ICF Coaches
-                </h4>
-                <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-6 mb-4">
-                  <p className="text-3xl font-bold text-gray-900 mb-2">
-                    Get 6 months free access
-                  </p>
-                  <p className="text-lg text-gray-700 font-medium mb-2">
-                    No credit card needed
-                  </p>
-                  <p className="text-sm text-gray-600 font-semibold">
-                    Valid for a limited time only
-                  </p>
-                </div>
-                <div className="flex justify-center">
-                  <a
-                    href="/register"
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-8 rounded-xl text-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-                  >
-                    Claim Your Free 6 Months
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </main>
   );
 } 

@@ -586,5 +586,5 @@ Generate ICF-compliant reports ready for credential renewal. Professional format
 ---
 
 *Last Updated: November 2025*
-*Version: BETA V0.9730*
+*Version: BETA V0.9750*
 

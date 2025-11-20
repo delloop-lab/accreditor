@@ -1,6 +1,7 @@
 {
   "name": "ICF Log",
   "short_name": "ICFLog",
+  "id": "/",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",
