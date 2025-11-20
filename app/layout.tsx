@@ -15,11 +15,13 @@ const geistMono = Geist_Mono({
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  themeColor: "#ffffff",
 };
 
 export const metadata: Metadata = {
   title: "ICF Log - Coaching Log & CPD Tracker",
   description: "Professional coaching log and CPD tracking application for ICF accredited coaches",
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({
