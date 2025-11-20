@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -59,13 +59,11 @@ function MentoringLogContent() {
         .order("session_date", { ascending: false });
 
       if (error) {
-        console.error("Error fetching sessions:", error);
         setError("Failed to load sessions");
       } else {
         setSessions(data || []);
       }
     } catch (error) {
-      console.error("Error:", error);
       setError("An error occurred while loading sessions");
     } finally {
       setLoading(false);
@@ -82,13 +80,11 @@ function MentoringLogContent() {
         .eq("id", id);
 
       if (error) {
-        console.error("Error deleting session:", error);
         setError("Failed to delete session");
       } else {
         setSessions(sessions.filter(session => session.id !== id));
       }
     } catch (error) {
-      console.error("Error:", error);
       setError("An error occurred while deleting the session");
     }
   };

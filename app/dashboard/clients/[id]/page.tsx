@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
@@ -71,14 +71,11 @@ export default function ClientDetailPage() {
           .list('clients', { limit: 1 });
         
         if (error) {
-          console.error('Storage bucket test failed:', error);
           setUploadError(`Storage bucket not accessible: ${error.message}. Please check your Supabase storage configuration.`);
         } else {
-          console.log('Storage bucket access successful');
           setUploadError(null);
         }
       } catch (error) {
-        console.error('Storage test exception:', error);
         setUploadError('Storage test failed. Please check your Supabase configuration.');
       }
     };
@@ -119,7 +116,6 @@ export default function ClientDetailPage() {
         });
       
       if (uploadError) {
-        console.error('Upload error:', uploadError);
         setUploadError(`Upload failed: ${uploadError.message}`);
         setUploadLoading(false);
         return;
@@ -148,7 +144,6 @@ export default function ClientDetailPage() {
           .select();
         
         if (dbError) {
-          console.error('Error saving document metadata:', dbError);
           setUploadError(`Error saving document metadata: ${dbError.message}`);
         } else if (data) {
           // Add document to state
@@ -164,7 +159,6 @@ export default function ClientDetailPage() {
         }
       }
     } catch (error) {
-      console.error('Document upload error:', error);
       setUploadError(`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setUploadLoading(false);
@@ -180,7 +174,6 @@ export default function ClientDetailPage() {
         .download(clientDocument.file_path);
       
       if (error) {
-        console.error('Download error:', error);
         alert('Error downloading file');
         return;
       }
@@ -195,7 +188,6 @@ export default function ClientDetailPage() {
       URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
-      console.error('Error downloading document:', error);
       alert('Failed to download document');
     }
   };
@@ -215,7 +207,6 @@ export default function ClientDetailPage() {
         .single();
       
       if (docError) {
-        console.error('Error retrieving document:', docError);
         alert('Failed to delete document');
         return;
       }
@@ -226,7 +217,6 @@ export default function ClientDetailPage() {
         .remove([docData.file_path]);
       
       if (storageError) {
-        console.error('Error deleting file from storage:', storageError);
         alert('Failed to delete file from storage');
         return;
       }
@@ -238,7 +228,6 @@ export default function ClientDetailPage() {
         .eq('id', documentId);
       
       if (dbError) {
-        console.error('Error deleting document metadata:', dbError);
         alert('Failed to delete document metadata');
         return;
       }
@@ -246,7 +235,6 @@ export default function ClientDetailPage() {
       // Remove document from state
       setDocuments(prev => prev.filter(doc => doc.id !== documentId));
     } catch (error) {
-      console.error('Error deleting document:', error);
       alert('Failed to delete document');
     }
   };
@@ -316,7 +304,6 @@ export default function ClientDetailPage() {
             
             setDocuments(mappedDocs);
           } else {
-            console.error('Error fetching documents:', documentsError);
             setDocuments([]);
           }
         } else {
@@ -339,7 +326,6 @@ export default function ClientDetailPage() {
           });
         }
       } catch (error) {
-        console.error('Error fetching client:', error);
         setError('Failed to load client details');
       }
       setLoading(false);
@@ -374,7 +360,6 @@ export default function ClientDetailPage() {
         setError('Failed to update client');
       }
     } catch (error) {
-      console.error('Error updating client:', error);
       setError('Failed to update client');
     }
     setSaving(false);
@@ -418,7 +403,6 @@ export default function ClientDetailPage() {
         setError('Failed to delete client');
       }
     } catch (error) {
-      console.error('Error deleting client:', error);
       setError('Failed to delete client');
     }
     setDeleting(false);
@@ -716,7 +700,7 @@ export default function ClientDetailPage() {
                         <div>
                           <p className="text-sm font-medium text-gray-700">{document.name}</p>
                           <p className="text-xs text-gray-500">
-                            Uploaded on {new Date(document.created_at).toLocaleDateString()} • {formatFileSize(document.file_size)}
+                            Uploaded on {new Date(document.created_at).toLocaleDateString()} â€¢ {formatFileSize(document.file_size)}
                           </p>
                         </div>
                       </div>

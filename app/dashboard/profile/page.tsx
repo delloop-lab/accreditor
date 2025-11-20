@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase, getCurrentUser } from "@/lib/supabaseClient";
@@ -43,11 +43,11 @@ const ICF_LEVELS = [
 
 const CURRENCIES = [
   { value: "USD", label: "US Dollar ($)", symbol: "$" },
-  { value: "EUR", label: "Euro (€)", symbol: "€" },
-  { value: "GBP", label: "British Pound (£)", symbol: "£" },
+  { value: "EUR", label: "Euro (â‚¬)", symbol: "â‚¬" },
+  { value: "GBP", label: "British Pound (Â£)", symbol: "Â£" },
   { value: "CAD", label: "Canadian Dollar (C$)", symbol: "C$" },
   { value: "AUD", label: "Australian Dollar (A$)", symbol: "A$" },
-  { value: "JPY", label: "Japanese Yen (¥)", symbol: "¥" },
+  { value: "JPY", label: "Japanese Yen (Â¥)", symbol: "Â¥" },
   { value: "CHF", label: "Swiss Franc (CHF)", symbol: "CHF" },
   { value: "NZD", label: "New Zealand Dollar (NZ$)", symbol: "NZ$" },
   { value: "SEK", label: "Swedish Krona (SEK)", symbol: "SEK" },
@@ -133,7 +133,6 @@ export default function ProfilePage() {
       try {
         const { user, error: authError } = await getCurrentUser();
         if (authError) {
-          console.warn('Auth error in profile:', authError);
           // Don't redirect immediately on auth errors, might be temporary
           setLoading(false);
           return;
@@ -151,10 +150,8 @@ export default function ProfilePage() {
           .eq("user_id", user.id)
           .single();
 
-        console.log('Profile fetch result:', { profileData, profileError });
 
         if (!profileError && profileData) {
-          console.log('Setting profile from database:', profileData);
           setProfile({
             id: profileData.id,
             name: profileData.name || "",
@@ -166,7 +163,6 @@ export default function ProfilePage() {
             updated_at: profileData.updated_at
           });
         } else {
-          console.log('Using fallback profile data from user:', user);
           // Use user data as fallback
           setProfile({
             id: user.id,
@@ -180,7 +176,6 @@ export default function ProfilePage() {
           });
         }
       } catch (error) {
-        console.error('Error fetching profile:', error);
       }
       setLoading(false);
     };
@@ -196,10 +191,8 @@ export default function ProfilePage() {
 
     try {
       const { user, error: authError } = await getCurrentUser();
-      console.log('Auth check result:', { user, authError });
       
       if (authError) {
-        console.error('Auth error:', authError);
         const errorMessage = authError && typeof authError === 'object' && 'message' in authError 
           ? (authError as any).message 
           : 'Session error';
@@ -209,15 +202,12 @@ export default function ProfilePage() {
       }
       
       if (!user) {
-        console.log('No user found, redirecting to login');
         router.replace("/login");
         return;
       }
 
-      console.log('Current user:', user.id);
 
       // Check if email already exists for another user
-      console.log('Checking email uniqueness for:', profile.email.trim());
       // REMOVED: Email uniqueness check due to RLS policy restrictions
       // Users can only query their own profile data, not other users' profiles
       // const { data: existingProfileWithEmail, error: emailCheckError } = await supabase
@@ -227,7 +217,6 @@ export default function ProfilePage() {
       //   .neq("user_id", user.id)
       //   .single();
 
-      // console.log('Email check result:', { existingProfileWithEmail, emailCheckError });
 
       // if (!emailCheckError && existingProfileWithEmail) {
       //   setShowUserExistsModal(true);
@@ -236,14 +225,12 @@ export default function ProfilePage() {
       // }
 
       // Check if profile exists first
-      console.log('Checking if profile exists for user:', user.id);
       const { data: existingProfile, error: profileCheckError } = await supabase
         .from("profiles")
         .select("id")
         .eq("user_id", user.id)
         .single();
 
-      console.log('Profile existence check result:', { existingProfile, profileCheckError });
 
       if (profileCheckError && profileCheckError.code === 'PGRST116') {
         // Profile doesn't exist, insert new one
@@ -290,7 +277,6 @@ export default function ProfilePage() {
       setSuccess("Profile updated successfully!");
       setTimeout(() => setSuccess(""), 3000);
     } catch (error) {
-      console.error('Error updating profile:', error);
       setError(`An unexpected error occurred: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setSaving(false);
@@ -299,20 +285,17 @@ export default function ProfilePage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    console.log('Profile change:', name, value);
     setProfile(prev => {
       const newProfile = {
         ...prev,
         [name]: value
       };
-      console.log('New profile state:', newProfile);
       return newProfile;
     });
     
     // Force badge update when ICF level changes
     if (name === 'icf_level') {
       setBadgeUpdateTrigger(prev => prev + 1);
-      console.log('Badge update triggered for ICF level:', value);
     }
   };
 
@@ -361,7 +344,6 @@ export default function ProfilePage() {
   }
 
   const icfBadge = getICFBadge(profile.icf_level);
-  console.log('Current ICF level:', profile.icf_level, 'Badge:', icfBadge);
   
   // Force re-render when profile changes
   const badgeKey = `badge-${profile.icf_level}-${badgeUpdateTrigger}`;
@@ -522,14 +504,12 @@ export default function ProfilePage() {
                   alt={`${icfBadge.text} Badge`}
                   className="w-96 h-96 object-contain"
                   onError={(e) => {
-                    console.error('Badge image failed to load:', icfBadge.image);
                     e.currentTarget.style.display = 'none';
                     // Show fallback badge
                     const fallback = e.currentTarget.nextElementSibling as HTMLElement;
                     if (fallback) fallback.style.display = 'flex';
                   }}
                   onLoad={() => {
-                    console.log('Badge image loaded successfully:', icfBadge.image);
                   }}
                 />
                 {/* Fallback badge if image fails to load */}
@@ -585,25 +565,25 @@ export default function ProfilePage() {
               <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
                 <h4 className="font-semibold text-blue-800 mb-2">ACC (Associate Certified Coach)</h4>
                 <ul className="space-y-1 text-xs">
-                  <li>• Minimum 60 hours of coach-specific training</li>
-                  <li>• At least 100 hours of coaching experience</li>
-                  <li>• Entry-level credential</li>
+                  <li>â€¢ Minimum 60 hours of coach-specific training</li>
+                  <li>â€¢ At least 100 hours of coaching experience</li>
+                  <li>â€¢ Entry-level credential</li>
                 </ul>
               </div>
               <div className="bg-green-50 p-4 rounded-lg border border-green-200">
                 <h4 className="font-semibold text-green-800 mb-2">PCC (Professional Certified Coach)</h4>
                 <ul className="space-y-1 text-xs">
-                  <li>• Minimum 125 hours of coach-specific training</li>
-                  <li>• At least 500 hours of coaching experience</li>
-                  <li>• Intermediate/Professional-level credential</li>
+                  <li>â€¢ Minimum 125 hours of coach-specific training</li>
+                  <li>â€¢ At least 500 hours of coaching experience</li>
+                  <li>â€¢ Intermediate/Professional-level credential</li>
                 </ul>
               </div>
               <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
                 <h4 className="font-semibold text-purple-800 mb-2">MCC (Master Certified Coach)</h4>
                 <ul className="space-y-1 text-xs">
-                  <li>• Minimum 200 hours of coach-specific training</li>
-                  <li>• At least 2,500 hours of coaching experience</li>
-                  <li>• Advanced/Master-level credential</li>
+                  <li>â€¢ Minimum 200 hours of coach-specific training</li>
+                  <li>â€¢ At least 2,500 hours of coaching experience</li>
+                  <li>â€¢ Advanced/Master-level credential</li>
                 </ul>
               </div>
             </div>

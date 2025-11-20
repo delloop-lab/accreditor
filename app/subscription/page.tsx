@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -27,7 +27,6 @@ export default function SubscriptionPage() {
         const usageData = await getUserUsage();
         setUsage(usageData);
       } catch (error) {
-        console.error('Error fetching usage:', error);
       } finally {
         setLoading(false);
       }
@@ -42,7 +41,6 @@ export default function SubscriptionPage() {
       window.open('https://buy.stripe.com/test_cNi3cx51I5rwgAS0Cu7EQ00', '_blank');
     } else {
       // Add Pro plan link when available
-      console.log('Pro plan not yet configured');
     }
   };
 

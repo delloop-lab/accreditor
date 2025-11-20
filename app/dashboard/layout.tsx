@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import Link from "next/link";
 import { ReactNode, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -35,7 +35,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         const adminStatus = await isCurrentUserAdmin();
         setIsAdmin(adminStatus);
       } catch (error) {
-        console.error('Error checking admin status:', error);
         setIsAdmin(false);
       }
     };
@@ -45,7 +44,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   const handleHomeClick = () => {
     // Navigate to landing page
-    console.log('Logo clicked - navigating to landing page');
     router.push('/landing');
   };
 
@@ -53,12 +51,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) {
-        console.warn('Error signing out:', error);
       }
       // Always redirect to login page directly instead of going through root
       router.push('/login');
     } catch (error) {
-      console.warn('Error during logout:', error);
       // Fallback: redirect to login page
       router.push('/login');
     }

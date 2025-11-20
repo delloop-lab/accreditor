@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+﻿import { createClient } from '@supabase/supabase-js';
 import { NextRequest } from 'next/server';
 
 /**
@@ -61,13 +61,11 @@ export async function getServerUser(request?: NextRequest) {
     const { data: { user }, error } = await supabase.auth.getUser();
     
     if (error || !user) {
-      console.error('Error getting server user:', error);
       return null;
     }
     
     return user;
   } catch (error) {
-    console.error('Error creating server Supabase client:', error);
     return null;
   }
 }

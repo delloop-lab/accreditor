@@ -1,4 +1,4 @@
-import type { NextConfig } from "next";
+﻿import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   // Enable strict mode for better error detection
@@ -6,7 +6,6 @@ const nextConfig: NextConfig = {
   
   // Add compiler options for better debugging
   compiler: {
-    // Remove console.logs in production
     removeConsole: process.env.NODE_ENV === "production",
   },
   

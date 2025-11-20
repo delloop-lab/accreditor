@@ -1,4 +1,4 @@
-import * as XLSX from 'xlsx';
+﻿import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 
 // Helper function to format date
@@ -23,7 +23,6 @@ const formatDateDDMMYYYY = (dateString: string) => {
 // Export Sessions data in ICF Client Coaching Log format
 export const exportSessionsToICFLog = (sessionsData: any[], filename: string = 'ICF-Client-Coaching-Log') => {
   try {
-    console.log('Exporting Sessions to ICF Log format:', sessionsData);
     
     // Create workbook
     const workbook = XLSX.utils.book_new();
@@ -112,16 +111,13 @@ export const exportSessionsToICFLog = (sessionsData: any[], filename: string = '
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
     });
     saveAs(blob, `${filename}.xlsx`);
-    console.log('ICF Log format export successful');
   } catch (error) {
-    console.error('ICF Log format export failed:', error);
   }
 };
 
 // Test export function to debug issues
 export const testExport = () => {
   try {
-    console.log('Testing export functionality...');
     const testData = [
       { name: 'Test Client', date: '2024-01-25', duration: 60 }
     ];
@@ -129,16 +125,13 @@ export const testExport = () => {
     const csvContent = 'Name,Date,Duration\nTest Client,2024-01-25,60 minutes';
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     saveAs(blob, 'test-export.csv');
-    console.log('Test export successful');
   } catch (error) {
-    console.error('Test export failed:', error);
   }
 };
 
 // Export CPD data to CSV
 export const exportCPDToCSV = (cpdData: any[], filename: string = 'cpd-data') => {
   try {
-    console.log('Exporting CPD to CSV:', cpdData);
     const headers = [
       'Title',
       'Date',
@@ -166,16 +159,13 @@ export const exportCPDToCSV = (cpdData: any[], filename: string = 'cpd-data') =>
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     saveAs(blob, `${filename}.csv`);
-    console.log('CPD CSV export successful');
   } catch (error) {
-    console.error('CPD CSV export failed:', error);
   }
 };
 
 // Export CPD data to XLSX
 export const exportCPDToXLSX = (cpdData: any[], filename: string = 'cpd-data') => {
   try {
-    console.log('Exporting CPD to XLSX:', cpdData);
     const worksheet = XLSX.utils.json_to_sheet(
       cpdData.map(item => ({
         'Title': item.title || '',
@@ -194,16 +184,13 @@ export const exportCPDToXLSX = (cpdData: any[], filename: string = 'cpd-data') =
     const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
     const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     saveAs(blob, `${filename}.xlsx`);
-    console.log('CPD XLSX export successful');
   } catch (error) {
-    console.error('CPD XLSX export failed:', error);
   }
 };
 
 // Export Sessions data to CSV
 export const exportSessionsToCSV = (sessionsData: any[], filename: string = 'sessions-data') => {
   try {
-    console.log('Exporting Sessions to CSV:', sessionsData);
     const headers = [
       'Client Name',
       'Start Date',
@@ -249,16 +236,13 @@ export const exportSessionsToCSV = (sessionsData: any[], filename: string = 'ses
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     saveAs(blob, `${filename}.csv`);
-    console.log('Sessions CSV export successful');
   } catch (error) {
-    console.error('Sessions CSV export failed:', error);
   }
 };
 
 // Export Sessions data to XLSX
 export const exportSessionsToXLSX = (sessionsData: any[], filename: string = 'sessions-data') => {
   try {
-    console.log('Exporting Sessions to XLSX:', sessionsData);
     const worksheet = XLSX.utils.json_to_sheet(
       sessionsData.map(item => ({
         'Client Name': item.clientName || item.client_name || '',
@@ -286,8 +270,6 @@ export const exportSessionsToXLSX = (sessionsData: any[], filename: string = 'se
     const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
     const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     saveAs(blob, `${filename}.xlsx`);
-    console.log('Sessions XLSX export successful');
   } catch (error) {
-    console.error('Sessions XLSX export failed:', error);
   }
 }; 

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
@@ -80,11 +80,11 @@ export default function ReportsPage() {
   // Currency symbols mapping
   const CURRENCY_SYMBOLS: { [key: string]: string } = {
     "USD": "$",
-    "EUR": "€",
-    "GBP": "£",
+    "EUR": "â‚¬",
+    "GBP": "Â£",
     "CAD": "C$",
     "AUD": "A$",
-    "JPY": "¥",
+    "JPY": "Â¥",
     "CHF": "CHF",
     "NZD": "NZ$",
     "SEK": "SEK",
@@ -339,7 +339,6 @@ export default function ReportsPage() {
         setCompetencyBreakdown(breakdown);
 
       } catch (error) {
-        console.error('Error fetching report data:', error);
       } finally {
         setLoading(false);
       }
@@ -598,7 +597,7 @@ export default function ReportsPage() {
                     onClick={() => setSelectedCard(null)}
                     className="text-gray-400 hover:text-gray-600"
                   >
-                    ✕
+                    âœ•
                   </button>
                 </div>
               </div>
@@ -646,7 +645,7 @@ export default function ReportsPage() {
               <div className="p-6 border-b">
                 <div className="flex items-center justify-between">
                   <h2 className="text-2xl font-bold text-gray-900">Session Progress Details</h2>
-                  <button onClick={() => setSelectedCard(null)} className="text-gray-400 hover:text-gray-600">✕</button>
+                  <button onClick={() => setSelectedCard(null)} className="text-gray-400 hover:text-gray-600">âœ•</button>
                 </div>
               </div>
               <div className="p-6">
@@ -698,7 +697,7 @@ export default function ReportsPage() {
                     onClick={() => setSelectedCard(null)}
                     className="text-gray-400 hover:text-gray-600"
                   >
-                    ✕
+                    âœ•
                   </button>
                 </div>
               </div>
@@ -762,7 +761,7 @@ export default function ReportsPage() {
                     onClick={() => setSelectedCard(null)}
                     className="text-gray-400 hover:text-gray-600"
                   >
-                    ✕
+                    âœ•
                   </button>
                 </div>
               </div>
@@ -831,7 +830,7 @@ export default function ReportsPage() {
                     onClick={() => setSelectedCard(null)}
                     className="text-gray-400 hover:text-gray-600"
                   >
-                    ✕
+                    âœ•
                   </button>
                 </div>
               </div>
@@ -887,19 +886,19 @@ export default function ReportsPage() {
                     <div className="border rounded-lg p-4">
                       <h4 className="font-medium text-gray-900 mb-2">Next ICF Level Requirements</h4>
                       <ul className="text-sm text-gray-600 space-y-1">
-                        <li>• {nextLevel.sessionHours} coaching hours required</li>
-                        <li>• {nextLevel.cpdHours} CPD/education hours required</li>
-                        <li>• Current level: {profile?.icf_level?.toUpperCase() || "Not specified"}</li>
-                        <li>• Target level: {profile?.icf_level === "none" ? "ACC" : profile?.icf_level === "acc" ? "PCC" : profile?.icf_level === "pcc" ? "MCC" : "Highest level reached"}</li>
+                        <li>â€¢ {nextLevel.sessionHours} coaching hours required</li>
+                        <li>â€¢ {nextLevel.cpdHours} CPD/education hours required</li>
+                        <li>â€¢ Current level: {profile?.icf_level?.toUpperCase() || "Not specified"}</li>
+                        <li>â€¢ Target level: {profile?.icf_level === "none" ? "ACC" : profile?.icf_level === "acc" ? "PCC" : profile?.icf_level === "pcc" ? "MCC" : "Highest level reached"}</li>
                       </ul>
                     </div>
                     <div className="border rounded-lg p-4">
                       <h4 className="font-medium text-gray-900 mb-2">Your Progress</h4>
                       <ul className="text-sm text-gray-600 space-y-1">
-                        <li>• {currentYearSessionHours} coaching hours completed</li>
-                        <li>• {currentYearCpdHours} CPD hours completed</li>
-                        <li>• {currentYearSessions} sessions logged this year</li>
-                        <li>• {isComplete ? "Ready for next ICF level" : "Requirements still in progress"}</li>
+                        <li>â€¢ {currentYearSessionHours} coaching hours completed</li>
+                        <li>â€¢ {currentYearCpdHours} CPD hours completed</li>
+                        <li>â€¢ {currentYearSessions} sessions logged this year</li>
+                        <li>â€¢ {isComplete ? "Ready for next ICF level" : "Requirements still in progress"}</li>
                       </ul>
                     </div>
                   </div>
@@ -920,7 +919,7 @@ export default function ReportsPage() {
                     onClick={() => setSelectedCard(null)}
                     className="text-gray-400 hover:text-gray-600"
                   >
-                    ✕
+                    âœ•
                   </button>
                 </div>
               </div>
@@ -943,19 +942,19 @@ export default function ReportsPage() {
                     <div className="border rounded-lg p-4">
                       <h4 className="font-medium text-gray-900 mb-2">Mentoring</h4>
                       <ul className="text-sm text-gray-600 space-y-1">
-                        <li>• Professional development sessions</li>
-                        <li>• Skills enhancement and guidance</li>
-                        <li>• Career development support</li>
-                        <li>• Learning from experienced coaches</li>
+                        <li>â€¢ Professional development sessions</li>
+                        <li>â€¢ Skills enhancement and guidance</li>
+                        <li>â€¢ Career development support</li>
+                        <li>â€¢ Learning from experienced coaches</li>
                       </ul>
                     </div>
                     <div className="border rounded-lg p-4">
                       <h4 className="font-medium text-gray-900 mb-2">Supervision</h4>
                       <ul className="text-sm text-gray-600 space-y-1">
-                        <li>• Review of coaching practice</li>
-                        <li>• Quality assurance sessions</li>
-                        <li>• Professional oversight</li>
-                        <li>• Ethical practice maintenance</li>
+                        <li>â€¢ Review of coaching practice</li>
+                        <li>â€¢ Quality assurance sessions</li>
+                        <li>â€¢ Professional oversight</li>
+                        <li>â€¢ Ethical practice maintenance</li>
                       </ul>
                     </div>
                   </div>
@@ -976,7 +975,7 @@ export default function ReportsPage() {
                     onClick={() => setSelectedCard(null)}
                     className="text-gray-400 hover:text-gray-600"
                   >
-                    ✕
+                    âœ•
                   </button>
                 </div>
               </div>
@@ -1016,21 +1015,21 @@ export default function ReportsPage() {
                     <div className="border rounded-lg p-4">
                       <h4 className="font-medium text-gray-900 mb-2">Requirements (Every 3 Years)</h4>
                       <ul className="text-sm text-gray-600 space-y-1">
-                        <li>• 40 CCE credits total over 3 years</li>
-                        <li>• 24 credits in Core Competencies</li>
-                        <li>• 3 credits in Coach Ethics</li>
-                        <li>• 16 credits in Resource Development/Core Competencies</li>
-                        <li>• Additional mentor coaching for ACC holders</li>
+                        <li>â€¢ 40 CCE credits total over 3 years</li>
+                        <li>â€¢ 24 credits in Core Competencies</li>
+                        <li>â€¢ 3 credits in Coach Ethics</li>
+                        <li>â€¢ 16 credits in Resource Development/Core Competencies</li>
+                        <li>â€¢ Additional mentor coaching for ACC holders</li>
                       </ul>
                     </div>
                     <div className="border rounded-lg p-4">
                       <h4 className="font-medium text-gray-900 mb-2">Your Progress</h4>
                       <ul className="text-sm text-gray-600 space-y-1">
-                        <li>• {totalRenewalHours.toFixed(1)} total hours completed</li>
-                        <li>• {currentYearCpdHours} CPD hours logged</li>
-                        <li>• {mentoringHours} mentoring hours logged</li>
-                        <li>• {supervisionHours} supervision hours logged</li>
-                        <li>• {totalRenewalHours >= 40 ? "Ready for renewal" : "More hours needed"}</li>
+                        <li>â€¢ {totalRenewalHours.toFixed(1)} total hours completed</li>
+                        <li>â€¢ {currentYearCpdHours} CPD hours logged</li>
+                        <li>â€¢ {mentoringHours} mentoring hours logged</li>
+                        <li>â€¢ {supervisionHours} supervision hours logged</li>
+                        <li>â€¢ {totalRenewalHours >= 40 ? "Ready for renewal" : "More hours needed"}</li>
                       </ul>
                     </div>
                   </div>

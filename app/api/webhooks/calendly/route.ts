@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { createServiceRoleSupabaseClient } from '@/lib/supabaseServer';
 import crypto from 'crypto';
 
@@ -16,7 +16,6 @@ function verifyCalendlySignature(
       Buffer.from(digest)
     );
   } catch (error) {
-    console.error('Error verifying Calendly signature:', error);
     return false;
   }
 }
@@ -51,12 +50,10 @@ export async function POST(request: NextRequest) {
         await handleInviteeCanceled(event);
         break;
       default:
-        console.log('Unhandled Calendly event:', event.event);
     }
 
     return NextResponse.json({ received: true });
   } catch (error) {
-    console.error('Error processing Calendly webhook:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -113,14 +110,11 @@ async function handleInviteeCreated(event: any) {
     
     // Fallback: if we can't find by Calendly URL, log for manual review
     if (!profile) {
-      console.log(`No coach found for Calendly event. Event URI: ${eventUri}, Invitee: ${inviteeEmail}`);
-      console.log('Event details:', JSON.stringify(event, null, 2));
       // For now, we'll need to manually associate bookings
       // TODO: Implement better matching logic or require webhook configuration per user
       return;
     }
     
-    console.log(`Found coach account: ${profile.email} for Calendly booking from ${inviteeEmail}`);
 
     // Create a session record from the Calendly booking
     const { error: sessionError } = await supabase
@@ -140,13 +134,10 @@ async function handleInviteeCreated(event: any) {
       });
 
     if (sessionError) {
-      console.error('Error creating session from Calendly booking:', sessionError);
       throw sessionError;
     }
 
-    console.log(`Session created for ${inviteeEmail} from Calendly booking`);
   } catch (error) {
-    console.error('Error handling invitee.created event:', error);
     throw error;
   }
 }
@@ -176,9 +167,7 @@ async function handleInviteeCanceled(event: any) {
         .eq('id', session.id);
     }
 
-    console.log(`Session canceled for Calendly invitee: ${inviteeUri}`);
   } catch (error) {
-    console.error('Error handling invitee.canceled event:', error);
     throw error;
   }
 }

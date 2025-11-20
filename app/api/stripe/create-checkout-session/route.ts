@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import stripe, { STRIPE_CONFIG } from '@/lib/stripe';
 
 export async function POST(request: NextRequest) {
@@ -44,7 +44,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ url: session.url });
   } catch (error) {
-    console.error('Error creating checkout session:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

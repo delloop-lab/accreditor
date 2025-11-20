@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
@@ -165,7 +165,6 @@ export default function ClientsPage() {
         // Process session deletion in batches with progress tracking
         await batchProcess(selectedClients, deleteSessionsBatch, 10, updateProgress);
       } catch (error: any) {
-        console.error("Error deleting sessions:", error);
         alert(error.message || "Error deleting associated sessions");
         setDeletingClients(false);
         setDeletionProgress({ current: 0, total: 0 });
@@ -198,7 +197,6 @@ export default function ClientsPage() {
         // Process client deletion in batches with progress tracking
         await batchProcess(selectedClients, deleteClientsBatch, 10, updateClientProgress);
       } catch (error: any) {
-        console.error("Error deleting clients:", error);
         alert(error.message || "Error deleting clients");
         setDeletingClients(false);
         setDeletionProgress({ current: 0, total: 0 });
@@ -218,7 +216,6 @@ export default function ClientsPage() {
       alert(`Successfully deleted ${selectedClients.length} client(s) and their associated sessions.`);
       
     } catch (error) {
-      console.error("Error in deletion process:", error);
       alert("An unexpected error occurred during deletion");
     } finally {
       setDeletingClients(false);
@@ -267,7 +264,6 @@ export default function ClientsPage() {
           setFilteredClients([]);
         }
       } catch (error) {
-        console.error('Error fetching clients:', error);
       }
       setLoading(false);
     };

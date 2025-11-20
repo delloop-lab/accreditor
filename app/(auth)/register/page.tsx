@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
@@ -76,7 +76,6 @@ export default function RegisterPage() {
         router.push("/dashboard");
       }
     } catch (err) {
-      console.error('Registration error:', err);
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);

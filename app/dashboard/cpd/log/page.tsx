@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useEffect, useState, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
@@ -66,15 +66,12 @@ function CPDLogContent() {
 
   useEffect(() => {
     const highlightId = searchParams.get('highlight');
-    console.log('CPD Log - Highlight ID from URL:', highlightId);
     if (highlightId) {
       setHighlightedId(highlightId);
     }
   }, [searchParams]);
 
   useEffect(() => {
-    console.log('CPD Log - Highlighted ID state:', highlightedId);
-    console.log('CPD Log - CPD entries:', cpdEntries.map(e => ({ id: e.id, title: e.title })));
     if (highlightedId && highlightedRef.current) {
       // Scroll to the highlighted element with a slight delay to ensure rendering
       setTimeout(() => {
@@ -133,7 +130,6 @@ function CPDLogContent() {
           setCpdEntries([]);
         }
       } catch (error) {
-        console.error('Error fetching CPD:', error);
         setCpdEntries([]);
       }
       setLoading(false);
@@ -156,8 +152,8 @@ function CPDLogContent() {
             className="flex items-center justify-center gap-2 bg-gray-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm"
           >
             <CalendarIcon className="h-4 w-4" />
-            <span className="hidden sm:inline">Sort by Date {sortOrder === 'asc' ? '↑' : '↓'}</span>
-            <span className="sm:hidden">Sort {sortOrder === 'asc' ? '↑' : '↓'}</span>
+            <span className="hidden sm:inline">Sort by Date {sortOrder === 'asc' ? 'â†‘' : 'â†“'}</span>
+            <span className="sm:hidden">Sort {sortOrder === 'asc' ? 'â†‘' : 'â†“'}</span>
           </button>
           
 
@@ -290,7 +286,7 @@ function CPDLogContent() {
                       
                       {/* Expand/Collapse Indicator */}
                       <div className="text-gray-400 p-1">
-                        {isExpanded ? '▼' : '▶'}
+                        {isExpanded ? 'â–¼' : 'â–¶'}
                       </div>
                     </div>
                   </div>
@@ -418,7 +414,7 @@ function CPDLogContent() {
                               <DocumentIcon className="h-4 w-4" />
                               View Certificate
                             </a>
-                            <span className="text-green-600 text-sm">✓ Certificate uploaded</span>
+                            <span className="text-green-600 text-sm">âœ“ Certificate uploaded</span>
                           </div>
                         ) : (
                           <p className="text-gray-500 text-sm">No certificate uploaded</p>

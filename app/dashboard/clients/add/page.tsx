@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
@@ -83,7 +83,6 @@ export default function AddClientPage() {
               });
 
             if (uploadError) {
-              console.error('Upload error:', uploadError);
               uploadErrors.push(`${file.name}: ${uploadError.message}`);
               continue;
             }
@@ -110,12 +109,10 @@ export default function AddClientPage() {
                 .insert([documentData]);
 
               if (dbError) {
-                console.error('Error saving document metadata:', dbError);
                 uploadErrors.push(`${file.name}: Failed to save metadata`);
               }
             }
           } catch (uploadError) {
-            console.error('Document upload error:', uploadError);
             uploadErrors.push(`${file.name}: Upload failed`);
           }
         }
@@ -133,7 +130,6 @@ export default function AddClientPage() {
 
       router.push("/dashboard/clients");
     } catch (error) {
-      console.error('Error adding client:', error);
       setError("An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);

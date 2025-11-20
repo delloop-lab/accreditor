@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient, getServerUser } from '@/lib/supabaseServer';
 
 export async function GET(request: NextRequest) {
@@ -16,7 +16,6 @@ export async function GET(request: NextRequest) {
     const error = searchParams.get('error');
 
     if (error) {
-      console.error('Calendly OAuth error:', error);
       return NextResponse.redirect(new URL('/dashboard/calendar?error=calendly_auth_failed', request.url));
     }
 
@@ -30,7 +29,6 @@ export async function GET(request: NextRequest) {
     const redirectUri = process.env.CALENDLY_REDIRECT_URI || `${request.nextUrl.origin}/api/auth/calendly/callback`;
 
     if (!clientId || !clientSecret) {
-      console.error('Calendly OAuth credentials not configured');
       return NextResponse.redirect(new URL('/dashboard/calendar?error=oauth_not_configured', request.url));
     }
 
@@ -51,7 +49,6 @@ export async function GET(request: NextRequest) {
 
     if (!tokenResponse.ok) {
       const errorText = await tokenResponse.text();
-      console.error('Failed to exchange code for token:', errorText);
       return NextResponse.redirect(new URL('/dashboard/calendar?error=token_exchange_failed', request.url));
     }
 
@@ -69,14 +66,11 @@ export async function GET(request: NextRequest) {
       .eq('user_id', user.id);
 
     if (updateError) {
-      console.error('Error storing Calendly tokens:', updateError);
       // Continue anyway - tokens were received
     }
 
-    console.log('Calendly OAuth successful for user:', user.id);
     return NextResponse.redirect(new URL('/dashboard/calendar?calendly_connected=true', request.url));
   } catch (error) {
-    console.error('Error in Calendly OAuth callback:', error);
     return NextResponse.redirect(new URL('/dashboard/calendar?error=callback_error', request.url));
   }
 }

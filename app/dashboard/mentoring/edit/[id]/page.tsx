@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
@@ -75,7 +75,6 @@ export default function EditMentoringPage() {
           .single();
 
         if (error) {
-          console.error('Error fetching session:', error);
           setError('Failed to load session');
           return;
         }
@@ -110,7 +109,6 @@ export default function EditMentoringPage() {
           });
         }
       } catch (error) {
-        console.error('Error:', error);
         setError('Failed to load session');
       } finally {
         setLoading(false);
@@ -168,11 +166,9 @@ export default function EditMentoringPage() {
             .list('', { limit: 1 });
           
           if (bucketError) {
-            console.error('Bucket access error:', bucketError);
             setError(`Storage bucket error: ${bucketError.message}`);
             return;
           } else {
-            console.log('Bucket access successful, proceeding with upload...');
             
             // Upload to certificates bucket
             const { data: uploadData, error: uploadError } = await supabase.storage
@@ -183,7 +179,6 @@ export default function EditMentoringPage() {
               });
 
             if (uploadError) {
-              console.error('Upload error:', uploadError);
               setError(`Upload failed: ${uploadError.message}`);
               return;
             }
@@ -196,11 +191,9 @@ export default function EditMentoringPage() {
               uploadedFileName = formData.uploadedFile.name;
               uploadedFilePath = urlData.publicUrl;
               uploadedFileSize = formData.uploadedFile.size;
-              console.log('File uploaded successfully:', uploadedFilePath);
             }
           }
         } catch (error) {
-          console.error('File upload error:', error);
           setError(`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
           return;
         }
@@ -229,7 +222,6 @@ export default function EditMentoringPage() {
         .eq("user_id", user.id);
 
       if (dbError) {
-        console.error('Database error:', dbError);
         setError(`Failed to update session: ${dbError.message}`);
         return;
       }
@@ -242,7 +234,6 @@ export default function EditMentoringPage() {
       }, 2000);
 
     } catch (error) {
-      console.error('Error updating session:', error);
       setError('Failed to update session');
     } finally {
       setSubmitLoading(false);
@@ -321,7 +312,7 @@ export default function EditMentoringPage() {
             onClick={() => router.push("/dashboard/mentoring/log")}
             className="text-emerald-600 hover:text-emerald-800 mb-4 flex items-center gap-2"
           >
-            ← Back to Mentoring Log
+            â† Back to Mentoring Log
           </button>
                       <h1 className="text-2xl font-bold text-gray-900">Edit {sessionType === "mentoring" ? "Mentoring" : "Supervision"} Session</h1>
         </div>

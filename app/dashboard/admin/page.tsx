@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { 
@@ -196,7 +196,6 @@ The ICF Log Team</p>`);
         setUsers(usersData);
         setStats(statsData);
       } catch (error) {
-        console.error('Error fetching admin data:', error);
       }
       
       setLoading(false);
@@ -219,15 +218,12 @@ The ICF Log Team</p>`);
         .limit(100); // Increased limit to see more emails
 
       if (error) {
-        console.error('Error fetching scheduled emails:', error);
         setErrorMessage(`Failed to fetch scheduled emails: ${error.message}`);
         setShowErrorModal(true);
       } else {
-        console.log(`Fetched ${data?.length || 0} scheduled emails`);
         setScheduledEmails(data || []);
       }
     } catch (error) {
-      console.error('Error fetching scheduled emails:', error);
       setErrorMessage(`Failed to fetch scheduled emails: ${error instanceof Error ? error.message : 'Unknown error'}`);
       setShowErrorModal(true);
     } finally {
@@ -257,7 +253,6 @@ The ICF Log Team</p>`);
         throw new Error('User not authenticated');
       }
 
-      console.log('Attempting to delete email:', emailIdToDelete);
 
       // Delete the email
       const { error, data } = await supabase
@@ -267,15 +262,12 @@ The ICF Log Team</p>`);
         .eq('created_by', user.id)
         .select();
 
-      console.log('Delete result:', { error, data, deletedCount: data?.length });
 
       if (error) {
-        console.error('Delete error:', error);
         throw error;
       }
 
       if (!data || data.length === 0) {
-        console.warn('No rows deleted. Email might not exist or RLS prevented deletion.');
         setErrorMessage('Failed to delete. The email may have already been deleted or you don\'t have permission.');
         setShowErrorModal(true);
         setShowDeleteConfirmModal(false);
@@ -286,7 +278,6 @@ The ICF Log Team</p>`);
         return;
       }
 
-      console.log('Successfully deleted email. Removing from state...');
 
       // Close modal first
       setShowDeleteConfirmModal(false);
@@ -295,7 +286,6 @@ The ICF Log Team</p>`);
       // Immediately remove from local state
       setScheduledEmails(prev => {
         const filtered = prev.filter(e => e.id !== emailIdToDelete);
-        console.log(`Removed from state. Previous count: ${prev.length}, New count: ${filtered.length}`);
         return filtered;
       });
       
@@ -303,7 +293,6 @@ The ICF Log Team</p>`);
       await fetchScheduledEmails();
       
     } catch (error) {
-      console.error('Error deleting scheduled email:', error);
       setErrorMessage(`Failed to delete scheduled email: ${error instanceof Error ? error.message : 'Unknown error'}`);
       setShowErrorModal(true);
       setShowDeleteConfirmModal(false);
@@ -336,7 +325,6 @@ The ICF Log Team</p>`);
           setSubscriptionUsers(usersData);
           setSubscriptionStats(statsData);
         } catch (error) {
-          console.error('Error fetching subscription data:', error);
         }
       };
       fetchSubscriptionData();
@@ -349,7 +337,6 @@ The ICF Log Team</p>`);
       const searchResults = await searchUsersWithSubscriptions(term);
       setSubscriptionUsers(searchResults);
     } catch (error) {
-      console.error('Error searching subscription users:', error);
     }
   };
 
@@ -375,7 +362,6 @@ The ICF Log Team</p>`);
         setShowErrorModal(true);
       }
     } catch (error) {
-      console.error('Error updating plan:', error);
       setErrorMessage('Error updating subscription plan');
       setShowErrorModal(true);
     } finally {
@@ -524,7 +510,6 @@ The ICF Log Team</p>`);
         errors: data.errors || [],
       });
     } catch (error) {
-      console.error('Error sending reminders:', error);
       setReminderResult({
         sent: 0,
         failed: 0,
@@ -1101,13 +1086,13 @@ The ICF Log Team</p>`);
                         <div className="text-xs text-gray-600">
                           Scheduled: {new Date(email.scheduled_for).toLocaleString()}
                           {email.status === 'sent' && email.sent_count > 0 && (
-                            <span className="ml-2 text-green-600">• Sent: {email.sent_count}</span>
+                            <span className="ml-2 text-green-600">â€¢ Sent: {email.sent_count}</span>
                           )}
                           {email.status === 'failed' && email.failed_count > 0 && (
-                            <span className="ml-2 text-red-600">• Failed: {email.failed_count}</span>
+                            <span className="ml-2 text-red-600">â€¢ Failed: {email.failed_count}</span>
                           )}
                           {email.status === 'pending' && new Date(email.scheduled_for) < new Date() && (
-                            <span className="ml-2 text-orange-600">• Overdue</span>
+                            <span className="ml-2 text-orange-600">â€¢ Overdue</span>
                           )}
                         </div>
                       </div>
@@ -1230,7 +1215,7 @@ The ICF Log Team</p>`);
                               email.status === 'failed' ? 'bg-red-100 text-red-800' :
                               'bg-gray-100 text-gray-800'
                             }`}>
-                              {email.status === 'sent' ? '✓ SENT' : '✗ FAILED'}
+                              {email.status === 'sent' ? 'âœ“ SENT' : 'âœ— FAILED'}
                             </span>
                             <span className="text-sm font-semibold text-gray-900 truncate">{email.subject}</span>
                           </div>

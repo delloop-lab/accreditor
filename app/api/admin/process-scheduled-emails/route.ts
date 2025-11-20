@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient, createServiceRoleSupabaseClient } from '@/lib/supabaseServer';
 import { Resend } from 'resend';
 
@@ -37,7 +37,7 @@ function convertTextToHtml(text: string, userName: string, sessionCount?: number
         <a href="https://icflog.com/dashboard" style="color: #6b7280; text-decoration: underline;">Manage your email preferences</a>
       </p>
       <p style="font-size: 12px; color: #9ca3af; margin: 5px 0;">
-        © ${new Date().getFullYear()} ICF Log. All rights reserved.
+        Â© ${new Date().getFullYear()} ICF Log. All rights reserved.
       </p>
     </div>
   </div>
@@ -58,7 +58,7 @@ function convertTextToHtml(text: string, userName: string, sessionCount?: number
     html = html.replace(/(https?:\/\/[^\s\n<>]+)/gi, '<a href="$1" style="color: #3b82f6; text-decoration: underline;">$1</a>');
   }
 
-  // Convert bullet points (•) to HTML list items
+  // Convert bullet points (â€¢) to HTML list items
   const lines = html.split('\n');
   const processedLines: string[] = [];
   let inList = false;
@@ -67,13 +67,13 @@ function convertTextToHtml(text: string, userName: string, sessionCount?: number
     const line = lines[i].trim();
     
     // Check if line starts with bullet point
-    if (line.startsWith('•') || line.startsWith('-') || line.match(/^\d+\./)) {
+    if (line.startsWith('â€¢') || line.startsWith('-') || line.match(/^\d+\./)) {
       if (!inList) {
         processedLines.push('<ul style="margin: 10px 0; padding-left: 20px;">');
         inList = true;
       }
       // Remove bullet and wrap in <li>
-      const listItem = line.replace(/^[•\-\d+\.]\s*/, '').trim();
+      const listItem = line.replace(/^[â€¢\-\d+\.]\s*/, '').trim();
       processedLines.push(`<li style="margin: 5px 0;">${listItem}</li>`);
     } else {
       if (inList) {
@@ -112,7 +112,7 @@ function convertTextToHtml(text: string, userName: string, sessionCount?: number
     <div style="font-size: 16px; white-space: pre-wrap;">${html}</div>
     
     <p style="font-size: 14px; color: #9ca3af; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-      © ${new Date().getFullYear()} ICF Log. All rights reserved.
+      Â© ${new Date().getFullYear()} ICF Log. All rights reserved.
     </p>
   </div>
 </body>
@@ -139,7 +139,6 @@ export async function POST(request: NextRequest) {
       try {
         supabase = createServiceRoleSupabaseClient();
       } catch (error) {
-        console.error('Error creating service role client:', error);
         // Fallback to regular client if service role key not available
         supabase = createServerSupabaseClient(request);
       }
@@ -162,9 +161,7 @@ export async function POST(request: NextRequest) {
         if (isAdmin) {
           try {
             supabase = createServiceRoleSupabaseClient();
-            console.log('[Process Scheduled Emails] Using service role client for admin operation');
           } catch (error) {
-            console.error('[Process Scheduled Emails] Error creating service role client, using regular client:', error);
             supabase = tempSupabase; // Fallback to regular client
           }
         } else {
@@ -184,7 +181,6 @@ export async function POST(request: NextRequest) {
 
     // Find all pending scheduled emails that are due
     const now = new Date().toISOString();
-    console.log(`[Process Scheduled Emails] Checking for emails scheduled before: ${now}`);
     
     const { data: scheduledEmails, error: fetchError } = await supabase
       .from('scheduled_emails')
@@ -193,14 +189,12 @@ export async function POST(request: NextRequest) {
       .lte('scheduled_for', now);
 
     if (fetchError) {
-      console.error('[Process Scheduled Emails] Error fetching scheduled emails:', fetchError);
       return NextResponse.json(
         { error: 'Failed to fetch scheduled emails', details: fetchError.message },
         { status: 500 }
       );
     }
 
-    console.log(`[Process Scheduled Emails] Found ${scheduledEmails?.length || 0} pending emails to process`);
 
     if (!scheduledEmails || scheduledEmails.length === 0) {
       return NextResponse.json({
@@ -320,7 +314,6 @@ export async function POST(request: NextRequest) {
 
         // Update scheduled email status
         const updateStatus = failed === 0 ? 'sent' : 'failed';
-        console.log(`[Process Scheduled Emails] Updating email ${scheduledEmail.id} to status: ${updateStatus}, sent: ${sent}, failed: ${failed}`);
         
         const { error: updateError } = await supabase
           .from('scheduled_emails')
@@ -334,16 +327,13 @@ export async function POST(request: NextRequest) {
           .eq('id', scheduledEmail.id);
 
         if (updateError) {
-          console.error(`[Process Scheduled Emails] Error updating email ${scheduledEmail.id}:`, updateError);
           throw new Error(`Failed to update email status: ${updateError.message}`);
         }
 
-        console.log(`[Process Scheduled Emails] Successfully updated email ${scheduledEmail.id} to ${updateStatus}`);
         totalProcessed++;
         totalSent += sent;
         totalFailed += failed;
       } catch (error) {
-        console.error(`[Process Scheduled Emails] Error processing scheduled email ${scheduledEmail.id}:`, error);
         // Mark as failed
         const { error: updateError } = await supabase
           .from('scheduled_emails')
@@ -355,7 +345,6 @@ export async function POST(request: NextRequest) {
           .eq('id', scheduledEmail.id);
         
         if (updateError) {
-          console.error(`[Process Scheduled Emails] Error marking email ${scheduledEmail.id} as failed:`, updateError);
         }
       }
     }
@@ -367,7 +356,6 @@ export async function POST(request: NextRequest) {
       failed: totalFailed,
     });
   } catch (error) {
-    console.error('Error processing scheduled emails:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to process scheduled emails' },
       { status: 500 }

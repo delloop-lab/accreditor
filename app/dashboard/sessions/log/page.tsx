@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useEffect, useState, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
@@ -80,11 +80,11 @@ function SessionsLogContent() {
   // Currency symbols mapping
   const CURRENCY_SYMBOLS: { [key: string]: string } = {
     "USD": "$",
-    "EUR": "€",
-    "GBP": "£",
+    "EUR": "â‚¬",
+    "GBP": "Â£",
     "CAD": "C$",
     "AUD": "A$",
-    "JPY": "¥",
+    "JPY": "Â¥",
     "CHF": "CHF",
     "NZD": "NZ$",
     "SEK": "SEK",
@@ -184,7 +184,6 @@ function SessionsLogContent() {
       
       return true;
     } catch (error) {
-      console.error('Backup creation failed:', error);
       return false;
     }
   };
@@ -256,7 +255,6 @@ function SessionsLogContent() {
         });
       }
     } catch (error) {
-      console.error('Import error:', error);
       setImportMessage({
         type: 'error',
         message: `Import failed: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -356,19 +354,15 @@ const processImportedData = async (data: any[]): Promise<ImportProcessResult> =>
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
-    console.log('Processing imported data:', data);
     
     // Track unique clients to avoid duplicates
     const uniqueClients = new Map<string, ImportedClientData>();
     
     // Debug the spreadsheet structure to see what client fields are available
     if (data.length > 0) {
-      console.log('Sample spreadsheet row:', data[0]);
-      console.log('Available fields:', Object.keys(data[0]));
       
       // Specifically check for Contact Information field
       if (data[0]['Contact Information']) {
-        console.log('Contact Information example:', data[0]['Contact Information']);
       } else {
         // Try to find any field that might contain contact info
         const possibleContactFields = Object.keys(data[0]).filter(key => 
@@ -378,9 +372,7 @@ const processImportedData = async (data: any[]): Promise<ImportProcessResult> =>
         );
         
         if (possibleContactFields.length > 0) {
-          console.log('Possible contact fields found:', possibleContactFields);
           possibleContactFields.forEach(field => {
-            console.log(`${field} example:`, data[0][field]);
           });
         }
       }
@@ -394,12 +386,10 @@ const processImportedData = async (data: any[]): Promise<ImportProcessResult> =>
         const paidHours = parseFloat(row['Paid hours'] || '0');
         const proBonoHours = parseFloat(row['Pro-bono hours'] || '0');
         
-        console.log('Filtering row:', { clientName, startDate, paidHours, proBonoHours });
         
         // Must have client name and either start date or hours
         const isValid = clientName && (startDate || paidHours > 0 || proBonoHours > 0);
         if (!isValid) {
-          console.log('Skipping invalid row:', row);
         }
         return isValid;
       })
@@ -409,7 +399,6 @@ const processImportedData = async (data: any[]): Promise<ImportProcessResult> =>
           const startDate = parseDate(row['Start Date']);
           const endDate = row['End Date'] ? parseDate(row['End Date']) : null;
           
-          console.log('Parsed dates for row:', {
             originalStartDate: row['Start Date'],
             parsedStartDate: startDate,
             originalEndDate: row['End Date'],
@@ -435,7 +424,6 @@ const processImportedData = async (data: any[]): Promise<ImportProcessResult> =>
           for (const col of paymentAmountColumns) {
             if (row[col] && row[col] !== '' && row[col] !== null) {
               rawPaymentAmount = row[col];
-              console.log(`Found payment amount in column '${col}':`, rawPaymentAmount);
               break;
             }
           }
@@ -449,9 +437,7 @@ const processImportedData = async (data: any[]): Promise<ImportProcessResult> =>
             const parseResult = parseNumberWithCurrency(String(rawPaymentAmount), localeInfo);
             if (parseResult.value !== null && !parseResult.error) {
               paymentAmount = parseResult.value;
-              console.log(`Parsed payment amount: ${rawPaymentAmount} -> ${paymentAmount} (currency: ${parseResult.currencySymbol || 'none'})`);
             } else {
-              console.log(`Failed to parse payment amount: ${rawPaymentAmount}, error: ${parseResult.error}`);
             }
           }
           
@@ -475,17 +461,14 @@ const processImportedData = async (data: any[]): Promise<ImportProcessResult> =>
           let clientEmail = '';
           
           // Debug all fields in the row to find where email might be
-          console.log('All row fields for debugging:');
           Object.entries(row).forEach(([key, value]) => {
             if (typeof value === 'string' && value.includes('@')) {
-              console.log(`Field '${key}' contains possible email: ${value}`);
             }
           });
           
           // First try to get Contact Information
           if (row['Contact Information'] && typeof row['Contact Information'] === 'string') {
             contactInfo = row['Contact Information'].trim();
-            console.log(`Found Contact Information: "${contactInfo}"`);
             
             // Try to extract email from contact information if it looks like an email
             if (contactInfo.includes('@')) {
@@ -494,14 +477,10 @@ const processImportedData = async (data: any[]): Promise<ImportProcessResult> =>
               const emailMatch = contactInfo.match(emailRegex);
               if (emailMatch && emailMatch.length > 0) {
                 clientEmail = emailMatch[0];
-                console.log(`Extracted email: ${clientEmail} from Contact Information`);
               } else {
-                console.log('No email pattern found in Contact Information despite @ symbol');
-                console.log('Contact Info content:', contactInfo);
               }
             }
           } else {
-            console.log('No Contact Information field found in row:', Object.keys(row));
           }
           
           // If we didn't find an email in Contact Information, try direct email fields
@@ -510,7 +489,6 @@ const processImportedData = async (data: any[]): Promise<ImportProcessResult> =>
             for (const fieldName of emailFieldNames) {
               if (row[fieldName] && typeof row[fieldName] === 'string' && row[fieldName].includes('@')) {
                 clientEmail = row[fieldName].trim();
-                console.log(`Found email in dedicated field '${fieldName}': ${clientEmail}`);
                 break;
               }
             }
@@ -550,7 +528,6 @@ const processImportedData = async (data: any[]): Promise<ImportProcessResult> =>
                 contact_info: contactInfo
               };
               
-              console.log(`Adding client to import list: ${clientName}, email: ${clientEmail || 'none'}`);
               uniqueClients.set(clientKey, clientData);
             }
           }
@@ -573,10 +550,8 @@ const processImportedData = async (data: any[]): Promise<ImportProcessResult> =>
             user_id: user.id
           };
           
-          console.log('Created session data:', sessionData);
           return sessionData;
         } catch (error) {
-          console.error('Error processing row:', row, error);
           return null;
         }
       })
@@ -590,12 +565,10 @@ const processImportedData = async (data: any[]): Promise<ImportProcessResult> =>
 
   const parseDate = (dateStr: string): string => {
     if (!dateStr || dateStr.toString().trim() === '') {
-      console.warn('Empty date string, using today\'s date');
       return new Date().toISOString().split('T')[0];
     }
     
     const dateString = dateStr.toString().trim();
-    console.log('Parsing date:', dateString);
     
     // Check if it's an Excel serial number (numeric value)
     const numericValue = parseFloat(dateString);
@@ -606,7 +579,6 @@ const processImportedData = async (data: any[]): Promise<ImportProcessResult> =>
       const millisecondsPerDay = 24 * 60 * 60 * 1000;
       const targetDate = new Date(excelEpoch.getTime() + (numericValue - 1) * millisecondsPerDay);
       
-      console.log('Excel serial number conversion:', {
         originalValue: dateString,
         numericValue: numericValue,
         targetDate: targetDate.toISOString(),
@@ -618,10 +590,8 @@ const processImportedData = async (data: any[]): Promise<ImportProcessResult> =>
       // Validate the resulting date
       if (targetDate.getFullYear() >= 1900 && targetDate.getFullYear() <= 2100) {
         const result = targetDate.toISOString().split('T')[0];
-        console.log('Successfully parsed Excel serial number:', dateString, '->', result);
         return result;
       } else {
-        console.warn('Invalid Excel serial number resulting in invalid year:', targetDate.getFullYear());
       }
     }
     
@@ -642,10 +612,8 @@ const processImportedData = async (data: any[]): Promise<ImportProcessResult> =>
         const paddedMonth = month.toString().padStart(2, '0');
         const paddedDay = day.toString().padStart(2, '0');
         const result = `${year}-${paddedMonth}-${paddedDay}`;
-        console.log('Successfully parsed DD/MM/YYYY format:', dateString, '->', result);
         return result;
       } else {
-        console.warn('Invalid date components:', { day, month, year });
       }
     }
     
@@ -666,16 +634,13 @@ const processImportedData = async (data: any[]): Promise<ImportProcessResult> =>
         const paddedMonth = month.toString().padStart(2, '0');
         const paddedDay = day.toString().padStart(2, '0');
         const result = `${year}-${paddedMonth}-${paddedDay}`;
-        console.log('Successfully parsed MM/DD/YYYY format:', dateString, '->', result);
         return result;
       } else {
-        console.warn('Invalid US date components:', { month, day, year });
       }
     }
     
     // Try parsing YYYY-MM-DD format
     if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-      console.log('Already in YYYY-MM-DD format:', dateString);
       return dateString;
     }
     
@@ -683,12 +648,10 @@ const processImportedData = async (data: any[]): Promise<ImportProcessResult> =>
     const date = new Date(dateString);
     if (!isNaN(date.getTime()) && date.getFullYear() >= 1900 && date.getFullYear() <= 2100) {
       const result = date.toISOString().split('T')[0];
-      console.log('Successfully parsed with Date constructor:', dateString, '->', result);
       return result;
     }
     
     // If all else fails, log the error and return today's date
-    console.error('Failed to parse date:', dateString, 'using today\'s date');
     return new Date().toISOString().split('T')[0];
   };
 
@@ -705,7 +668,6 @@ const findExistingClient = async (clientName: string, clientEmail: string, userI
           .maybeSingle();
         
         if (!emailError && emailMatch) {
-          console.log(`Found client by email: ${clientEmail}`);
           return emailMatch.id;
         }
       }
@@ -719,13 +681,11 @@ const findExistingClient = async (clientName: string, clientEmail: string, userI
         .maybeSingle();
       
       if (!nameError && nameMatch) {
-        console.log(`Found client by name: ${clientName}`);
         return nameMatch.id;
       }
       
       return null; // Client not found
     } catch (error) {
-      console.error('Error finding existing client:', error);
       return null;
     }
   };
@@ -743,19 +703,16 @@ const findExistingClient = async (clientName: string, clientEmail: string, userI
         .eq('user_id', userId);
         
       if (error) {
-        console.error('Error checking for existing session:', error);
         return false; // If there's an error, we'll assume it's not a duplicate
       }
       
       // If we found any sessions matching these criteria, it's likely a duplicate
       if (data && data.length > 0) {
-        console.log(`Found ${data.length} existing sessions matching: client=${session.client_name}, date=${session.date}, duration=${session.duration}`);
         return true;
       }
       
       return false; // No duplicates found
     } catch (error) {
-      console.error('Error finding existing session:', error);
       return false;
     }
   };
@@ -766,9 +723,6 @@ const findExistingClient = async (clientName: string, clientEmail: string, userI
       // Ensure we have at least a name
       if (!client.name) return null;
       
-      console.log(`Creating new client: ${client.name}`);
-      console.log(`Client email: "${client.email}"`);
-      console.log(`Client contact info: "${client.contact_info}"`);
       
       const clientData = {
         name: client.name,
@@ -777,7 +731,6 @@ const findExistingClient = async (clientName: string, clientEmail: string, userI
         user_id: userId
       };
       
-      console.log('Client data being inserted:', clientData);
       
       const { data, error } = await supabase
         .from('clients')
@@ -786,14 +739,11 @@ const findExistingClient = async (clientName: string, clientEmail: string, userI
         .single();
       
       if (error) {
-        console.error('Error creating client:', error);
         return null;
       }
       
-      console.log(`Created new client: ${client.name} with ID: ${data.id}`);
       return data.id;
     } catch (error) {
-      console.error('Error creating new client:', error);
       return null;
     }
   };
@@ -806,37 +756,29 @@ const findExistingClient = async (clientName: string, clientEmail: string, userI
     
     let clientsAdded = 0;
     let sessionsSkipped = 0;
-    console.log(`Processing ${clients.length} clients from import`);
     
     // Process each client
     for (const client of clients) {
       // Skip if we don't have a name
       if (!client.name) {
-        console.log('Skipping client with no name');
         continue;
       }
       
-      console.log(`Processing client: ${client.name}, email: ${client.email || 'none'}`);
       
       // Check if client already exists - use contact_info as email
       const existingClientId = await findExistingClient(client.name, client.contact_info || '', user.id);
       
       // If client doesn't exist, create a new one
       if (!existingClientId) {
-        console.log(`Client ${client.name} not found, creating new record`);
         const newClientId = await createNewClient(client, user.id);
         if (newClientId) {
-          console.log(`Successfully created client with ID: ${newClientId}`);
           clientsAdded++;
         } else {
-          console.log(`Failed to create client: ${client.name}`);
         }
       } else {
-        console.log(`Client ${client.name} already exists with ID: ${existingClientId}`);
       }
     }
     
-    console.log(`Added ${clientsAdded} new clients`);
     
     // Filter out duplicate sessions
     const uniqueSessions = [];
@@ -845,15 +787,12 @@ const findExistingClient = async (clientName: string, clientEmail: string, userI
       const isDuplicate = await findExistingSession(session, user.id);
       
       if (isDuplicate) {
-        console.log(`Skipping duplicate session for ${session.client_name} on ${session.date}`);
         sessionsSkipped++;
       } else {
         uniqueSessions.push(session);
       }
     }
     
-    console.log(`Found ${sessionsSkipped} duplicate sessions that will be skipped`);
-    console.log(`Inserting ${uniqueSessions.length} unique sessions`);
     
     // If no unique sessions to insert, just return the stats
     if (uniqueSessions.length === 0) {
@@ -865,7 +804,6 @@ const findExistingClient = async (clientName: string, clientEmail: string, userI
     }
     
     // Debug the session structure before inserting
-    console.log('Inserting sessions with structure:', JSON.stringify(uniqueSessions[0], null, 2));
     
     // Insert only unique sessions
     const { data, error } = await supabase
@@ -895,14 +833,12 @@ const findExistingClient = async (clientName: string, clientEmail: string, userI
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        console.error('No user found');
         return;
       }
 
       // Find the session to get client name
       const sessionToDeleteData = sessions.find(s => s.id === sessionToDelete);
       if (!sessionToDeleteData) {
-        console.error('Session not found');
         return;
       }
 
@@ -914,7 +850,6 @@ const findExistingClient = async (clientName: string, clientEmail: string, userI
         .eq("user_id", user.id);
 
       if (error) {
-        console.error('Error deleting session:', error);
         alert('Failed to delete session');
         return;
       }
@@ -937,7 +872,6 @@ const findExistingClient = async (clientName: string, clientEmail: string, userI
             .eq("user_id", user.id);
             
           if (sessionsError) {
-            console.error(`Error deleting sessions for client ${sessionToDeleteData.clientName}:`, sessionsError);
           }
           
           // Then delete the client
@@ -948,7 +882,6 @@ const findExistingClient = async (clientName: string, clientEmail: string, userI
             .eq("user_id", user.id);
           
           if (clientError) {
-            console.error(`Error deleting client ${sessionToDeleteData.clientName}:`, clientError);
           } else {
             // Show success message for client deletion
             setImportMessage({
@@ -970,7 +903,6 @@ const findExistingClient = async (clientName: string, clientEmail: string, userI
         });
       }
     } catch (error) {
-      console.error('Error deleting session:', error);
       alert('Failed to delete session');
     } finally {
       setDeleting(false);
@@ -1022,7 +954,6 @@ const findExistingClient = async (clientName: string, clientEmail: string, userI
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        console.error('No user found');
         return;
       }
       
@@ -1046,7 +977,6 @@ const findExistingClient = async (clientName: string, clientEmail: string, userI
         .eq("user_id", user.id);
       
       if (error) {
-        console.error('Error deleting sessions:', error);
         alert('Failed to delete sessions');
         return;
       }
@@ -1070,7 +1000,6 @@ const findExistingClient = async (clientName: string, clientEmail: string, userI
               .eq("user_id", user.id);
             
             if (clientError) {
-              console.error(`Error deleting client ${clientName}:`, clientError);
             }
           }
         }
@@ -1090,7 +1019,6 @@ const findExistingClient = async (clientName: string, clientEmail: string, userI
       });
       
     } catch (error) {
-      console.error('Error in bulk delete:', error);
       alert('Failed to delete sessions');
     } finally {
       setBulkDeleting(false);
@@ -1116,7 +1044,6 @@ const findExistingClient = async (clientName: string, clientEmail: string, userI
         .eq('user_id', user.id);
       
       if (error) {
-        console.error('Error finding client:', error);
         return;
       }
       
@@ -1145,7 +1072,6 @@ const findExistingClient = async (clientName: string, clientEmail: string, userI
               alert(`No client record found for ${clientName}. Please add this client manually.`);
             }
           } catch (createErr) {
-            console.error('Error creating client:', createErr);
             alert(`No client record found for ${clientName}. Please add this client manually.`);
           }
         } else {
@@ -1154,7 +1080,6 @@ const findExistingClient = async (clientName: string, clientEmail: string, userI
         }
       }
     } catch (error) {
-      console.error('Error navigating to client:', error);
     }
   };
 
@@ -1288,7 +1213,6 @@ const findExistingClient = async (clientName: string, clientEmail: string, userI
         setSessions(mapped);
       }
     } catch (error) {
-      console.error('Error fetching sessions:', error);
     }
     setLoading(false);
   };
@@ -1398,8 +1322,8 @@ const findExistingClient = async (clientName: string, clientEmail: string, userI
                 className="flex items-center justify-center gap-1.5 bg-gray-600 text-white px-2 sm:px-3 py-2 rounded-lg hover:bg-gray-700 transition-colors text-xs sm:text-sm"
               >
                 <CalendarIcon className="h-4 w-4" />
-                <span className="hidden sm:inline">Sort by Date {sortOrder === 'asc' ? '↑' : '↓'}</span>
-                <span className="sm:hidden">Sort {sortOrder === 'asc' ? '↑' : '↓'}</span>
+                <span className="hidden sm:inline">Sort by Date {sortOrder === 'asc' ? 'â†‘' : 'â†“'}</span>
+                <span className="sm:hidden">Sort {sortOrder === 'asc' ? 'â†‘' : 'â†“'}</span>
               </button>
               
               <input
@@ -1727,29 +1651,22 @@ const findExistingClient = async (clientName: string, clientEmail: string, userI
                     toggleSessionSelection(session.id);
                     return;
                   }
-                  console.log('Card clicked, target:', e.target);
                   // Only navigate if the click is not on the client name or edit button
                   const target = (e.target as HTMLElement);
-                  console.log('Target element:', target);
-                  console.log('Is client name?', target.closest('h2[data-client-name]'));
-                  console.log('Is edit button?', target.closest('button[title="Edit Session"]'));
                   
                   // Check if click is on client name or edit button
                   if (
                     target.closest('h2[data-client-name]') ||
                     target.closest('button[title="Edit Session"]')
                   ) {
-                    console.log('Click blocked - going to client name or edit button');
                     return;
                   }
                   
                   // Check if click is inside the client name area
                   if (target.closest('[data-client-name]')) {
-                    console.log('Click blocked - inside client name area');
                     return;
                   }
                   
-                  console.log('Navigating to session edit:', session.id);
                   if (session.id && session.id.trim() !== '') {
                     router.push(`/dashboard/sessions/edit/${session.id}`);
                   }
@@ -1776,7 +1693,6 @@ const findExistingClient = async (clientName: string, clientEmail: string, userI
                         data-client-name
                         className="text-lg font-bold text-gray-900 hover:text-blue-600 hover:underline cursor-pointer"
                         onClick={(e) => { 
-                          console.log('Client name clicked:', session.clientName);
                           e.preventDefault();
                           e.stopPropagation(); 
                           findClientAndNavigate(session.clientName, session);

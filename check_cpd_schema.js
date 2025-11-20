@@ -1,4 +1,4 @@
-const { createClient } = require('@supabase/supabase-js');
+﻿const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
 
 // Initialize Supabase client
@@ -6,7 +6,6 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Missing Supabase environment variables');
   process.exit(1);
 }
 
@@ -19,14 +18,10 @@ async function checkCpdSchema() {
       .rpc('get_table_info', { table_name: 'cpd' });
     
     if (error) {
-      console.error('Error fetching table info:', error);
       return;
     }
     
-    console.log('CPD Table Schema:');
-    console.log(JSON.stringify(data, null, 2));
   } catch (error) {
-    console.error('Error:', error);
   }
 }
 

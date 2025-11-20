@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
@@ -12,14 +12,13 @@ export default function Error({
   const router = useRouter();
 
   useEffect(() => {
-    console.error(error);
   }, [error]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center">
         <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
-          <span className="text-red-600 text-xl font-bold">⚠</span>
+          <span className="text-red-600 text-xl font-bold">âš </span>
         </div>
         
         <h2 className="text-xl font-semibold text-gray-900 mb-2">
@@ -35,7 +34,7 @@ export default function Error({
             onClick={reset}
             className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
           >
-            <span>←</span>
+            <span>â†</span>
             Try again
           </button>
           

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { supabase } from "./supabaseClient";
 
 // Key for storing the last entry date in localStorage
@@ -48,7 +48,6 @@ export const fetchMostRecentEntryDate = async (): Promise<string | null> => {
     }
     return sessionData[0].date;
   } catch (error) {
-    console.error("Error fetching most recent entry date:", error);
     return null;
   }
 };
@@ -74,7 +73,6 @@ export const getDatePickerDefaultDate = (): string => {
     const day = String(today.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   } catch (error) {
-    console.error("Error getting default date picker date:", error);
     // Return today's date as fallback
     const today = new Date();
     const year = today.getFullYear();
@@ -92,7 +90,6 @@ export const updateLastEntryDate = (date: string): void => {
   try {
     localStorage.setItem(LAST_ENTRY_DATE_KEY, date);
   } catch (error) {
-    console.error("Error updating last entry date:", error);
   }
 };
 
@@ -114,7 +111,6 @@ export const initializeDatePickerDefaultDate = async (): Promise<void> => {
       localStorage.setItem(LAST_ENTRY_DATE_KEY, mostRecentDate);
     }
   } catch (error) {
-    console.error("Error initializing default date picker date:", error);
   }
 };
 
@@ -149,7 +145,6 @@ export const setDateInputDefault = (event: React.FocusEvent<HTMLInputElement>): 
       }
     }
   } catch (error) {
-    console.error("Error setting date input default:", error);
   }
 };
 

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
@@ -31,7 +31,6 @@ export default function EditCPDPage() {
           .single());
 
         if (error) {
-          console.error('Error fetching CPD:', error);
           setError('Failed to load CPD activity');
           return;
         }
@@ -62,7 +61,6 @@ export default function EditCPDPage() {
           setCpdData(transformedData);
         }
       } catch (error) {
-        console.error('Error:', error);
         setError('Failed to load CPD activity');
       } finally {
         setLoading(false);
@@ -92,13 +90,9 @@ export default function EditCPDPage() {
             // Sanitize filename to avoid path issues
             const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
             const fileName = `${user.id}/${Date.now()}_${sanitizedName}`;
-            console.log('Attempting to upload file:', fileName);
-            console.log('File size:', file.size, 'bytes');
-            console.log('File type:', file.type);
             
             // Check file size (limit to 10MB)
             if (file.size > 10 * 1024 * 1024) {
-              console.error('File too large. Maximum size is 10MB.');
               setError('File too large. Maximum size is 10MB.');
               return;
             }
@@ -109,11 +103,9 @@ export default function EditCPDPage() {
               .list('', { limit: 1 });
             
             if (bucketError) {
-              console.error('Bucket access error:', bucketError);
               setError(`Storage bucket error: ${bucketError.message}`);
               return;
             } else {
-              console.log('Bucket access successful, proceeding with upload...');
               
               const { data: uploadData, error: uploadError } = await supabase.storage
                 .from('certificates')
@@ -123,21 +115,16 @@ export default function EditCPDPage() {
                 });
               
               if (uploadError) {
-                console.error('Upload error details:', uploadError);
-                console.error('Error message:', uploadError.message);
                 setError(`Upload failed: ${uploadError.message}`);
                 return;
               } else if (uploadData) {
-                console.log('Upload successful, getting public URL...');
                 const { data: urlData } = supabase.storage
                   .from('certificates')
                   .getPublicUrl(fileName);
                 documentUrl = urlData.publicUrl;
-                console.log('File uploaded successfully:', documentUrl);
               }
             }
           } catch (error) {
-            console.error('File upload failed with exception:', error);
             setError(`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
             return;
           }
@@ -176,7 +163,6 @@ export default function EditCPDPage() {
         .eq("user_id", user.id);
 
       if (error) {
-        console.error('Error updating CPD:', error);
         setError('Failed to update CPD activity');
         return;
       }
@@ -184,7 +170,6 @@ export default function EditCPDPage() {
       // Redirect back to CPD log
       router.push("/dashboard/cpd/log");
     } catch (error) {
-      console.error('Error:', error);
       setError('Failed to update CPD activity');
     }
   };
@@ -240,7 +225,7 @@ export default function EditCPDPage() {
             onClick={() => router.push("/dashboard/cpd/log")}
             className="text-purple-600 hover:text-purple-800 mb-4 flex items-center gap-2"
           >
-            ← Back to CPD Log
+            â† Back to CPD Log
           </button>
                       <h1 className="text-2xl font-bold text-gray-900">Edit CPD Activity</h1>
         </div>

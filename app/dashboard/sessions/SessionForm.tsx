@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
@@ -85,11 +85,11 @@ export default function SessionForm({
   // Currency symbols mapping
   const CURRENCY_SYMBOLS: { [key: string]: string } = {
     "USD": "$",
-    "EUR": "€",
-    "GBP": "£",
+    "EUR": "â‚¬",
+    "GBP": "Â£",
     "CAD": "C$",
     "AUD": "A$",
-    "JPY": "¥",
+    "JPY": "Â¥",
     "CHF": "CHF",
     "NZD": "NZ$",
     "SEK": "SEK",
@@ -140,7 +140,6 @@ export default function SessionForm({
           setClients([]);
         }
       } catch (error) {
-        console.error('Error fetching data:', error);
       }
       setLoading(false);
     };
@@ -273,10 +272,8 @@ export default function SessionForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submission - clientId:', clientId, 'clientName:', clientName, 'date:', date, 'types:', types);
     
     if (!clientName || !date || types.length === 0) {
-      console.error('Form validation failed:', { clientName, date, types });
       return;
     }
     
@@ -311,7 +308,6 @@ export default function SessionForm({
       additionalNotes,
     };
     
-    console.log('Submitting session data:', sessionData);
     
     // Call onSubmit (which will save to database)
     await onSubmit(sessionData);

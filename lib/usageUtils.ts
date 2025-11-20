@@ -1,4 +1,4 @@
-import { supabase } from './supabaseClient';
+﻿import { supabase } from './supabaseClient';
 
 export interface UsageData {
   totalCPD: number;
@@ -71,7 +71,6 @@ export const getUserUsage = async (userId?: string): Promise<UsageData> => {
       subscriptionPlan: profile?.subscription_plan || 'free',
     };
   } catch (error) {
-    console.error('Error getting user usage:', error);
     return {
       totalCPD: 0,
       totalSessions: 0,

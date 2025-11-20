@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import SessionForm, { SessionData } from "./SessionForm";
@@ -49,17 +49,14 @@ export default function SessionsPage() {
 
   // Add session to Supabase
   const addSession = async (data: SessionData): Promise<void> => {
-    console.log('Adding session with data:', data);
     
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      console.error('No user found');
       return;
     }
     
     // Validate required fields
     if (!data.clientName || !data.date || !data.types || data.types.length === 0) {
-      console.error('Missing required fields:', { clientName: data.clientName, date: data.date, types: data.types });
       return;
     }
     
@@ -81,7 +78,6 @@ export default function SessionsPage() {
       user_id: user.id
     };
     
-    console.log('Inserting session data:', sessionData);
     
     const { data: newSession, error } = await supabase
       .from("sessions")
@@ -90,12 +86,10 @@ export default function SessionsPage() {
       .single();
       
     if (error) {
-      console.error('Error inserting session:', error);
       return;
     }
     
     if (newSession) {
-      console.log('Session saved successfully:', newSession);
       // Map the new session to match the expected format
       const mappedSession = {
         clientName: newSession.client_name,

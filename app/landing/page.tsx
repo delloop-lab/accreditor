@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import Link from "next/link";
@@ -34,7 +34,6 @@ export default function LandingPage() {
         const { data: { session } } = await supabase.auth.getSession();
         setIsLoggedIn(!!session);
       } catch (error) {
-        console.warn('Auth check failed:', error);
         // Fail silently for auth errors
       } finally {
         setLoading(false);
@@ -316,7 +315,7 @@ export default function LandingPage() {
                   onClick={() => setShowOfferModal(false)}
                   className="text-gray-500 hover:text-gray-700 text-xl font-bold"
                 >
-                  ×
+                  Ã—
                 </button>
               </div>
               <div className="text-center py-6">

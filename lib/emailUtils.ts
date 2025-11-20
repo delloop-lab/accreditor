@@ -1,4 +1,4 @@
-import { Resend } from 'resend';
+﻿import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -31,13 +31,11 @@ export async function sendReminderEmail(data: ReminderEmailData): Promise<{ succ
     });
 
     if (error) {
-      console.error('Resend error:', error);
       return { success: false, error: error.message || 'Failed to send email' };
     }
 
     return { success: true };
   } catch (error) {
-    console.error('Email sending error:', error);
     return { 
       success: false, 
       error: error instanceof Error ? error.message : 'Unknown error occurred' 
@@ -145,7 +143,7 @@ function generateReminderEmailTemplate(data: ReminderEmailData): string {
   
   <div style="text-align: center; margin-top: 20px; padding: 20px; color: #9ca3af; font-size: 12px;">
     <p>You're receiving this email because you have an account with ICF Log.</p>
-    <p>© ${new Date().getFullYear()} ICF Log. All rights reserved.</p>
+    <p>Â© ${new Date().getFullYear()} ICF Log. All rights reserved.</p>
   </div>
 </body>
 </html>

@@ -1,4 +1,4 @@
-import { supabase } from './supabaseClient';
+﻿import { supabase } from './supabaseClient';
 
 export interface UserSubscription {
   user_id: string;
@@ -43,13 +43,11 @@ export const getAllUsersWithSubscriptions = async (): Promise<UserSubscription[]
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching users with subscriptions:', error);
       return [];
     }
 
     return users || [];
   } catch (error) {
-    console.error('Error fetching subscription data:', error);
     return [];
   }
 };
@@ -71,7 +69,6 @@ export const getSubscriptionStats = async (): Promise<SubscriptionStats> => {
 
     return stats;
   } catch (error) {
-    console.error('Error calculating subscription stats:', error);
     return {
       total_users: 0,
       active_subscriptions: 0,
@@ -99,13 +96,11 @@ export const updateUserSubscriptionPlan = async (
       .eq('user_id', userId);
 
     if (error) {
-      console.error('Error updating subscription plan:', error);
       return { success: false, error: error.message };
     }
 
     return { success: true };
   } catch (error) {
-    console.error('Error updating subscription plan:', error);
     return { success: false, error: 'Failed to update subscription plan' };
   }
 };
@@ -128,7 +123,6 @@ export const getCustomerPortalUrl = async (customerId: string): Promise<string |
     const data = await response.json();
     return data.url;
   } catch (error) {
-    console.error('Error creating customer portal session:', error);
     return null;
   }
 };
@@ -158,13 +152,11 @@ export const searchUsersWithSubscriptions = async (searchTerm: string): Promise<
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error searching users:', error);
       return [];
     }
 
     return users || [];
   } catch (error) {
-    console.error('Error searching users:', error);
     return [];
   }
 }; 

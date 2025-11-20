@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
@@ -33,7 +33,6 @@ export default function CalendarPage() {
       setLoadingUpcoming(true);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        console.log('No user found, skipping upcoming sessions fetch');
         return;
       }
 
@@ -51,7 +50,6 @@ export default function CalendarPage() {
         .limit(20);
 
       if (dbError) {
-        console.error('Database error fetching sessions:', dbError);
       }
 
       // Fetch Calendly events via API
@@ -73,12 +71,10 @@ export default function CalendarPage() {
             }));
           } else {
             const errorData = await response.json();
-            console.error('Calendly API error response:', response.status, errorData);
             setApiError(errorData.error || `API returned status ${response.status}`);
           }
         }
       } catch (calendlyError) {
-        console.error('Exception fetching Calendly events:', calendlyError);
       }
 
       // Combine and filter sessions
@@ -108,7 +104,6 @@ export default function CalendarPage() {
       setUpcomingSessions(filtered);
       setApiError(null);
     } catch (error) {
-      console.error('Error fetching upcoming sessions:', error);
       setUpcomingSessions([]);
       setApiError(error instanceof Error ? error.message : 'Unknown error occurred');
     } finally {
@@ -137,7 +132,6 @@ export default function CalendarPage() {
           setCalendlyUrl(profile.calendly_url || process.env.NEXT_PUBLIC_CALENDLY_URL || "");
         }
       } catch (error) {
-        console.error('Error fetching profile:', error);
       } finally {
         setLoading(false);
       }
@@ -198,7 +192,6 @@ export default function CalendarPage() {
 
       alert('Calendly URL saved successfully!');
     } catch (error) {
-      console.error('Error saving Calendly URL:', error);
       alert('Failed to save Calendly URL');
     }
   };

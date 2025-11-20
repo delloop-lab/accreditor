@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import stripe, { STRIPE_CONFIG } from '@/lib/stripe';
 import { supabase } from '@/lib/supabaseClient';
 
@@ -15,7 +15,6 @@ export async function POST(request: NextRequest) {
       STRIPE_CONFIG.webhookSecret
     );
   } catch (err: any) {
-    console.error(`⚠️  Webhook signature verification failed.`, err.message);
     return NextResponse.json(
       { error: 'Webhook signature verification failed' },
       { status: 400 }
@@ -43,12 +42,10 @@ export async function POST(request: NextRequest) {
         await handleInvoicePaymentFailed(event.data.object);
         break;
       default:
-        console.log(`Unhandled event type ${event.type}`);
     }
 
     return NextResponse.json({ received: true });
   } catch (error) {
-    console.error('Error handling webhook:', error);
     return NextResponse.json(
       { error: 'Webhook handler failed' },
       { status: 500 }
@@ -57,13 +54,11 @@ export async function POST(request: NextRequest) {
 }
 
 async function handleSubscriptionCreated(subscription: any) {
-  console.log('Subscription created:', subscription.id);
   
   // Get customer details
   const customer = await stripe.customers.retrieve(subscription.customer);
   
   if (customer.deleted) {
-    console.error('Customer was deleted');
     return;
   }
 
@@ -81,12 +76,10 @@ async function handleSubscriptionCreated(subscription: any) {
     .eq('email', customer.email);
 
   if (error) {
-    console.error('Error updating user subscription:', error);
   }
 }
 
 async function handleSubscriptionUpdated(subscription: any) {
-  console.log('Subscription updated:', subscription.id);
   
   const { error } = await supabase
     .from('profiles')
@@ -98,12 +91,10 @@ async function handleSubscriptionUpdated(subscription: any) {
     .eq('stripe_customer_id', subscription.customer);
 
   if (error) {
-    console.error('Error updating subscription:', error);
   }
 }
 
 async function handleSubscriptionDeleted(subscription: any) {
-  console.log('Subscription deleted:', subscription.id);
   
   const { error } = await supabase
     .from('profiles')
@@ -114,21 +105,17 @@ async function handleSubscriptionDeleted(subscription: any) {
     .eq('stripe_customer_id', subscription.customer);
 
   if (error) {
-    console.error('Error canceling subscription:', error);
   }
 }
 
 async function handleSubscriptionTrialWillEnd(subscription: any) {
-  console.log('Subscription trial will end:', subscription.id);
   // Add logic to notify user about trial ending
 }
 
 async function handleInvoicePaymentSucceeded(invoice: any) {
-  console.log('Invoice payment succeeded:', invoice.id);
   // Add logic for successful payment
 }
 
 async function handleInvoicePaymentFailed(invoice: any) {
-  console.log('Invoice payment failed:', invoice.id);
   // Add logic for failed payment (notify user, etc.)
 } 

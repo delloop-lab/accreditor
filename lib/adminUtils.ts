@@ -1,4 +1,4 @@
-import { supabase } from './supabaseClient';
+﻿import { supabase } from './supabaseClient';
 
 export type UserRole = 'user' | 'admin' | 'super_admin';
 
@@ -60,7 +60,6 @@ export const isCurrentUserAdmin = async (): Promise<boolean> => {
 
     return profile?.role === 'admin' || profile?.role === 'super_admin';
   } catch (error) {
-    console.error('Error checking admin status:', error);
     return false;
   }
 };
@@ -81,7 +80,6 @@ export const isCurrentUserSuperAdmin = async (): Promise<boolean> => {
 
     return profile?.role === 'super_admin';
   } catch (error) {
-    console.error('Error checking super admin status:', error);
     return false;
   }
 };
@@ -102,7 +100,6 @@ export const getCurrentUserRole = async (): Promise<UserRole | null> => {
 
     return profile?.role || 'user';
   } catch (error) {
-    console.error('Error getting user role:', error);
     return null;
   }
 };
@@ -119,7 +116,6 @@ export const getAllUsers = async (): Promise<AdminUser[]> => {
       .order('created_at', { ascending: false });
 
     if (profilesError) {
-      console.error('Error fetching profiles:', profilesError);
       return [];
     }
 
@@ -164,7 +160,6 @@ export const getAllUsers = async (): Promise<AdminUser[]> => {
 
     return usersWithStats;
   } catch (error) {
-    console.error('Error fetching users:', error);
     return [];
   }
 };
@@ -326,7 +321,6 @@ export const getUserStats = async (): Promise<UserStats | null> => {
       most_active_day: mostActiveDay,
     };
   } catch (error) {
-    console.error('Error fetching user stats:', error);
     return null;
   }
 };
@@ -342,13 +336,11 @@ export const updateUserRole = async (userId: string, newRole: UserRole): Promise
       .eq('user_id', userId);
 
     if (error) {
-      console.error('Error updating user role:', error);
       return false;
     }
 
     return true;
   } catch (error) {
-    console.error('Error updating user role:', error);
     return false;
   }
 };
@@ -365,7 +357,6 @@ export const searchUsers = async (searchTerm: string): Promise<AdminUser[]> => {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error searching users:', error);
       return [];
     }
 
@@ -390,7 +381,6 @@ export const searchUsers = async (searchTerm: string): Promise<AdminUser[]> => {
 
     return usersWithStats;
   } catch (error) {
-    console.error('Error searching users:', error);
     return [];
   }
 };
@@ -421,7 +411,6 @@ export const getUserActivity = async (userId: string) => {
       recentCpdEntries: cpdEntries || []
     };
   } catch (error) {
-    console.error('Error fetching user activity:', error);
     return {
       recentSessions: [],
       recentCpdEntries: []

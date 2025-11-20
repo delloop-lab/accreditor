@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -87,11 +87,9 @@ export default function MentoringSupportForm() {
             .list('', { limit: 1 });
           
           if (bucketError) {
-            console.error('Bucket access error:', bucketError);
             setError(`Storage bucket error: ${bucketError.message}`);
             return;
           } else {
-            console.log('Bucket access successful, proceeding with upload...');
             
             // Upload to certificates bucket
             const { data: uploadData, error: uploadError } = await supabase.storage
@@ -102,7 +100,6 @@ export default function MentoringSupportForm() {
               });
 
             if (uploadError) {
-              console.error('Upload error:', uploadError);
               setError(`Upload failed: ${uploadError.message}`);
               return;
             }
@@ -115,11 +112,9 @@ export default function MentoringSupportForm() {
               uploadedFileName = formData.uploadedFile.name;
               uploadedFilePath = urlData.publicUrl;
               uploadedFileSize = formData.uploadedFile.size;
-              console.log('File uploaded successfully:', uploadedFilePath);
             }
           }
         } catch (error) {
-          console.error('File upload error:', error);
           setError(`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
           return;
         }
@@ -146,7 +141,6 @@ export default function MentoringSupportForm() {
         });
 
       if (dbError) {
-        console.error('Database error:', dbError);
         setError(`Failed to save session: ${dbError.message}`);
         return;
       }
@@ -174,7 +168,6 @@ export default function MentoringSupportForm() {
       }, 2000);
 
     } catch (error) {
-      console.error('Error saving session:', error);
       setError(`An error occurred: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setLoading(false);
@@ -349,7 +342,7 @@ export default function MentoringSupportForm() {
                     onChange={(e) => handleInputChange('deliveryType', e.target.value)}
                     className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300"
                   />
-                  <span className="ml-2 text-sm text-gray-700">⭘ Individual (1:1)</span>
+                  <span className="ml-2 text-sm text-gray-700">â­˜ Individual (1:1)</span>
                 </label>
                 <label className="flex items-center">
                   <input
@@ -360,7 +353,7 @@ export default function MentoringSupportForm() {
                     onChange={(e) => handleInputChange('deliveryType', e.target.value)}
                     className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300"
                   />
-                  <span className="ml-2 text-sm text-gray-700">⭘ Group</span>
+                  <span className="ml-2 text-sm text-gray-700">â­˜ Group</span>
                 </label>
               </div>
             </div>
@@ -373,9 +366,9 @@ export default function MentoringSupportForm() {
                 className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500"
                 required
               >
-                <option value="one-on-one">⭘ 1:1 Supervision</option>
-                <option value="group">⭘ Group Supervision</option>
-                <option value="peer">⭘ Peer Supervision</option>
+                <option value="one-on-one">â­˜ 1:1 Supervision</option>
+                <option value="group">â­˜ Group Supervision</option>
+                <option value="peer">â­˜ Peer Supervision</option>
               </select>
             </div>
           )}

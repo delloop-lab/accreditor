@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabaseClient';
 import { sendBulkReminders, ReminderEmailData } from '@/lib/emailUtils';
 import { isCurrentUserAdmin } from '@/lib/adminUtils';
@@ -28,7 +28,6 @@ export async function POST(request: NextRequest) {
         .not('email', 'is', null);
 
       if (profilesError) {
-        console.error('Error fetching profiles:', profilesError);
         return NextResponse.json(
           { error: 'Failed to fetch users' },
           { status: 500 }
@@ -45,7 +44,6 @@ export async function POST(request: NextRequest) {
         .not('email', 'is', null);
 
       if (profilesError) {
-        console.error('Error fetching profiles:', profilesError);
         return NextResponse.json(
           { error: 'Failed to fetch users' },
           { status: 500 }
@@ -122,7 +120,6 @@ export async function POST(request: NextRequest) {
       errors: result.errors,
     });
   } catch (error) {
-    console.error('Error sending reminders:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to send reminders' },
       { status: 500 }

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient, getServerUser } from '@/lib/supabaseServer';
 
 export async function POST(request: NextRequest) {
@@ -64,7 +64,6 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('Error scheduling email:', error);
       return NextResponse.json(
         { error: 'Failed to schedule email' },
         { status: 500 }
@@ -76,7 +75,6 @@ export async function POST(request: NextRequest) {
       scheduledEmail: data,
     });
   } catch (error) {
-    console.error('Error scheduling email:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to schedule email' },
       { status: 500 }

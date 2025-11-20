@@ -1,4 +1,4 @@
-import { supabase } from './supabaseClient';
+﻿import { supabase } from './supabaseClient';
 
 export async function testSupabaseConnection() {
   try {
@@ -6,7 +6,6 @@ export async function testSupabaseConnection() {
     const { data, error } = await supabase.from('profiles').select('count').limit(1);
     
     if (error) {
-      console.log('Supabase connection test failed:', error);
       return {
         success: false,
         error: error.message,
@@ -19,7 +18,6 @@ export async function testSupabaseConnection() {
       message: 'Supabase connection successful'
     };
   } catch (err) {
-    console.log('Supabase test error:', err);
     return {
       success: false,
       error: 'Connection failed',
@@ -34,7 +32,6 @@ export async function testAuthSettings() {
     const { data, error } = await supabase.auth.getSession();
     
     if (error) {
-      console.log('Auth settings test failed:', error);
       return {
         success: false,
         error: error.message,
@@ -47,7 +44,6 @@ export async function testAuthSettings() {
       message: 'Auth service working correctly'
     };
   } catch (err) {
-    console.log('Auth test error:', err);
     return {
       success: false,
       error: 'Auth service failed',

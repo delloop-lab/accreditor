@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+﻿import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -8,7 +8,6 @@ const isBrowser = typeof window !== 'undefined';
 
 if (!supabaseUrl || !supabaseAnonKey) {
   if (isBrowser) {
-    console.error('Missing Supabase environment variables. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY');
   }
 }
 
@@ -31,8 +30,6 @@ export const isSupabaseConfigured = () => {
 
 // Suppress auth session missing errors and refresh token errors in console
 if (typeof window !== 'undefined') {
-  const originalError = console.error;
-  console.error = (...args) => {
     const message = args[0];
     if (typeof message === 'string' && (
       message.includes('AuthSessionMissingError') ||

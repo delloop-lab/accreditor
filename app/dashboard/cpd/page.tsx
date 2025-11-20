@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import CPDForm, { CPDData } from "./CPDForm";
@@ -63,14 +63,11 @@ export default function CPDPage() {
           .list('', { limit: 1 });
         
         if (error) {
-          console.error('Storage bucket test failed:', error);
           setUploadError(`Storage bucket not accessible: ${error.message}. Please check your Supabase storage configuration.`);
         } else {
-          console.log('Storage bucket access successful');
           setUploadError(null);
         }
       } catch (error) {
-        console.error('Storage test exception:', error);
         setUploadError('Storage test failed. Please check your Supabase configuration.');
       }
     };
@@ -93,13 +90,9 @@ export default function CPDPage() {
           // Sanitize filename to avoid path issues
           const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
           const fileName = `${user.id}/${Date.now()}_${sanitizedName}`;
-          console.log('Attempting to upload file:', fileName);
-          console.log('File size:', file.size, 'bytes');
-          console.log('File type:', file.type);
           
           // Check file size (limit to 10MB)
           if (file.size > 10 * 1024 * 1024) {
-            console.error('File too large. Maximum size is 10MB.');
             setUploadError('File too large. Maximum size is 10MB.');
             return;
           }
@@ -110,11 +103,9 @@ export default function CPDPage() {
             .list('', { limit: 1 });
           
           if (bucketError) {
-            console.error('Bucket access error:', bucketError);
             setUploadError(`Storage bucket error: ${bucketError.message}`);
             // Continue without file upload if bucket access fails
           } else {
-            console.log('Bucket access successful, proceeding with upload...');
             
             const { data: uploadData, error: uploadError } = await supabase.storage
               .from('certificates')
@@ -124,22 +115,17 @@ export default function CPDPage() {
               });
             
             if (uploadError) {
-              console.error('Upload error details:', uploadError);
-              console.error('Error message:', uploadError.message);
               setUploadError(`Upload failed: ${uploadError.message}`);
               // Continue without file upload if it fails
             } else if (uploadData) {
-              console.log('Upload successful, getting public URL...');
               const { data: urlData } = supabase.storage
                 .from('certificates')
                 .getPublicUrl(fileName);
               documentUrl = urlData.publicUrl;
-              console.log('File uploaded successfully:', documentUrl);
               setUploadError(null); // Clear any previous errors
             }
           }
         } catch (error) {
-          console.error('File upload failed with exception:', error);
           setUploadError(`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
           // Continue without file upload if it fails
         }

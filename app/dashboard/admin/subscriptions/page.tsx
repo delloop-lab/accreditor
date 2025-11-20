@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -51,7 +51,6 @@ export default function SubscriptionsAdminPage() {
         setUsers(usersData);
         setStats(statsData);
       } catch (error) {
-        console.error('Error fetching subscription data:', error);
       } finally {
         setLoading(false);
       }
@@ -66,7 +65,6 @@ export default function SubscriptionsAdminPage() {
       const searchResults = await searchUsersWithSubscriptions(term);
       setUsers(searchResults);
     } catch (error) {
-      console.error('Error searching users:', error);
     }
   };
 
@@ -89,7 +87,6 @@ export default function SubscriptionsAdminPage() {
         alert(`Error updating plan: ${result.error}`);
       }
     } catch (error) {
-      console.error('Error updating plan:', error);
       alert('Error updating subscription plan');
     } finally {
       setUpdating(false);

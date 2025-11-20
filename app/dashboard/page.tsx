@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase, getCurrentUser } from "@/lib/supabaseClient";
@@ -120,11 +120,11 @@ export default function DashboardPage() {
   // Currency symbols mapping
   const CURRENCY_SYMBOLS: { [key: string]: string } = {
     "USD": "$",
-    "EUR": "€",
-    "GBP": "£",
+    "EUR": "â‚¬",
+    "GBP": "Â£",
     "CAD": "C$",
     "AUD": "A$",
-    "JPY": "¥",
+    "JPY": "Â¥",
     "CHF": "CHF",
     "NZD": "NZ$",
     "SEK": "SEK",
@@ -142,7 +142,6 @@ export default function DashboardPage() {
       const { user, error: authError } = await getCurrentUser();
       
       if (authError) {
-        console.error('Auth error:', authError);
         const errorMessage = authError && typeof authError === 'object' && 'message' in authError 
           ? (authError as any).message 
           : 'Authentication error';
@@ -152,7 +151,6 @@ export default function DashboardPage() {
           return;
         }
         // Don't redirect immediately on auth errors, might be temporary
-        console.warn('Temporary auth error, retrying...');
         setLoading(false);
         return;
       }
@@ -183,15 +181,11 @@ export default function DashboardPage() {
         .eq("user_id", user.id);
         
       if (allSessionError && allSessionError.message !== 'Mock client') {
-        console.error('All sessions fetch error:', allSessionError);
       }
       
       // Calculate total session hours from all sessions
       if (allSessionData && allSessionData.length > 0) {
         // Debug: Log sample durations to understand the data format
-        console.log('Sample durations:', allSessionData.slice(0, 5).map(s => s.duration));
-        console.log('All durations:', allSessionData.map(s => s.duration));
-        console.log('Duration statistics:', {
           count: allSessionData.length,
           min: Math.min(...allSessionData.map(s => s.duration || 0)),
           max: Math.max(...allSessionData.map(s => s.duration || 0)),
@@ -220,7 +214,6 @@ export default function DashboardPage() {
         .limit(3);
         
       if (sessionError && sessionError.message !== 'Mock client') {
-        console.error('Session fetch error:', sessionError);
       }
       
       // Map real session data to consistent format
@@ -261,7 +254,6 @@ export default function DashboardPage() {
         .eq("user_id", user.id);
         
       if (cpdError && cpdError.message !== 'Mock client') {
-        console.error('CPD fetch error:', cpdError);
       }
       
       // Map real data to consistent format
@@ -296,7 +288,6 @@ export default function DashboardPage() {
         .eq("user_id", user.id);
         
       if (mentoringError && mentoringError.message !== 'Mock client') {
-        console.error('Mentoring/Supervision fetch error:', mentoringError);
       }
       
       // Calculate mentoring and supervision hours
@@ -343,7 +334,6 @@ export default function DashboardPage() {
       }) || [];
       
       // Debug logging for this month calculation
-      console.log('This month calculation debug:', {
         currentMonth,
         currentYear,
         totalSessions: allSessionData?.length || 0,
@@ -375,7 +365,6 @@ export default function DashboardPage() {
         return total + (duration / 60);
       }, 0);
       
-      console.log('This month total hours calculation:', {
         thisMonthTotalHours,
         roundedHours: Math.round(thisMonthTotalHours),
         sessionCount: thisMonthSessions.length
@@ -395,7 +384,6 @@ export default function DashboardPage() {
             return total + (duration / 60);
           }, 0);
           
-          console.log('Fallback July 2025 calculation:', {
             july2025SessionsCount: july2025Sessions.length,
             july2025Hours: Math.round(july2025Hours)
           });
@@ -409,7 +397,6 @@ export default function DashboardPage() {
       }
 
       // Check if profile is incomplete and show reminder
-      console.log('Profile data check:', {
         hasProfileData: !!profileData,
         profileName: profileData?.name,
         nameTrimmed: profileData?.name?.trim(),
@@ -418,16 +405,13 @@ export default function DashboardPage() {
       
       if (profileData && profileData.name && profileData.name.trim() !== '') {
         // User has a name, don't show reminder
-        console.log('User has name, hiding reminder');
         setShowProfileReminder(false);
       } else {
         // User doesn't have a name, show reminder
-        console.log('User missing name, showing reminder');
         setShowProfileReminder(true);
       }
 
     } catch (error) {
-      console.error('Error in fetchData:', error);
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
@@ -670,9 +654,9 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="text-xs text-gray-600">
-              <p>• Current: {Math.round(totalSessionHours)} coaching hours</p>
-              <p>• Required: {getNextLevelRequirements(profile?.icf_level).sessionHours} hours for {getNextLevelName(profile?.icf_level)}</p>
-              <p>• Remaining: {Math.max(0, getNextLevelRequirements(profile?.icf_level).sessionHours - totalSessionHours)} hours needed</p>
+              <p>â€¢ Current: {Math.round(totalSessionHours)} coaching hours</p>
+              <p>â€¢ Required: {getNextLevelRequirements(profile?.icf_level).sessionHours} hours for {getNextLevelName(profile?.icf_level)}</p>
+              <p>â€¢ Remaining: {Math.max(0, getNextLevelRequirements(profile?.icf_level).sessionHours - totalSessionHours)} hours needed</p>
             </div>
           </div>
 
@@ -705,9 +689,9 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="text-xs text-gray-600">
-              <p>• Current: {cpdHours} CPD training hours</p>
-              <p>• Required: {getNextLevelRequirements(profile?.icf_level).cpdHours} hours for {getNextLevelName(profile?.icf_level)}</p>
-              <p>• Remaining: {Math.max(0, getNextLevelRequirements(profile?.icf_level).cpdHours - cpdHours)} hours needed</p>
+              <p>â€¢ Current: {cpdHours} CPD training hours</p>
+              <p>â€¢ Required: {getNextLevelRequirements(profile?.icf_level).cpdHours} hours for {getNextLevelName(profile?.icf_level)}</p>
+              <p>â€¢ Remaining: {Math.max(0, getNextLevelRequirements(profile?.icf_level).cpdHours - cpdHours)} hours needed</p>
             </div>
           </div>
         </div>
@@ -771,9 +755,9 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="text-xs text-gray-600">
-              <p>• Current: {mentoringHours} mentoring hours</p>
-              <p>• Required: 10 hours per year for ICF compliance</p>
-              <p>• {mentoringHours >= 10 ? 'Requirement met! ✓' : `Remaining: ${Math.max(0, 10 - mentoringHours)} hours needed`}</p>
+              <p>â€¢ Current: {mentoringHours} mentoring hours</p>
+              <p>â€¢ Required: 10 hours per year for ICF compliance</p>
+              <p>â€¢ {mentoringHours >= 10 ? 'Requirement met! âœ“' : `Remaining: ${Math.max(0, 10 - mentoringHours)} hours needed`}</p>
             </div>
           </div>
 
@@ -806,9 +790,9 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="text-xs text-gray-600">
-              <p>• Current: {supervisionHours} supervision hours</p>
-              <p>• Supervision hours are not required for ICF credentials</p>
-              <p>• Useful for professional development and practice improvement</p>
+              <p>â€¢ Current: {supervisionHours} supervision hours</p>
+              <p>â€¢ Supervision hours are not required for ICF credentials</p>
+              <p>â€¢ Useful for professional development and practice improvement</p>
             </div>
           </div>
         </div>
@@ -1086,10 +1070,10 @@ export default function DashboardPage() {
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                 <h3 className="font-semibold text-blue-800 mb-2">Profile Setup Includes:</h3>
                 <ul className="text-sm text-blue-700 space-y-1">
-                  <li>• Your full name and contact information</li>
-                  <li>• Current ICF credential level</li>
-                  <li>• Preferred currency for session tracking</li>
-                  <li>• Professional coaching details</li>
+                  <li>â€¢ Your full name and contact information</li>
+                  <li>â€¢ Current ICF credential level</li>
+                  <li>â€¢ Preferred currency for session tracking</li>
+                  <li>â€¢ Professional coaching details</li>
                 </ul>
               </div>
               <div className="flex gap-3">

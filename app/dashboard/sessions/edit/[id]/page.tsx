@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
@@ -76,7 +76,6 @@ export default function EditSessionPage() {
               setError('Calendly session not found');
             }
           } catch (calendlyError) {
-            console.error('Error fetching Calendly session:', calendlyError);
             setError('Failed to load Calendly session');
           }
           setLoading(false);
@@ -92,7 +91,6 @@ export default function EditSessionPage() {
           .single();
 
         if (error) {
-          console.error('Error fetching session:', error);
           setError('Failed to load session');
           return;
         }
@@ -119,7 +117,6 @@ export default function EditSessionPage() {
           setSession(sessionData);
         }
       } catch (error) {
-        console.error('Error:', error);
         setError('Failed to load session');
       } finally {
         setLoading(false);
@@ -166,7 +163,6 @@ export default function EditSessionPage() {
           });
 
         if (error) {
-          console.error('Error creating session:', error);
           setError('Failed to save session');
           return;
         }
@@ -199,7 +195,6 @@ export default function EditSessionPage() {
         .eq("user_id", user.id);
 
       if (error) {
-        console.error('Error updating session:', error);
         setError('Failed to update session');
         return;
       }
@@ -207,7 +202,6 @@ export default function EditSessionPage() {
       // Redirect back to sessions log
       router.push("/dashboard/sessions/log");
     } catch (error) {
-      console.error('Error:', error);
       setError('Failed to update session');
     }
   };
@@ -263,7 +257,7 @@ export default function EditSessionPage() {
             onClick={() => router.push("/dashboard/sessions/log")}
             className="text-blue-600 hover:text-blue-800 mb-4 flex items-center gap-2"
           >
-            ← Back to Sessions
+            â† Back to Sessions
           </button>
                       <h1 className="text-2xl font-bold text-gray-900">Edit Session</h1>
         </div>

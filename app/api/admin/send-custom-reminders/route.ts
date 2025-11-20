@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient, getServerUser } from '@/lib/supabaseServer';
 import { sendBulkReminders, ReminderEmailData } from '@/lib/emailUtils';
 
@@ -47,7 +47,7 @@ function convertTextToHtml(text: string, userName: string, sessionCount?: number
         <a href="https://icflog.com/dashboard" style="color: #6b7280; text-decoration: underline;">Manage your email preferences</a>
       </p>
       <p style="font-size: 12px; color: #9ca3af; margin: 5px 0;">
-        © ${new Date().getFullYear()} ICF Log. All rights reserved.
+        Â© ${new Date().getFullYear()} ICF Log. All rights reserved.
       </p>
     </div>
   </div>
@@ -67,7 +67,7 @@ function convertTextToHtml(text: string, userName: string, sessionCount?: number
     html = html.replace(/(https?:\/\/[^\s\n<>]+)/gi, '<a href="$1" style="color: #3b82f6; text-decoration: underline;">$1</a>');
   }
 
-  // Convert bullet points (•) to HTML list items
+  // Convert bullet points (â€¢) to HTML list items
   // Split by lines and process each line
   const lines = html.split('\n');
   const processedLines: string[] = [];
@@ -77,13 +77,13 @@ function convertTextToHtml(text: string, userName: string, sessionCount?: number
     const line = lines[i].trim();
     
     // Check if line starts with bullet point
-    if (line.startsWith('•') || line.startsWith('-') || line.match(/^\d+\./)) {
+    if (line.startsWith('â€¢') || line.startsWith('-') || line.match(/^\d+\./)) {
       if (!inList) {
         processedLines.push('<ul style="margin: 10px 0; padding-left: 20px;">');
         inList = true;
       }
       // Remove bullet and wrap in <li>
-      const listItem = line.replace(/^[•\-\d+\.]\s*/, '').trim();
+      const listItem = line.replace(/^[â€¢\-\d+\.]\s*/, '').trim();
       processedLines.push(`<li style="margin: 5px 0;">${listItem}</li>`);
     } else {
       if (inList) {
@@ -128,7 +128,7 @@ function convertTextToHtml(text: string, userName: string, sessionCount?: number
     <div style="font-size: 16px; line-height: 1.8;">${html}</div>
     
     <p style="font-size: 14px; color: #9ca3af; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-      © ${new Date().getFullYear()} ICF Log. All rights reserved.
+      Â© ${new Date().getFullYear()} ICF Log. All rights reserved.
     </p>
   </div>
 </body>
@@ -340,7 +340,6 @@ export async function POST(request: NextRequest) {
         });
     } catch (logError) {
       // Don't fail the request if logging fails, but log the error
-      console.error('Error logging reminder send:', logError);
     }
 
     return NextResponse.json({
@@ -351,7 +350,6 @@ export async function POST(request: NextRequest) {
       errors,
     });
   } catch (error) {
-    console.error('Error sending custom reminders:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to send reminders' },
       { status: 500 }
