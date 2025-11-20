@@ -1,6 +1,16 @@
 ﻿import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let resendClient: Resend | null = null;
+
+const getResendClient = () => {
+  if (!process.env.RESEND_API_KEY) {
+    return null;
+  }
+  if (!resendClient) {
+    resendClient = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resendClient;
+};
 
 export interface ReminderEmailData {
   to: string;
@@ -17,7 +27,8 @@ export interface ReminderEmailData {
  */
 export async function sendReminderEmail(data: ReminderEmailData): Promise<{ success: boolean; error?: string }> {
   try {
-    if (!process.env.RESEND_API_KEY) {
+    const resend = getResendClient();
+    if (!resend) {
       return { success: false, error: 'RESEND_API_KEY is not configured' };
     }
 
