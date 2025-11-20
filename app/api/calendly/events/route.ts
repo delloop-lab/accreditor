@@ -20,10 +20,10 @@ export async function GET(request: NextRequest) {
     if (profileError) {
     }
     // Try OAuth token first, fallback to API token
-    const hasOAuthToken = !!profile.calendly_access_token;
+    const hasOAuthToken = !!profile?.calendly_access_token;
     const envToken = process.env.CALENDLY_API_TOKEN;
     const hasEnvToken = !!envToken;
-    const calendlyApiToken = (profile.calendly_access_token || envToken)?.trim();
+    const calendlyApiToken = (profile?.calendly_access_token || envToken)?.trim();
 
     if (!calendlyApiToken) {
       return NextResponse.json({ 
