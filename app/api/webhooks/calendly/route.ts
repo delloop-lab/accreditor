@@ -1,5 +1,6 @@
 ﻿import { NextRequest, NextResponse } from 'next/server';
 import { createServiceRoleSupabaseClient } from '@/lib/supabaseServer';
+import { sendReminderEmail } from '@/lib/emailUtils';
 import crypto from 'crypto';
 
 // Calendly webhook signature verification
@@ -135,6 +136,54 @@ async function handleInviteeCreated(event: any) {
 
     if (sessionError) {
       throw sessionError;
+    }
+
+    // Send email notification if user has enabled Calendly event emails
+    try {
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('email, name, email_notification_types')
+        .eq('user_id', profile.user_id)
+        .single();
+
+      if (userProfile?.email) {
+        // Check if user has enabled email notifications for Calendly events
+        let emailTypes: string[] = [];
+        if (userProfile.email_notification_types) {
+          if (typeof userProfile.email_notification_types === 'string') {
+            try {
+              emailTypes = JSON.parse(userProfile.email_notification_types);
+            } catch {
+              emailTypes = [];
+            }
+          } else {
+            emailTypes = userProfile.email_notification_types;
+          }
+        }
+
+        if (emailTypes.includes('Calendly events')) {
+          // Send email notification
+          await sendReminderEmail({
+            to: userProfile.email,
+            userName: userProfile.name || 'Valued Coach',
+            customSubject: 'New Calendly Booking - ICF Log',
+            customContent: `
+              <p>Hi ${userProfile.name || 'there'},</p>
+              <p>You have a new appointment scheduled via Calendly:</p>
+              <div style="background: #f9fafb; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                <p style="margin: 5px 0;"><strong>Client:</strong> ${inviteeName}</p>
+                <p style="margin: 5px 0;"><strong>Date & Time:</strong> ${new Date(eventStartTime).toLocaleString()}</p>
+                <p style="margin: 5px 0;"><strong>Duration:</strong> ${durationMinutes} minutes</p>
+              </div>
+              <p>This session has been automatically added to your ICF Log.</p>
+              <p><a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://icflog.com'}/dashboard/calendar" style="color: #3b82f6; text-decoration: underline;">View your calendar</a></p>
+            `,
+          });
+        }
+      }
+    } catch (emailError) {
+      // Log email error but don't fail the webhook
+      console.error('[Calendly Webhook] Failed to send email notification:', emailError);
     }
 
   } catch (error) {

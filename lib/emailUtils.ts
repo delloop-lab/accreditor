@@ -34,11 +34,17 @@ export async function sendReminderEmail(data: ReminderEmailData): Promise<{ succ
 
     const fromEmail = process.env.RESEND_FROM_EMAIL || 'ICF Log <noreply@icflog.com>';
     
+    // Use custom subject/content if provided, otherwise use default template
+    const subject = data.customSubject || 'Reminder: Keep Your ICF Log Updated';
+    const htmlContent = data.customContent 
+      ? generateCustomEmailTemplate(data)
+      : generateReminderEmailTemplate(data);
+    
     const { error } = await resend.emails.send({
       from: fromEmail,
       to: data.to,
-      subject: 'Reminder: Keep Your ICF Log Updated',
-      html: generateReminderEmailTemplate(data),
+      subject,
+      html: htmlContent,
     });
 
     if (error) {
@@ -77,6 +83,70 @@ export async function sendBulkReminders(
   }
 
   return { sent, failed, errors };
+}
+
+/**
+ * Generate HTML email template for custom content
+ */
+function generateCustomEmailTemplate(data: ReminderEmailData): string {
+  const lastActivity = data.lastActivityDate 
+    ? new Date(data.lastActivityDate).toLocaleDateString()
+    : 'No recent activity';
+  
+  // Replace placeholders in custom content
+  let content = data.customContent || '';
+  content = content
+    .replace(/\{\{userName\}\}/g, data.userName)
+    .replace(/\{\{sessionCount\}\}/g, (data.sessionCount || 0).toString())
+    .replace(/\{\{cpdHours\}\}/g, (data.cpdHours || 0).toFixed(1))
+    .replace(/\{\{lastActivityDate\}\}/g, lastActivity);
+  
+  // Check if content already contains HTML tags
+  const hasHtmlTags = /<[a-z][\s\S]*>/i.test(content);
+  
+  if (!hasHtmlTags) {
+    // Convert plain text to HTML
+    content = content.replace(/\n/g, '<br>');
+  }
+  
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ICF Log</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
+  <div style="background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+    <h1 style="color: white; margin: 0; font-size: 28px;">ICF Log</h1>
+    <p style="color: rgba(255,255,255,0.9); margin: 5px 0 0 0;">Professional Coaching Log & CPD Tracker</p>
+  </div>
+  
+  <div style="background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 10px 10px;">
+    <div style="font-size: 16px; line-height: 1.8;">${content}</div>
+    
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://icflog.com'}/dashboard" 
+         style="background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%); 
+                color: white; 
+                padding: 15px 30px; 
+                text-decoration: none; 
+                border-radius: 6px; 
+                font-weight: bold; 
+                display: inline-block;
+                font-size: 16px;">
+        Go to Dashboard
+      </a>
+    </div>
+    
+    <p style="font-size: 14px; color: #9ca3af; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+      © ${new Date().getFullYear()} ICF Log. All rights reserved.
+    </p>
+  </div>
+</body>
+</html>
+  `;
 }
 
 /**

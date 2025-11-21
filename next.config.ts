@@ -3,8 +3,9 @@
 const runtimeCaching = [
   {
     urlPattern: ({ request, url }: any) => {
-      if (request.mode !== "navigate") return false;
+      // Explicitly exclude API routes from all caching
       if (url.pathname.startsWith("/api")) return false;
+      if (request.mode !== "navigate") return false;
       if (url.pathname.startsWith("/auth")) return false;
       if (url.pathname.startsWith("/login")) return false;
       if (url.pathname.startsWith("/dashboard/login")) return false;
@@ -72,8 +73,12 @@ const withPWA = require("next-pwa")({
   dest: "public",
   register: true,
   skipWaiting: true,
+  // Disable PWA only in development mode
+  // In production (npm start), PWA will be enabled
   disable: process.env.NODE_ENV === "development",
-  runtimeCaching,
+  // Use custom service worker source file that includes push notification handling
+  swSrc: "./sw.js",
+  // Note: runtimeCaching is not used when swSrc is provided - caching is handled in sw.js
   fallbacks: {
     document: "/offline",
   },

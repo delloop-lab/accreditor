@@ -1,11 +1,9 @@
 ﻿"use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { supabase, getCurrentUser } from "@/lib/supabaseClient";
 import { UserIcon, EnvelopeIcon, AcademicCapIcon, CheckBadgeIcon } from "@heroicons/react/24/outline";
-
-// Force dynamic rendering to prevent build errors
-export const dynamic = 'force-dynamic';
+import NotificationSettings from "@/app/components/NotificationSettings";
 
 type Profile = {
   id: string;
@@ -14,6 +12,7 @@ type Profile = {
   icf_level: string;
   currency: string;
   country: string;
+  cpd_renewal_date?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -123,6 +122,7 @@ export default function ProfilePage() {
     icf_level: "none",
     currency: "USD",
     country: "United States", // Default country
+    cpd_renewal_date: null,
     created_at: "",
     updated_at: ""
   });
@@ -146,7 +146,7 @@ export default function ProfilePage() {
         // Fetch profile from profiles table
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
-          .select("id, name, email, icf_level, currency, country, created_at, updated_at")
+          .select("id, name, email, icf_level, currency, country, cpd_renewal_date, created_at, updated_at")
           .eq("user_id", user.id)
           .single();
 
@@ -159,6 +159,7 @@ export default function ProfilePage() {
             icf_level: profileData.icf_level || "none",
             currency: profileData.currency || "USD",
             country: profileData.country || "United States",
+            cpd_renewal_date: profileData.cpd_renewal_date || null,
             created_at: profileData.created_at,
             updated_at: profileData.updated_at
           });
@@ -264,6 +265,7 @@ export default function ProfilePage() {
             icf_level: profile.icf_level,
             currency: profile.currency,
             country: profile.country,
+            cpd_renewal_date: profile.cpd_renewal_date || null,
             updated_at: new Date().toISOString()
           })
           .eq("user_id", user.id);
@@ -467,6 +469,24 @@ export default function ProfilePage() {
                 </p>
               </div>
 
+              {/* CPD Renewal Date */}
+              <div>
+                <label htmlFor="cpd_renewal_date" className="block text-sm font-medium text-gray-700 mb-2">
+                  CPD Renewal Deadline
+                </label>
+                <input
+                  type="date"
+                  id="cpd_renewal_date"
+                  name="cpd_renewal_date"
+                  value={profile.cpd_renewal_date || ""}
+                  onChange={(e) => setProfile({ ...profile, cpd_renewal_date: e.target.value || null })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <p className="text-sm text-gray-600 mt-2">
+                  Set your ICF credential renewal date to receive automatic reminders at 90, 75, 50, and 25 days before your deadline.
+                </p>
+              </div>
+
               {/* Error/Success Messages */}
               {error && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -551,6 +571,13 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Notification Settings */}
+      <div className="mt-6">
+        <Suspense fallback={<div className="p-6 bg-white rounded-xl shadow-lg max-w-md"><p>Loading notification settings...</p></div>}>
+          <NotificationSettings />
+        </Suspense>
       </div>
 
       {/* ICF Information - Below both sections */}

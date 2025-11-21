@@ -1,6 +1,8 @@
 ﻿"use client";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+
+// Prevent prerendering of error page
+export const dynamic = 'force-dynamic';
 
 export default function Error({
   error,
@@ -9,16 +11,23 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  const router = useRouter();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-  }, [error]);
+    setMounted(true);
+  }, []);
+
+  const handleGoHome = () => {
+    if (typeof window !== "undefined") {
+      window.location.href = "/";
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center">
         <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
-          <span className="text-red-600 text-xl font-bold">âš </span>
+          <span className="text-red-600 text-xl font-bold">⚠</span>
         </div>
         
         <h2 className="text-xl font-semibold text-gray-900 mb-2">
@@ -34,19 +43,19 @@ export default function Error({
             onClick={reset}
             className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
           >
-            <span>â†</span>
+            <span>←</span>
             Try again
           </button>
           
           <button
-            onClick={() => router.push("/")}
+            onClick={handleGoHome}
             className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
           >
             Go home
           </button>
         </div>
         
-        {process.env.NODE_ENV === 'development' && (
+        {mounted && process.env.NODE_ENV === 'development' && (
           <details className="mt-6 text-left">
             <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-700">
               Error details (development only)
@@ -59,4 +68,4 @@ export default function Error({
       </div>
     </div>
   );
-} 
+}
