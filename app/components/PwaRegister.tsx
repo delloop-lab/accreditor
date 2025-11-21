@@ -1,9 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function PwaRegister() {
+  const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
+    // Ensure we're on the client and component is mounted
+    setMounted(true);
+    
     // Only register in production mode (when running npm start or in production build)
     // In development, PWA is disabled via next.config.ts
     if (typeof window === "undefined") return;
@@ -14,7 +19,19 @@ export default function PwaRegister() {
     // When running `npm run dev`, NODE_ENV will be "development"
     const isProduction = process.env.NODE_ENV === "production";
 
-    if (!isProduction) return;
+    if (!isProduction) {
+      // Unregister any existing service workers in development mode
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        for (const registration of registrations) {
+          registration.unregister().then((success) => {
+            if (success) {
+              console.log("[PWA] Unregistered service worker in development mode");
+            }
+          });
+        }
+      });
+      return;
+    }
 
     // Use dynamic import for next-pwa/register
     // Note: With register: true in next.config.ts, this might be redundant,
@@ -28,6 +45,9 @@ export default function PwaRegister() {
       });
   }, []);
 
+  // Don't render anything until mounted to prevent hydration issues
+  if (!mounted) return null;
+  
   return null;
 }
 

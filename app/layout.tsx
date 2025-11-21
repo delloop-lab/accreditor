@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Suspense } from "react";
 import "./globals.css";
 import PwaRegister from "./components/PwaRegister";
 
@@ -23,6 +24,9 @@ export const metadata: Metadata = {
   title: "ICF Log - Coaching Log & CPD Tracker",
   description: "Professional coaching log and CPD tracking application for ICF accredited coaches",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({
@@ -33,8 +37,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={geistSans.className}>
-        <PwaRegister />
         {children}
+        <Suspense fallback={null}>
+          <PwaRegister />
+        </Suspense>
       </body>
     </html>
   );
