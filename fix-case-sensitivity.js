@@ -5,20 +5,35 @@
  * It patches Node.js path resolution to ensure consistent casing.
  * 
  * Loaded via NODE_OPTIONS="--require ./fix-case-sensitivity.js"
+ * 
+ * NOTE: This fix is Windows-specific and will be skipped on Linux/macOS
  */
 
 const path = require('path');
 const Module = require('module');
+const os = require('os');
 
-// Normalize any Windows path to lowercase
-function normalizePath(pathStr) {
-  if (!pathStr || typeof pathStr !== 'string') return pathStr;
-  // Normalize Windows drive paths to lowercase
-  // Only normalize the drive letter and first part of path
-  return pathStr.replace(/^([A-Z]):(.*)/g, (match, drive, rest) => {
-    return drive.toLowerCase() + ':' + rest.toLowerCase();
-  });
-}
+// Only apply fix on Windows (where case sensitivity issues occur)
+const isWindows = os.platform() === 'win32';
+
+if (!isWindows) {
+  // On non-Windows systems, exit early - no fix needed
+  if (!global.__caseFixActive) {
+    console.log('[Case Fix] Skipped - not needed on ' + os.platform());
+    global.__caseFixActive = true;
+  }
+  // Export empty module to prevent errors
+  module.exports = {};
+} else {
+  // Normalize any Windows path to lowercase
+  function normalizePath(pathStr) {
+    if (!pathStr || typeof pathStr !== 'string') return pathStr;
+    // Normalize Windows drive paths to lowercase
+    // Only normalize the drive letter and first part of path
+    return pathStr.replace(/^([A-Z]):(.*)/g, (match, drive, rest) => {
+      return drive.toLowerCase() + ':' + rest.toLowerCase();
+    });
+  }
 
 // Store original methods
 const originalResolve = path.resolve;
@@ -79,8 +94,9 @@ if (typeof __filename !== 'undefined') {
   }
 }
 
-// Log that the fix is active (only once)
-if (!global.__caseFixActive) {
-  console.log('[Case Fix] Path normalization active - all paths will be lowercase');
-  global.__caseFixActive = true;
+  // Log that the fix is active (only once)
+  if (!global.__caseFixActive) {
+    console.log('[Case Fix] Path normalization active - all paths will be lowercase');
+    global.__caseFixActive = true;
+  }
 }
