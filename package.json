@@ -1,6 +1,6 @@
 {
   "name": "coaching-log",
-  "version": "0.9901",
+  "version": "0.9902",
   "private": true,
   "scripts": {
     "dev": "cross-env NODE_OPTIONS=\"--require ./fix-case-sensitivity.js\" next dev",
