@@ -52,15 +52,55 @@ export default function EditSessionPage() {
             const calendlySession = calendlySessions.find((s: any) => s.id === sessionId);
             
             if (calendlySession) {
+              // Format dates for HTML date input (YYYY-MM-DD format)
+              const formatDateForInput = (dateString: string | null | undefined): string => {
+                if (!dateString) return '';
+                // If already in YYYY-MM-DD format, return as is
+                if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                  return dateString;
+                }
+                // Otherwise, parse and format
+                try {
+                  const date = new Date(dateString);
+                  return date.toISOString().split('T')[0];
+                } catch {
+                  return '';
+                }
+              };
+              
+              // Normalize session types to match COACHING_TYPES values
+              const normalizeTypes = (typesArray: string[] | null | undefined): string[] => {
+                if (!typesArray || !Array.isArray(typesArray) || typesArray.length === 0) {
+                  return [];
+                }
+                // Map common variations to standard values
+                return typesArray.map(type => {
+                  const typeLower = type.toLowerCase();
+                  if (typeLower === 'one-on-one' || typeLower === 'one-to-one' || typeLower === '1-on-1') {
+                    return 'individual';
+                  }
+                  // Return as-is if it matches standard values (individual, team, mentor, other)
+                  if (['individual', 'team', 'mentor', 'other'].includes(typeLower)) {
+                    return typeLower;
+                  }
+                  // Default to 'other' for unknown types
+                  return 'other';
+                });
+              };
+              
               // Transform Calendly session to SessionData
-              // Only include data that actually comes from Calendly - don't auto-fill other fields
+              // Use session_type from Calendly if available, otherwise leave empty
+              const calendlyTypes = (calendlySession.session_type 
+                ? [calendlySession.session_type] 
+                : []) as string[];
+              
               const sessionData: SessionData = {
                 clientId: '',
                 clientName: calendlySession.client_name || '',
-                date: calendlySession.date,
-                finishDate: calendlySession.finish_date || '',
+                date: formatDateForInput(calendlySession.date),
+                finishDate: formatDateForInput(calendlySession.finish_date),
                 duration: calendlySession.duration || 0,
-                types: [], // Leave empty - user will select
+                types: normalizeTypes(calendlyTypes), // Use normalized types from Calendly
                 numberInGroup: undefined,
                 paymentType: '', // Leave empty - user will set payment type
                 paymentAmount: null,
@@ -96,14 +136,60 @@ export default function EditSessionPage() {
         }
 
         if (data) {
+          // Format dates for HTML date input (YYYY-MM-DD format)
+          const formatDateForInput = (dateString: string | null | undefined): string => {
+            if (!dateString) return '';
+            // If already in YYYY-MM-DD format, return as is
+            if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+              return dateString;
+            }
+            // Otherwise, parse and format
+            try {
+              const date = new Date(dateString);
+              return date.toISOString().split('T')[0];
+            } catch {
+              return '';
+            }
+          };
+          
+          // Normalize session types to match COACHING_TYPES values
+          const normalizeTypes = (typesArray: string[] | null | undefined): string[] => {
+            if (!typesArray || !Array.isArray(typesArray) || typesArray.length === 0) {
+              return [];
+            }
+            // Map common variations to standard values
+            return typesArray.map(type => {
+              const typeLower = type.toLowerCase();
+              if (typeLower === 'one-on-one' || typeLower === 'one-to-one' || typeLower === '1-on-1') {
+                return 'individual';
+              }
+              // Return as-is if it matches standard values (individual, team, mentor, other)
+              if (['individual', 'team', 'mentor', 'other'].includes(typeLower)) {
+                return typeLower;
+              }
+              // Default to 'other' for unknown types
+              return 'other';
+            });
+          };
+          
+          // If types is empty, try to infer from number_in_group
+          let sessionTypes = normalizeTypes(data.types);
+          if (sessionTypes.length === 0 && data.number_in_group !== null && data.number_in_group !== undefined) {
+            if (data.number_in_group === 1) {
+              sessionTypes = ['individual'];
+            } else if (data.number_in_group > 1) {
+              sessionTypes = ['team'];
+            }
+          }
+          
           // Transform the data to match SessionData type
           const sessionData: SessionData = {
             clientId: '', // Don't set clientId for editing - let user select from dropdown
             clientName: data.client_name || '',
-            date: data.date,
-            finishDate: data.finish_date || '',
+            date: formatDateForInput(data.date),
+            finishDate: formatDateForInput(data.finish_date),
             duration: data.duration,
-            types: data.types || [],
+            types: sessionTypes,
             numberInGroup: data.number_in_group,
             paymentType: data.paymenttype,
             paymentAmount: data.payment_amount,

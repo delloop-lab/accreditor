@@ -3,6 +3,19 @@ import { createServiceRoleSupabaseClient } from '@/lib/supabaseServer';
 import { sendReminderEmail } from '@/lib/emailUtils';
 import crypto from 'crypto';
 
+// Helper function to infer session type from event name
+function inferSessionType(eventName: string): string {
+  const nameLower = eventName.toLowerCase();
+  if (nameLower.includes('team') || nameLower.includes('group')) {
+    return 'team';
+  }
+  if (nameLower.includes('mentor') || nameLower.includes('mentoring')) {
+    return 'mentor';
+  }
+  // Default to individual for one-on-one sessions
+  return 'individual';
+}
+
 // Calendly webhook signature verification
 function verifyCalendlySignature(
   payload: string,
@@ -71,16 +84,41 @@ async function handleInviteeCreated(event: any) {
     
     // Extract information from Calendly event
     const inviteeEmail = invitee.email;
-    const inviteeName = invitee.name || inviteeEmail.split('@')[0];
+    // Remove Gmail plus addressing (e.g., "user+tag" becomes "user")
+    const emailLocalPart = inviteeEmail ? inviteeEmail.split('@')[0] : '';
+    const inviteeName = invitee.name || (emailLocalPart ? emailLocalPart.split('+')[0].trim() : 'Unknown Client');
     const eventStartTime = invitee.event_start_time;
     const eventEndTime = invitee.event_end_time;
     const eventUri = invitee.event;
     const inviteeUri = invitee.uri;
     
-    // Calculate duration in minutes
+    // Calculate duration in minutes (fallback)
     const startTime = new Date(eventStartTime);
     const endTime = new Date(eventEndTime);
-    const durationMinutes = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60));
+    const calculatedDurationMinutes = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60));
+    
+    // Extract event type information
+    const eventTypeName = eventDetails?.name || 'Unknown';
+    // Event type duration is in seconds, convert to minutes
+    const eventTypeDuration = eventDetails?.duration 
+      ? Math.round(eventDetails.duration / 60)
+      : calculatedDurationMinutes; // Fallback to calculated
+    
+    // Check if event URI contains "one-to-one" or similar patterns
+    const eventUriLower = eventUri.toLowerCase();
+    const isOneToOne = eventUriLower.includes('one-to-one') || 
+                      eventUriLower.includes('one-on-one') ||
+                      eventUriLower.includes('1-on-1') ||
+                      eventUriLower.includes('1-to-1');
+    
+    // Infer session type from event type name, but override if one-to-one detected
+    let sessionType = inferSessionType(eventTypeName);
+    let numberInGroup = null; // Default to null, will be set if one-to-one
+    
+    if (isOneToOne) {
+      sessionType = 'individual';
+      numberInGroup = 1;
+    }
     
     // Find the coach/user who owns this Calendly account
     // We need to match the event URI to a user's calendly_url
@@ -118,21 +156,29 @@ async function handleInviteeCreated(event: any) {
     
 
     // Create a session record from the Calendly booking
+    const sessionData: any = {
+      user_id: profile.user_id,
+      client_name: inviteeName,
+      date: eventStartTime,
+      finish_date: eventEndTime,
+      duration: eventTypeDuration, // Use event type duration
+      notes: `Scheduled via Calendly - ${eventTypeName}. Event URI: ${eventUri}`,
+      types: [sessionType], // Use inferred session type
+      paymenttype: 'scheduled',
+      calendly_event_uri: eventUri,
+      calendly_invitee_uri: inviteeUri,
+      calendly_booking_id: invitee.uri.split('/').pop(),
+      calendly_event_type_name: eventTypeName, // Store event type name for reference
+    };
+    
+    // Set number_in_group if one-to-one detected
+    if (numberInGroup !== null) {
+      sessionData.number_in_group = numberInGroup;
+    }
+    
     const { error: sessionError } = await supabase
       .from('sessions')
-      .insert({
-        user_id: profile.user_id,
-        client_name: inviteeName,
-        date: eventStartTime,
-        finish_date: eventEndTime,
-        duration: durationMinutes,
-        notes: `Scheduled via Calendly. Event URI: ${eventUri}`,
-        types: ['one-on-one'], // Default, can be customized
-        paymenttype: 'scheduled',
-        calendly_event_uri: eventUri,
-        calendly_invitee_uri: inviteeUri,
-        calendly_booking_id: invitee.uri.split('/').pop(),
-      });
+      .insert(sessionData);
 
     if (sessionError) {
       throw sessionError;
@@ -172,8 +218,10 @@ async function handleInviteeCreated(event: any) {
               <p>You have a new appointment scheduled via Calendly:</p>
               <div style="background: #f9fafb; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0; border-radius: 4px;">
                 <p style="margin: 5px 0;"><strong>Client:</strong> ${inviteeName}</p>
+                <p style="margin: 5px 0;"><strong>Event Type:</strong> ${eventTypeName}</p>
                 <p style="margin: 5px 0;"><strong>Date & Time:</strong> ${new Date(eventStartTime).toLocaleString()}</p>
-                <p style="margin: 5px 0;"><strong>Duration:</strong> ${durationMinutes} minutes</p>
+                <p style="margin: 5px 0;"><strong>Duration:</strong> ${eventTypeDuration} minutes</p>
+                <p style="margin: 5px 0;"><strong>Session Type:</strong> ${sessionType}</p>
               </div>
               <p>This session has been automatically added to your ICF Log.</p>
               <p><a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://icflog.com'}/dashboard/calendar" style="color: #3b82f6; text-decoration: underline;">View your calendar</a></p>
@@ -197,27 +245,49 @@ async function handleInviteeCanceled(event: any) {
   try {
     const invitee = event.payload;
     const inviteeUri = invitee.uri;
+    const inviteeId = inviteeUri ? inviteeUri.split('/').pop() : null;
     
-    // Find and update the session if it exists
-    const { data: session } = await supabase
-      .from('sessions')
-      .select('id, notes')
-      .eq('calendly_invitee_uri', inviteeUri)
-      .single();
+    // Find the session by invitee URI or booking ID
+    let session = null;
+    
+    if (inviteeUri) {
+      const { data: sessionByUri } = await supabase
+        .from('sessions')
+        .select('id, notes')
+        .eq('calendly_invitee_uri', inviteeUri)
+        .single();
+      
+      if (sessionByUri) {
+        session = sessionByUri;
+      }
+    }
+    
+    // Fallback: try to find by booking ID if invitee ID matches
+    if (!session && inviteeId) {
+      const { data: sessionById } = await supabase
+        .from('sessions')
+        .select('id, notes')
+        .eq('calendly_booking_id', inviteeId)
+        .single();
+      
+      if (sessionById) {
+        session = sessionById;
+      }
+    }
 
     if (session) {
-      // Optionally mark as canceled or delete
+      // Mark as canceled - this will be filtered out in the calendar view
       await supabase
         .from('sessions')
         .update({ 
           notes: (session.notes || '') + ' [CANCELED via Calendly]',
-          // Or delete: .delete() instead of .update()
         })
         .eq('id', session.id);
     }
 
   } catch (error) {
-    throw error;
+    // Don't throw - webhook should still return success even if session not found
+    console.error('[Calendly Webhook] Error handling cancellation:', error);
   }
 }
 

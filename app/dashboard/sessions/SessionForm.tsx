@@ -150,12 +150,49 @@ export default function SessionForm({
   // Populate form with initial data when editing
   useEffect(() => {
     if (initialData && isEditing) {
+      // Format dates for HTML date input (YYYY-MM-DD format)
+      const formatDateForInput = (dateString: string | null | undefined): string => {
+        if (!dateString) return '';
+        // If already in YYYY-MM-DD format, return as is
+        if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+          return dateString;
+        }
+        // Otherwise, parse and format
+        try {
+          const date = new Date(dateString);
+          return date.toISOString().split('T')[0];
+        } catch {
+          return '';
+        }
+      };
+      
       setClientId(initialData.clientId);
       setClientName(initialData.clientName);
-      setDate(initialData.date);
-      setFinishDate(initialData.finishDate);
+      setDate(formatDateForInput(initialData.date));
+      setFinishDate(formatDateForInput(initialData.finishDate));
       setDuration(initialData.duration?.toString() || "");
-      setTypes(initialData.types);
+      
+      // Normalize and set types - ensure they match COACHING_TYPES values
+      const normalizeTypes = (typesArray: string[] | null | undefined): string[] => {
+        if (!typesArray || !Array.isArray(typesArray) || typesArray.length === 0) {
+          return [];
+        }
+        // Map common variations to standard values
+        return typesArray.map(type => {
+          const typeLower = type.toLowerCase();
+          if (typeLower === 'one-on-one' || typeLower === 'one-to-one' || typeLower === '1-on-1') {
+            return 'individual';
+          }
+          // Return as-is if it matches standard values (individual, team, mentor, other)
+          if (['individual', 'team', 'mentor', 'other'].includes(typeLower)) {
+            return typeLower;
+          }
+          // Default to 'other' for unknown types
+          return 'other';
+        });
+      };
+      
+      setTypes(normalizeTypes(initialData.types));
       setNumberInGroup(initialData.numberInGroup?.toString() || "1");
       setPaymentType(initialData.paymentType || "");
       setPaymentAmount(initialData.paymentAmount ? formatNumberForDisplay(initialData.paymentAmount, { country: userCountry, currency: userCurrency }, { style: 'decimal' }) : "");

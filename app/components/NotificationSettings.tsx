@@ -650,14 +650,14 @@ export default function NotificationSettings() {
       <p className="text-sm font-medium text-gray-700 mb-3">Select notification types:</p>
       <div className="mb-4">
         {notificationOptions.map((type) => (
-          <label key={type} className="flex items-start py-1.5 px-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+          <label key={type} className="flex items-center py-0.5 px-2 rounded hover:bg-gray-50 cursor-pointer transition-colors">
             <input
               type="checkbox"
-              className="mt-0.5 mr-3 w-4 h-4 flex-shrink-0"
+              className="mr-2 w-4 h-4 flex-shrink-0"
               checked={selected.includes(type)}
               onChange={() => toggleNotification(type)}
             />
-            <span className="text-sm text-gray-700 leading-relaxed">{type}</span>
+            <span className="text-sm text-gray-700 leading-tight">{type}</span>
           </label>
         ))}
       </div>
@@ -679,14 +679,14 @@ export default function NotificationSettings() {
         
         <div className="mb-4">
           {notificationOptions.map((type) => (
-            <label key={`email-${type}`} className="flex items-start py-1.5 px-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+            <label key={`email-${type}`} className="flex items-center py-0.5 px-2 rounded hover:bg-gray-50 cursor-pointer transition-colors">
               <input
                 type="checkbox"
-                className="mt-0.5 mr-3 w-4 h-4 flex-shrink-0"
+                className="mr-2 w-4 h-4 flex-shrink-0"
                 checked={emailSelected.includes(type)}
                 onChange={() => toggleEmailNotification(type)}
               />
-              <span className="text-sm text-gray-700 leading-relaxed">{type}</span>
+              <span className="text-sm text-gray-700 leading-tight">{type}</span>
             </label>
           ))}
         </div>

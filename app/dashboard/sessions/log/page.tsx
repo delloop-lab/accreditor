@@ -1111,13 +1111,29 @@ const findExistingClient = async (clientName: string, clientEmail: string, userI
           
           if (response.ok) {
             const calendlyData = await response.json();
+            
+            // Normalize session types to match COACHING_TYPES values
+            const normalizeTypes = (sessionType: string | null | undefined): string[] => {
+              if (!sessionType) return [];
+              const typeLower = sessionType.toLowerCase();
+              if (typeLower === 'one-on-one' || typeLower === 'one-to-one' || typeLower === '1-on-1') {
+                return ['individual'];
+              }
+              // Return as-is if it matches standard values (individual, team, mentor, other)
+              if (['individual', 'team', 'mentor', 'other'].includes(typeLower)) {
+                return [typeLower];
+              }
+              // Default to 'other' for unknown types
+              return ['other'];
+            };
+            
             calendlySessions = (calendlyData.events || []).map((e: any) => ({
               id: e.id,
               client_name: e.client_name || 'Calendly Booking',
               date: e.date,
               finish_date: e.finish_date || e.date,
               duration: e.duration || 0,
-              types: [],
+              types: normalizeTypes(e.session_type), // Use session_type from Calendly and normalize it
               paymenttype: '',
               payment_amount: null,
               focus_area: '',
@@ -1308,8 +1324,14 @@ const findExistingClient = async (clientName: string, clientEmail: string, userI
                 className="flex items-center justify-center gap-1.5 bg-gray-600 text-white px-2 sm:px-3 py-2 rounded-lg hover:bg-gray-700 transition-colors text-xs sm:text-sm"
               >
                 <CalendarIcon className="h-4 w-4" />
-                <span className="hidden sm:inline">Sort by Date {sortOrder === 'asc' ? 'â†‘' : 'â†“'}</span>
-                <span className="sm:hidden">Sort {sortOrder === 'asc' ? 'â†‘' : 'â†“'}</span>
+                <span className="hidden sm:inline flex items-center gap-1">
+                  Sort by Date
+                  {sortOrder === 'asc' ? <ChevronUpIcon className="h-4 w-4" /> : <ChevronDownIcon className="h-4 w-4" />}
+                </span>
+                <span className="sm:hidden flex items-center gap-1">
+                  Sort
+                  {sortOrder === 'asc' ? <ChevronUpIcon className="h-4 w-4" /> : <ChevronDownIcon className="h-4 w-4" />}
+                </span>
               </button>
               
               <input
@@ -1703,14 +1725,34 @@ const findExistingClient = async (clientName: string, clientEmail: string, userI
                       )}
                     </div>
                     <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-600 mt-1">
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-4 flex-wrap">
+                        {session.types.length > 0 && (
+                          <span 
+                            className="flex items-center gap-1 cursor-pointer hover:text-blue-600 hover:underline"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              if (session.id && session.id.trim() !== '') {
+                                router.push(`/dashboard/sessions/edit/${session.id}`);
+                              }
+                            }}
+                            title="Click to edit session"
+                          >
+                            <span className="font-medium">Type:</span>
+                            <span className="capitalize">{session.types[0]}</span>
+                            {session.types.length > 1 && (
+                              <span className="text-xs text-gray-500">+{session.types.length - 1}</span>
+                            )}
+                          </span>
+                        )}
+                        <span className="flex items-center gap-1">
+                          <ClockIcon className="h-4 w-4" />
+                          <span className="font-medium">Duration:</span>
+                          {session.duration}min
+                        </span>
                         <span className="flex items-center gap-1">
                           <CalendarIcon className="h-4 w-4" />
                           {new Date(session.date).toLocaleDateString()}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <ClockIcon className="h-4 w-4" />
-                          {session.duration}min
                         </span>
                       </div>
                       {session.paymentType && session.paymentType.trim() !== '' && (
@@ -1731,61 +1773,45 @@ const findExistingClient = async (clientName: string, clientEmail: string, userI
                       )}
                     </div>
                   </div>
-                  <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2">
-                    {session.types.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {session.types.slice(0, 2).map((type, idx) => (
-                          <span key={idx} className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">
-                            {type}
-                          </span>
-                        ))}
-                        {session.types.length > 2 && (
-                          <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">
-                            +{session.types.length - 2}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={e => {
-                          e.stopPropagation();
-                          toggleCard(session.id);
-                        }}
-                        className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                        title={expandedCards.has(session.id) ? "Collapse Details" : "Expand Details"}
-                      >
-                        {expandedCards.has(session.id) ? (
-                          <ChevronUpIcon className="h-4 w-4" />
-                        ) : (
-                          <ChevronDownIcon className="h-4 w-4" />
-                        )}
-                      </button>
-                      <button
-                        onClick={e => {
-                          e.stopPropagation();
-                          if (session.id && session.id.trim() !== '') {
-                            router.push(`/dashboard/sessions/edit/${session.id}`);
-                          }
-                        }}
-                        className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
-                        title={session.id?.startsWith('calendly-') ? 'Edit Calendly session (will save to database)' : 'Edit Session'}
-                      >
-                        <PencilIcon className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={e => {
-                          e.stopPropagation();
-                          if (session.id && session.id.trim() !== '') {
-                            handleDeleteClick(session.id);
-                          }
-                        }}
-                        className="p-2 text-gray-400 hover:text-red-600 transition-colors"
-                        title="Delete Session"
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </button>
-                    </div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={e => {
+                        e.stopPropagation();
+                        toggleCard(session.id);
+                      }}
+                      className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                      title={expandedCards.has(session.id) ? "Collapse Details" : "Expand Details"}
+                    >
+                      {expandedCards.has(session.id) ? (
+                        <ChevronUpIcon className="h-4 w-4" />
+                      ) : (
+                        <ChevronDownIcon className="h-4 w-4" />
+                      )}
+                    </button>
+                    <button
+                      onClick={e => {
+                        e.stopPropagation();
+                        if (session.id && session.id.trim() !== '') {
+                          router.push(`/dashboard/sessions/edit/${session.id}`);
+                        }
+                      }}
+                      className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                      title={session.id?.startsWith('calendly-') ? 'Edit Calendly session (will save to database)' : 'Edit Session'}
+                    >
+                      <PencilIcon className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={e => {
+                        e.stopPropagation();
+                        if (session.id && session.id.trim() !== '') {
+                          handleDeleteClick(session.id);
+                        }
+                      }}
+                      className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                      title="Delete Session"
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                    </button>
                   </div>
                 </div>
                 
@@ -1793,6 +1819,19 @@ const findExistingClient = async (clientName: string, clientEmail: string, userI
                 {expandedCards.has(session.id) && (
                   <div className="px-4 pb-4 border-t border-gray-100">
                     <div className="pt-4 space-y-3">
+                      {/* Session Date */}
+                      <div>
+                        <h4 className="text-sm font-semibold text-gray-700 mb-1">Session Date</h4>
+                        <p className="text-sm text-gray-600">
+                          {new Date(session.date).toLocaleDateString('en-US', { 
+                            weekday: 'long', 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric' 
+                          })}
+                        </p>
+                      </div>
+                      
                       {session.focusArea && (
                         <div>
                           <h4 className="text-sm font-semibold text-gray-700 mb-1">Focus Area</h4>

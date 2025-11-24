@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
-import { AcademicCapIcon, CalendarIcon, ClockIcon, DocumentIcon, CheckCircleIcon, BuildingOfficeIcon, BookOpenIcon, ArrowDownTrayIcon, PencilIcon } from "@heroicons/react/24/outline";
+import { AcademicCapIcon, CalendarIcon, ClockIcon, DocumentIcon, CheckCircleIcon, BuildingOfficeIcon, BookOpenIcon, ArrowDownTrayIcon, PencilIcon, ChevronUpIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 import { exportCPDToCSV, exportCPDToXLSX, testExport } from "@/lib/exportUtils";
 
 type CPDEntry = {
@@ -152,8 +152,14 @@ function CPDLogContent() {
             className="flex items-center justify-center gap-2 bg-gray-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm"
           >
             <CalendarIcon className="h-4 w-4" />
-            <span className="hidden sm:inline">Sort by Date {sortOrder === 'asc' ? 'â†‘' : 'â†“'}</span>
-            <span className="sm:hidden">Sort {sortOrder === 'asc' ? 'â†‘' : 'â†“'}</span>
+            <span className="hidden sm:inline flex items-center gap-1">
+              Sort by Date
+              {sortOrder === 'asc' ? <ChevronUpIcon className="h-4 w-4" /> : <ChevronDownIcon className="h-4 w-4" />}
+            </span>
+            <span className="sm:hidden flex items-center gap-1">
+              Sort
+              {sortOrder === 'asc' ? <ChevronUpIcon className="h-4 w-4" /> : <ChevronDownIcon className="h-4 w-4" />}
+            </span>
           </button>
           
 

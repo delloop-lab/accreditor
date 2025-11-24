@@ -1,6 +1,19 @@
 ﻿import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient, getServerUser } from '@/lib/supabaseServer';
 
+// Helper function to infer session type from event name
+function inferSessionType(eventName: string): string {
+  const nameLower = eventName.toLowerCase();
+  if (nameLower.includes('team') || nameLower.includes('group')) {
+    return 'team';
+  }
+  if (nameLower.includes('mentor') || nameLower.includes('mentoring')) {
+    return 'mentor';
+  }
+  // Default to individual for one-on-one sessions
+  return 'individual';
+}
+
 export async function GET(request: NextRequest) {
   try {
     const user = await getServerUser(request);
@@ -83,7 +96,55 @@ export async function GET(request: NextRequest) {
       try {
         const startTime = new Date(event.start_time);
         const endTime = new Date(event.end_time);
-        const durationMinutes = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60));
+        const calculatedDurationMinutes = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60));
+        
+        // Fetch event type details to get duration and name
+        let eventTypeName = event.name || 'Unknown';
+        let eventTypeDuration = calculatedDurationMinutes; // Fallback to calculated duration
+        let sessionType = 'individual'; // Default session type
+        
+        if (event.event_type && event.event_type.uri) {
+          try {
+            const eventTypeResponse = await fetch(event.event_type.uri, {
+              headers: {
+                'Authorization': `Bearer ${calendlyApiToken}`,
+                'Content-Type': 'application/json'
+              }
+            });
+            
+            if (eventTypeResponse.ok) {
+              const eventTypeData = await eventTypeResponse.json();
+              eventTypeName = eventTypeData.resource?.name || eventTypeName;
+              // Event type duration is in seconds, convert to minutes
+              if (eventTypeData.resource?.duration) {
+                eventTypeDuration = Math.round(eventTypeData.resource.duration / 60);
+              }
+              // Infer session type from event type name
+              sessionType = inferSessionType(eventTypeName);
+            }
+          } catch (eventTypeError) {
+            // Fallback to calculated duration and event name
+            sessionType = inferSessionType(eventTypeName);
+          }
+        } else {
+          // If no event_type URI, infer from event name
+          sessionType = inferSessionType(eventTypeName);
+        }
+        
+        // Check if event URI contains "one-to-one" or similar patterns
+        const eventUriLower = event.uri.toLowerCase();
+        const isOneToOne = eventUriLower.includes('one-to-one') || 
+                          eventUriLower.includes('one-on-one') ||
+                          eventUriLower.includes('1-on-1') ||
+                          eventUriLower.includes('1-to-1');
+        
+        let numberInGroup: number | undefined = undefined;
+        
+        // Override session type and set number in group if one-to-one detected
+        if (isOneToOne) {
+          sessionType = 'individual';
+          numberInGroup = 1;
+        }
         
         // Fetch invitees to get the actual client name and email
         let clientName = 'Unknown Client';
@@ -110,12 +171,23 @@ export async function GET(request: NextRequest) {
               // Get the host email from event_memberships
               const hostEmail = event.event_memberships?.[0]?.user_email;
               
+              // Filter out canceled invitees - only process active ones
+              const activeInvitees = invitees.filter((inv: any) => {
+                const status = inv.status || inv.invitee?.status || 'active';
+                return status !== 'canceled';
+              });
+              
+              // If all invitees are canceled, skip this event entirely
+              if (activeInvitees.length === 0) {
+                continue; // Skip to next event
+              }
+              
               // Find the invitee (client) - it's the one who is NOT the host
               // Check both direct properties and nested structure
-              const invitee = invitees.find((inv: any) => {
+              const invitee = activeInvitees.find((inv: any) => {
                 const inviteeEmail = inv.email || inv.invitee?.email || inv.profile?.email;
                 return inviteeEmail && inviteeEmail !== hostEmail;
-              }) || invitees[0]; // Fallback to first invitee if no match
+              }) || activeInvitees[0]; // Fallback to first active invitee if no match
               
               if (invitee) {
                 // Try multiple possible paths for name and email
@@ -125,7 +197,9 @@ export async function GET(request: NextRequest) {
                 if (inviteeName && inviteeName.trim() !== '') {
                   clientName = inviteeName.trim();
                 } else if (inviteeEmail && inviteeEmail.includes('@')) {
-                  clientName = inviteeEmail.split('@')[0];
+                  // Remove Gmail plus addressing (e.g., "user+tag" becomes "user")
+                  const emailLocalPart = inviteeEmail.split('@')[0];
+                  clientName = emailLocalPart.split('+')[0].trim();
                 }
                 if (inviteeEmail && inviteeEmail.includes('@')) {
                   clientEmail = inviteeEmail.trim();
@@ -141,18 +215,27 @@ export async function GET(request: NextRequest) {
 
         // Add session - use client name if available, otherwise use event name as fallback
         // This way we still show the booking even if we can't get invitee details
-        allSessions.push({
+        const sessionData: any = {
           id: `calendly-${event.uri.split('/').pop()}`,
-          client_name: clientName !== 'Unknown Client' ? clientName : `Calendly Booking - ${event.name}`,
+          client_name: clientName !== 'Unknown Client' ? clientName : `Calendly Booking - ${eventTypeName}`,
           email: clientEmail,
           date: event.start_time,
           finish_date: event.end_time,
-          duration: durationMinutes,
-          notes: `Scheduled via Calendly - ${event.name}`,
+          duration: eventTypeDuration, // Use event type duration instead of calculated
+          notes: `Scheduled via Calendly - ${eventTypeName}`,
           calendly_booking_id: event.uri.split('/').pop(),
           calendly_event_uri: event.uri,
+          calendly_event_type_name: eventTypeName, // Store event type name for reference
+          session_type: sessionType, // Store inferred session type
           is_calendly_only: true
-        });
+        };
+        
+        // Add number_in_group if one-to-one detected
+        if (numberInGroup !== undefined) {
+          sessionData.number_in_group = numberInGroup;
+        }
+        
+        allSessions.push(sessionData);
       } catch (err) {
       }
     }

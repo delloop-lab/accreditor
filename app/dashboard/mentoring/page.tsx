@@ -342,7 +342,7 @@ export default function MentoringSupportForm() {
                     onChange={(e) => handleInputChange('deliveryType', e.target.value)}
                     className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300"
                   />
-                  <span className="ml-2 text-sm text-gray-700">â­˜ Individual (1:1)</span>
+                  <span className="ml-2 text-sm text-gray-700">Individual (1:1)</span>
                 </label>
                 <label className="flex items-center">
                   <input
@@ -353,7 +353,7 @@ export default function MentoringSupportForm() {
                     onChange={(e) => handleInputChange('deliveryType', e.target.value)}
                     className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300"
                   />
-                  <span className="ml-2 text-sm text-gray-700">â­˜ Group</span>
+                  <span className="ml-2 text-sm text-gray-700">Group</span>
                 </label>
               </div>
             </div>
@@ -366,9 +366,9 @@ export default function MentoringSupportForm() {
                 className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500"
                 required
               >
-                <option value="one-on-one">â­˜ 1:1 Supervision</option>
-                <option value="group">â­˜ Group Supervision</option>
-                <option value="peer">â­˜ Peer Supervision</option>
+                <option value="one-on-one">1:1 Supervision</option>
+                <option value="group">Group Supervision</option>
+                <option value="peer">Peer Supervision</option>
               </select>
             </div>
           )}

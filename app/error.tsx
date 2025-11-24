@@ -1,9 +1,6 @@
 ﻿"use client";
 import { useEffect, useState } from "react";
 
-// Prevent prerendering of error page
-export const dynamic = 'force-dynamic';
-
 export default function Error({
   error,
   reset,

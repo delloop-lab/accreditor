@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const supabase = createServiceRoleSupabaseClient(req);
+    const supabase = createServiceRoleSupabaseClient();
     const results = {
       sessionReminders: { sent: 0, failed: 0 },
       reflectionReminders: { sent: 0, failed: 0 },
@@ -71,6 +71,8 @@ export async function POST(req: NextRequest) {
           .from("push_subscriptions")
           .select("subscription, notification_types")
           .eq("user_id", profile.user_id);
+        
+        const pushSubscriptions = pushSubs || [];
 
         const { data: userProfile } = await supabase
           .from("profiles")
@@ -82,8 +84,8 @@ export async function POST(req: NextRequest) {
         let pushTypes: string[] = [];
         let emailTypes: string[] = [];
 
-        if (pushSubs && pushSubs.length > 0) {
-          const types = pushSubs[0].notification_types;
+        if (pushSubscriptions && pushSubscriptions.length > 0) {
+          const types = pushSubscriptions[0].notification_types;
           if (typeof types === "string") {
             try {
               pushTypes = JSON.parse(types);
@@ -137,7 +139,7 @@ export async function POST(req: NextRequest) {
               "/dashboard/sessions/log",
               pushTypes,
               emailTypes,
-              pushSubs,
+              pushSubscriptions,
               results.sessionReminders
             );
           }
@@ -175,7 +177,7 @@ export async function POST(req: NextRequest) {
                   `/dashboard/sessions/edit/${session.id}`,
                   pushTypes,
                   emailTypes,
-                  pushSubs,
+                  pushSubscriptions,
                   results.reflectionReminders
                 );
                 break; // Only send one reminder per check
@@ -215,7 +217,7 @@ export async function POST(req: NextRequest) {
               "/dashboard/cpd/log",
               pushTypes,
               emailTypes,
-              pushSubs,
+              pushSubscriptions,
               results.cpdActivityReminders
             );
           }
@@ -253,7 +255,7 @@ export async function POST(req: NextRequest) {
               "/dashboard/cpd",
               pushTypes,
               emailTypes,
-              pushSubs,
+              pushSubscriptions,
               results.cpdDeadlineReminders
             );
           }
@@ -282,7 +284,8 @@ export async function POST(req: NextRequest) {
 
 async function sendReminder(
   profile: any,
-  notificationType: string,
+  pushNotificationType: string,
+  emailNotificationType: string,
   title: string,
   body: string,
   url: string,
@@ -292,7 +295,7 @@ async function sendReminder(
   results: { sent: number; failed: number }
 ) {
   // Send push notification
-  if (pushTypes.includes(notificationType) && pushSubs && pushSubs.length > 0) {
+  if (pushTypes.includes(pushNotificationType) && pushSubs && pushSubs.length > 0) {
     const filtered = pushSubs.filter((sub) => {
       const types = typeof sub.notification_types === "string"
         ? JSON.parse(sub.notification_types)

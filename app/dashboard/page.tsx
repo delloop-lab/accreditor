@@ -109,6 +109,8 @@ export default function DashboardPage() {
   const [thisMonthHours, setThisMonthHours] = useState(0);
   const [mentoringHours, setMentoringHours] = useState(0);
   const [supervisionHours, setSupervisionHours] = useState(0);
+  const [totalClients, setTotalClients] = useState(0);
+  const [newClientsLast30Days, setNewClientsLast30Days] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [selectedSession, setSelectedSession] = useState<any>(null);
   const [selectedCpd, setSelectedCpd] = useState<any>(null);
@@ -120,11 +122,11 @@ export default function DashboardPage() {
   // Currency symbols mapping
   const CURRENCY_SYMBOLS: { [key: string]: string } = {
     "USD": "$",
-    "EUR": "â‚¬",
-    "GBP": "Â£",
+    "EUR": "€",
+    "GBP": "£",
     "CAD": "C$",
     "AUD": "A$",
-    "JPY": "Â¥",
+    "JPY": "¥",
     "CHF": "CHF",
     "NZD": "NZ$",
     "SEK": "SEK",
@@ -305,6 +307,36 @@ export default function DashboardPage() {
       } else {
         setMentoringHours(0);
         setSupervisionHours(0);
+      }
+
+      // Fetch client counts
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const thirtyDaysAgoISO = thirtyDaysAgo.toISOString();
+      
+      // Fetch total clients count
+      const { count: totalClientsCount, error: totalClientsError } = await supabase
+        .from("clients")
+        .select("*", { count: 'exact', head: true })
+        .eq("user_id", user.id);
+      
+      // Fetch new clients in last 30 days count
+      const { count: newClientsCount, error: newClientsError } = await supabase
+        .from("clients")
+        .select("*", { count: 'exact', head: true })
+        .eq("user_id", user.id)
+        .gte("created_at", thirtyDaysAgoISO);
+      
+      if (!totalClientsError && totalClientsCount !== null) {
+        setTotalClients(totalClientsCount);
+      } else {
+        setTotalClients(0);
+      }
+      
+      if (!newClientsError && newClientsCount !== null) {
+        setNewClientsLast30Days(newClientsCount);
+      } else {
+        setNewClientsLast30Days(0);
       }
 
       // Calculate this month's hours
@@ -525,7 +557,7 @@ export default function DashboardPage() {
       </div>
       
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex items-center gap-4 hover:shadow-md transition-shadow duration-200 min-w-[200px]">
           <div className="bg-blue-100 p-3 rounded-xl flex-shrink-0"><UserIcon className="h-6 w-6 text-blue-600" /></div>
           <div className="min-w-0 flex-1">
@@ -570,6 +602,14 @@ export default function DashboardPage() {
             <div className="font-bold text-2xl text-gray-900 mt-1">In Progress</div>
           </div>
         </div>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex items-center gap-4 hover:shadow-md transition-shadow duration-200 min-w-[200px] cursor-pointer" onClick={() => router.push('/dashboard/clients')}>
+          <div className="bg-cyan-100 p-3 rounded-xl flex-shrink-0"><UserIcon className="h-6 w-6 text-cyan-600" /></div>
+          <div className="min-w-0 flex-1">
+            <div className="text-sm text-gray-500 uppercase tracking-wide font-medium">Clients</div>
+            <div className="font-bold text-2xl text-gray-900 mt-1">{newClientsLast30Days}/{totalClients}</div>
+            <div className="text-sm text-gray-400 mt-1">New in 30 days / Total</div>
+          </div>
+        </div>
       </div>
 
       {/* ICF Progress Graph */}
@@ -605,9 +645,9 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="text-xs text-gray-600">
-              <p>â€¢ Current: {Math.round(totalSessionHours)} coaching hours</p>
-              <p>â€¢ Required: {getNextLevelRequirements(profile?.icf_level).sessionHours} hours for {getNextLevelName(profile?.icf_level)}</p>
-              <p>â€¢ Remaining: {Math.max(0, getNextLevelRequirements(profile?.icf_level).sessionHours - totalSessionHours)} hours needed</p>
+              <p>• Current: {Math.round(totalSessionHours)} coaching hours</p>
+              <p>• Required: {getNextLevelRequirements(profile?.icf_level).sessionHours} hours for {getNextLevelName(profile?.icf_level)}</p>
+              <p>• Remaining: {Math.max(0, getNextLevelRequirements(profile?.icf_level).sessionHours - totalSessionHours)} hours needed</p>
             </div>
           </div>
 
@@ -640,9 +680,9 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="text-xs text-gray-600">
-              <p>â€¢ Current: {cpdHours} CPD training hours</p>
-              <p>â€¢ Required: {getNextLevelRequirements(profile?.icf_level).cpdHours} hours for {getNextLevelName(profile?.icf_level)}</p>
-              <p>â€¢ Remaining: {Math.max(0, getNextLevelRequirements(profile?.icf_level).cpdHours - cpdHours)} hours needed</p>
+              <p>• Current: {cpdHours} CPD training hours</p>
+              <p>• Required: {getNextLevelRequirements(profile?.icf_level).cpdHours} hours for {getNextLevelName(profile?.icf_level)}</p>
+              <p>• Remaining: {Math.max(0, getNextLevelRequirements(profile?.icf_level).cpdHours - cpdHours)} hours needed</p>
             </div>
           </div>
         </div>
@@ -706,9 +746,9 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="text-xs text-gray-600">
-              <p>â€¢ Current: {mentoringHours} mentoring hours</p>
-              <p>â€¢ Required: 10 hours per year for ICF compliance</p>
-              <p>â€¢ {mentoringHours >= 10 ? 'Requirement met! âœ“' : `Remaining: ${Math.max(0, 10 - mentoringHours)} hours needed`}</p>
+              <p>• Current: {mentoringHours} mentoring hours</p>
+              <p>• Required: 10 hours per year for ICF compliance</p>
+              <p>• {mentoringHours >= 10 ? 'Requirement met! ✓' : `Remaining: ${Math.max(0, 10 - mentoringHours)} hours needed`}</p>
             </div>
           </div>
 
@@ -741,9 +781,9 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="text-xs text-gray-600">
-              <p>â€¢ Current: {supervisionHours} supervision hours</p>
-              <p>â€¢ Supervision hours are not required for ICF credentials</p>
-              <p>â€¢ Useful for professional development and practice improvement</p>
+              <p>• Current: {supervisionHours} supervision hours</p>
+              <p>• Supervision hours are not required for ICF credentials</p>
+              <p>• Useful for professional development and practice improvement</p>
             </div>
           </div>
         </div>
@@ -1021,10 +1061,10 @@ export default function DashboardPage() {
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                 <h3 className="font-semibold text-blue-800 mb-2">Profile Setup Includes:</h3>
                 <ul className="text-sm text-blue-700 space-y-1">
-                  <li>â€¢ Your full name and contact information</li>
-                  <li>â€¢ Current ICF credential level</li>
-                  <li>â€¢ Preferred currency for session tracking</li>
-                  <li>â€¢ Professional coaching details</li>
+                  <li>• Your full name and contact information</li>
+                  <li>• Current ICF credential level</li>
+                  <li>• Preferred currency for session tracking</li>
+                  <li>• Professional coaching details</li>
                 </ul>
               </div>
               <div className="flex gap-3">

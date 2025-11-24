@@ -54,24 +54,38 @@ export default function CalendlyWidget({
   // Build Calendly URL with parameters
   const buildCalendlyUrl = () => {
     const calendlyUrl = new URL(url);
+    const queryParams: string[] = [];
     
     if (prefill) {
       // Only add prefill parameters if they have non-empty values
       // Calendly rejects empty strings and causes 400 errors
       if (prefill.name && prefill.name.trim() !== '') {
-        calendlyUrl.searchParams.set('name', prefill.name.trim());
+        // Manually encode the name parameter to use %20 for spaces instead of +
+        // URLSearchParams.set() uses + for spaces, but Calendly displays + literally
+        // So we manually encode it with encodeURIComponent which uses %20
+        queryParams.push(`name=${encodeURIComponent(prefill.name.trim())}`);
       }
       if (prefill.email && prefill.email.trim() !== '' && prefill.email.includes('@')) {
-        calendlyUrl.searchParams.set('email', prefill.email.trim());
+        queryParams.push(`email=${encodeURIComponent(prefill.email.trim())}`);
       }
     }
     
     if (utm) {
       Object.entries(utm).forEach(([key, value]) => {
         if (value && value.trim() !== '') {
-          calendlyUrl.searchParams.set(key, value);
+          queryParams.push(`${key}=${encodeURIComponent(value.trim())}`);
         }
       });
+    }
+    
+    // Build the final URL with manually constructed query string
+    if (queryParams.length > 0) {
+      const baseUrl = calendlyUrl.origin + calendlyUrl.pathname;
+      const existingParams = calendlyUrl.search ? calendlyUrl.search.substring(1) : '';
+      const allParams = existingParams 
+        ? [...existingParams.split('&'), ...queryParams].join('&')
+        : queryParams.join('&');
+      return `${baseUrl}?${allParams}`;
     }
     
     return calendlyUrl.toString();

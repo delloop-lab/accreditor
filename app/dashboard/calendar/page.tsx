@@ -17,6 +17,8 @@ type UpcomingSession = {
   notes?: string;
   calendly_booking_id?: string;
   is_calendly_only?: boolean; // Flag for Calendly API events
+  email?: string; // Client email from Calendly
+  session_type?: string; // Session type (individual, team, mentor, etc.)
 };
 
 export default function CalendarPage() {
@@ -43,7 +45,7 @@ export default function CalendarPage() {
       // Fetch sessions from database
       const { data: dbSessions, error: dbError } = await supabase
         .from('sessions')
-        .select('id, client_name, date, finish_date, duration, notes, calendly_booking_id')
+        .select('id, client_name, date, finish_date, duration, notes, calendly_booking_id, types')
         .eq('user_id', user.id)
         .gte('date', nowISO)
         .order('date', { ascending: true })
@@ -68,7 +70,9 @@ export default function CalendarPage() {
             const data = await response.json();
             calendlySessions = (data.events || []).map((e: any) => ({
               ...e,
-              is_calendly_only: true
+              is_calendly_only: true,
+              email: e.email || undefined, // Ensure email is included
+              session_type: e.session_type || 'individual' // Include session type
             }));
           } else {
             const errorData = await response.json();
@@ -83,14 +87,45 @@ export default function CalendarPage() {
         console.error('[Calendar] Calendly fetch failed', calendlyError);
       }
 
-      // Combine and filter sessions
+      // Deduplicate: Filter out Calendly API sessions that are already in the database
+      // This prevents showing the same booking twice
+      const dbCalendlyIds = new Set(
+        (dbSessions || [])
+          .filter((s: any) => s.calendly_booking_id)
+          .map((s: any) => s.calendly_booking_id)
+      );
+      
+      const uniqueCalendlySessions = calendlySessions.filter(
+        (cs: any) => !dbCalendlyIds.has(cs.calendly_booking_id)
+      );
+      
+      // Combine sessions (database sessions take priority)
       const allSessions = [
         ...(dbSessions || []),
-        ...calendlySessions
+        ...uniqueCalendlySessions
       ];
       
-      // Filter to ensure we only show sessions that haven't finished yet
-      const filtered = allSessions.filter(session => {
+      // Deduplicate by booking ID and date to catch any remaining duplicates
+      const seenBookings = new Set<string>();
+      const deduplicated = allSessions.filter(session => {
+        const bookingKey = session.calendly_booking_id 
+          ? `${session.calendly_booking_id}-${session.date}`
+          : `${session.id}-${session.date}`;
+        
+        if (seenBookings.has(bookingKey)) {
+          return false; // Duplicate
+        }
+        seenBookings.add(bookingKey);
+        return true;
+      });
+      
+      // Filter to ensure we only show sessions that haven't finished yet and aren't canceled
+      const filtered = deduplicated.filter(session => {
+        // Filter out canceled sessions (marked by webhook)
+        if (session.notes && session.notes.includes('[CANCELED via Calendly]')) {
+          return false;
+        }
+        
         const sessionDate = new Date(session.date);
         let endTime: Date;
         
@@ -181,8 +216,109 @@ export default function CalendarPage() {
     return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
   };
 
-  const handleSessionClick = (sessionId: string) => {
-    router.push(`/dashboard/sessions/log?highlight=${sessionId}`);
+  const handleClientNameClick = async (e: React.MouseEvent, session: UpcomingSession) => {
+    e.stopPropagation();
+    
+    // If this is a Calendly-only booking, check if client exists
+    if (session.is_calendly_only && (session.client_name || session.email)) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        // Check if client exists by email (preferred) or name
+        let clientId: string | null = null;
+        
+        if (session.email) {
+          const { data: emailMatch } = await supabase
+            .from('clients')
+            .select('id')
+            .eq('email', session.email)
+            .eq('user_id', user.id)
+            .maybeSingle();
+          
+          if (emailMatch) {
+            clientId = emailMatch.id;
+          }
+        }
+        
+        // If not found by email, try by name
+        if (!clientId && session.client_name) {
+          const { data: nameMatch } = await supabase
+            .from('clients')
+            .select('id')
+            .eq('name', session.client_name)
+            .eq('user_id', user.id)
+            .maybeSingle();
+          
+          if (nameMatch) {
+            clientId = nameMatch.id;
+          }
+        }
+
+        // If client doesn't exist, navigate to add client page with pre-filled data
+        if (!clientId) {
+          const params = new URLSearchParams();
+          if (session.client_name) params.set('name', session.client_name);
+          if (session.email) params.set('email', session.email);
+          router.push(`/dashboard/clients/add?${params.toString()}`);
+          return;
+        }
+
+        // Client exists, navigate to client detail page
+        router.push(`/dashboard/clients/${clientId}`);
+      } catch (error) {
+        console.error('[Calendar] Error checking client:', error);
+        // Fallback to session log if there's an error
+        router.push(`/dashboard/sessions/log?highlight=${session.id}`);
+      }
+    } else {
+      // Regular session, check if client exists
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        // Check if client exists by name
+        const { data: nameMatch } = await supabase
+          .from('clients')
+          .select('id')
+          .eq('name', session.client_name)
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        if (nameMatch) {
+          router.push(`/dashboard/clients/${nameMatch.id}`);
+        } else {
+          alert(`No client record found for ${session.client_name}. Please add this client first.`);
+        }
+      } catch (error) {
+        console.error('[Calendar] Error checking client:', error);
+      }
+    }
+  };
+
+  const handleSessionTypeClick = (e: React.MouseEvent, session: UpcomingSession) => {
+    e.stopPropagation();
+    // Navigate to edit session or session log
+    if (session.id && session.id.trim() !== '') {
+      if (session.id.startsWith('calendly-')) {
+        // For Calendly-only sessions, navigate to session log with highlight
+        router.push(`/dashboard/sessions/log?highlight=${session.id}`);
+      } else {
+        // For database sessions, navigate to edit page
+        router.push(`/dashboard/sessions/edit/${session.id}`);
+      }
+    }
+  };
+
+  const handleSessionClick = (session: UpcomingSession) => {
+    // Navigate to session log or edit page
+    if (session.id && session.id.trim() !== '') {
+      if (session.id.startsWith('calendly-')) {
+        router.push(`/dashboard/sessions/log?highlight=${session.id}`);
+      } else {
+        router.push(`/dashboard/sessions/edit/${session.id}`);
+      }
+    }
   };
 
   const handleSaveCalendlyUrl = async () => {
@@ -267,27 +403,48 @@ export default function CalendarPage() {
             {upcomingSessions.map((session) => (
               <div
                 key={session.id}
-                onClick={() => handleSessionClick(session.id)}
+                onClick={() => handleSessionClick(session)}
                 className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-blue-300 cursor-pointer transition-all group"
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <UserIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                    <h3 className="font-semibold text-gray-900 truncate">{session.client_name}</h3>
+                    <h3 
+                      className="font-semibold text-gray-900 truncate hover:text-blue-600 hover:underline cursor-pointer"
+                      onClick={(e) => handleClientNameClick(e, session)}
+                      title="Click to view client details"
+                    >
+                      {session.client_name}
+                    </h3>
                     {session.calendly_booking_id && (
                       <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded flex-shrink-0">
                         Calendly
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-4 text-sm text-gray-600 ml-6">
+                  <div className="flex items-center gap-4 text-sm text-gray-600 ml-6 flex-wrap">
+                    {((session as any).session_type || ((session as any).types && (session as any).types.length > 0)) && (
+                      <span 
+                        className="flex items-center gap-1 cursor-pointer hover:text-blue-600 hover:underline"
+                        onClick={(e) => handleSessionTypeClick(e, session)}
+                        title="Click to edit session"
+                      >
+                        <span className="font-medium">Type:</span>
+                        <span className="capitalize">
+                          {(session as any).session_type || 
+                           ((session as any).types && (session as any).types[0]) || 
+                           'individual'}
+                        </span>
+                      </span>
+                    )}
+                    <span className="flex items-center gap-1">
+                      <ClockIcon className="h-4 w-4" />
+                      <span className="font-medium">Duration:</span>
+                      {formatDuration(session.duration)}
+                    </span>
                     <span className="flex items-center gap-1">
                       <CalendarIcon className="h-4 w-4" />
                       {formatDate(session.date)}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <ClockIcon className="h-4 w-4" />
-                      {formatDuration(session.duration)}
                     </span>
                   </div>
                   {session.notes && (

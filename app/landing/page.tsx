@@ -18,9 +18,6 @@ import {
   ArrowRightOnRectangleIcon
 } from "@heroicons/react/24/outline";
 
-// Force dynamic rendering to prevent build errors
-export const dynamic = 'force-dynamic';
-
 export default function LandingPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);

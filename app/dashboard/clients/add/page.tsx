@@ -1,11 +1,12 @@
 ﻿"use client";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { UserIcon, ArrowLeftIcon, ExclamationTriangleIcon, XMarkIcon, DocumentArrowUpIcon, XCircleIcon } from "@heroicons/react/24/outline";
 
 export default function AddClientPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [consentGiven, setConsentGiven] = useState(false);
@@ -17,6 +18,20 @@ export default function AddClientPage() {
     phone: "",
     notes: ""
   });
+
+  // Pre-fill form from URL parameters (e.g., from Calendly booking)
+  useEffect(() => {
+    const name = searchParams.get('name');
+    const email = searchParams.get('email');
+    
+    if (name || email) {
+      setFormData(prev => ({
+        ...prev,
+        name: name || prev.name,
+        email: email || prev.email
+      }));
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
