@@ -1,10 +1,10 @@
 ﻿"use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { UserIcon, ArrowLeftIcon, ExclamationTriangleIcon, XMarkIcon, DocumentArrowUpIcon, XCircleIcon } from "@heroicons/react/24/outline";
 
-export default function AddClientPage() {
+function AddClientForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
@@ -416,4 +416,27 @@ export default function AddClientPage() {
       )}
     </div>
   );
-} 
+}
+
+export default function AddClientPage() {
+  return (
+    <Suspense fallback={
+      <div className="max-w-2xl mx-auto p-6">
+        <div className="flex items-center gap-2 mb-6">
+          <UserIcon className="h-6 w-6 text-blue-600" />
+          <h1 className="text-2xl font-bold">Add New Client</h1>
+        </div>
+        <div className="bg-white rounded-xl shadow-lg p-6 border">
+          <div className="animate-pulse space-y-4">
+            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+            <div className="h-10 bg-gray-200 rounded"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+            <div className="h-10 bg-gray-200 rounded"></div>
+          </div>
+        </div>
+      </div>
+    }>
+      <AddClientForm />
+    </Suspense>
+  );
+}
