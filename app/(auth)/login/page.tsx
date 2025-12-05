@@ -45,7 +45,7 @@ export default function LoginPage() {
           <img 
             src="/icfLOGO4.png" 
             alt="ICF Log" 
-            className="h-30 w-auto mx-auto mb-4"
+            className="h-16 w-auto mx-auto mb-2.5"
           />
           <h1 className="text-2xl font-bold mb-2">Welcome Back</h1>
           <p className="text-gray-600">Sign in to your coaching account</p>

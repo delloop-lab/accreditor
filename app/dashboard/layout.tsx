@@ -72,7 +72,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           <img
             src="/icfLOGO4.png"
             alt="ICF Log"
-            className="h-32 w-auto"
+            className="h-16 w-auto mb-2.5"
           />
           <button
             onClick={() => setIsMobileMenuOpen(true)}
@@ -97,7 +97,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             <img 
               src="/icfLOGO4.png" 
               alt="ICF Log" 
-              className="h-30 w-auto"
+              className="h-16 w-auto mb-2.5"
             />
           </div>
           
@@ -176,7 +176,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           
           {/* Version Number */}
           <div className="text-center mt-4 pb-2">
-            <span className="text-xs text-gray-400 font-mono">V0.9910</span>
+            <span className="text-xs text-gray-400 font-mono">V0.9920</span>
           </div>
         </nav>
       </aside>
@@ -205,7 +205,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                               <img
               src="/icfLOGO4.png"
               alt="ICF Log"
-              className="h-12 w-auto"
+              className="h-6 w-auto mb-2.5"
             />
 
                 </div>

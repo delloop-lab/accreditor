@@ -10,3 +10,6 @@ ON sessions(calendly_event_type_name);
 -- Add comment to column for documentation
 COMMENT ON COLUMN sessions.calendly_event_type_name IS 'Name of the Calendly event type used for this booking (e.g., "Expert Coaching 45 Minutes")';
 
+
+
+

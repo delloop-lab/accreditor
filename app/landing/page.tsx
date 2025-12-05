@@ -59,7 +59,7 @@ export default function LandingPage() {
           <img
             src="/icfLOGO4.png"
             alt="ICF Log"
-            className="h-40 w-auto"
+            className="h-20 w-auto mb-2.5"
           />
         </div>
       </header>
@@ -121,7 +121,7 @@ export default function LandingPage() {
           <img 
             src="/icfLOGO4.png" 
             alt="ICF Log" 
-            className="logo-size-150"
+            className="h-20 w-auto mb-2.5"
           />
         </div>
         <p className="text-lg sm:text-xl text-gray-600 font-medium mb-2 sm:mb-3">

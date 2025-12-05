@@ -92,8 +92,7 @@ export default function RegisterPage() {
           <img 
             src="/icfLOGO4.png" 
             alt="ICF Log" 
-            style={{ height: '150px', width: 'auto' }}
-            className="mx-auto mb-4"
+            className="h-20 w-auto mx-auto mb-2.5"
           />
           <h1 className="text-2xl font-bold mb-2">Register</h1>
           <h2 className="text-lg font-semibold text-gray-800 mb-1">Create Your ICF Log Account</h2>
