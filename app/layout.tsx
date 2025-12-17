@@ -25,10 +25,7 @@ export const metadata: Metadata = {
   description: "Professional coaching log and CPD tracking application for ICF accredited coaches",
   manifest: "/manifest.json",
   icons: {
-    icon: [
-      { url: "/landing2-images/logo.svg", type: "image/svg+xml" },
-      { url: "/favicon.ico", type: "image/x-icon" },
-    ],
+    icon: "/favicon.ico",
   },
 };
 
