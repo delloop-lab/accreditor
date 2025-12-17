@@ -1,0 +1,6 @@
+<svg width="120" height="40" viewBox="0 0 120 40" xmlns="http://www.w3.org/2000/svg">
+  <text x="0" y="28" font-family="Montserrat, sans-serif" font-size="32" font-weight="800" fill="#87CEEB">ICF</text>
+  <rect x="50" y="8" width="70" height="24" fill="#87CEEB" rx="2"/>
+  <text x="55" y="28" font-family="Montserrat, sans-serif" font-size="32" font-weight="800" fill="#000000">LOG</text>
+</svg>
+

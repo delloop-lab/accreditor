@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import Link from "next/link";
 import { ReactNode, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -20,6 +20,7 @@ import {
   EnvelopeIcon,
   CreditCardIcon,
   CalendarIcon,
+  HomeIcon,
 } from "@heroicons/react/24/outline";
 import { isCurrentUserAdmin } from "@/lib/adminUtils";
 
@@ -176,7 +177,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           
           {/* Version Number */}
           <div className="text-center mt-4 pb-2">
-            <span className="text-xs text-gray-400 font-mono">V0.9920</span>
+            <span className="text-xs text-gray-400 font-mono">V0.9930</span>
           </div>
         </nav>
       </aside>

@@ -49,6 +49,10 @@ coverage/
 tmp/
 temp/
 
+# Source files (already migrated)
+new_landing_page/
+copy_images.bat
+
 public/sw.js
 public/workbox-*.js
 public/fallback-*.js

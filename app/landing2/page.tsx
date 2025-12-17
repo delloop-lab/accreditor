@@ -3,10 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from "next/link";
 import './styles.css';
 
-// Version number - increment by 0.010 for each change
-const VERSION = "0.9940";
-
-export default function LandingPage() {
+export default function Landing2Page() {
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [showBackToTop, setShowBackToTop] = useState(false);
   const backToTopRef = useRef<HTMLButtonElement>(null);
@@ -86,13 +83,6 @@ export default function LandingPage() {
     <>
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=Montserrat:wght@400;600;700;800&family=Roboto:wght@300;400;500;700;900&display=swap');
-        * {
-          box-sizing: border-box;
-        }
-        html, body {
-          overflow-x: hidden;
-          max-width: 100vw;
-        }
       `}</style>
       
       {/* Countdown Banner */}
@@ -447,9 +437,6 @@ export default function LandingPage() {
               <Link href="/disclaimer" className="footer-link">Disclaimer</Link>
               <Link href="/privacy" className="footer-link">Privacy Policy</Link>
             </div>
-            <div className="footer-version">
-              <span className="version-text">Beta V{VERSION}</span>
-            </div>
           </div>
         </div>
       </footer>
@@ -467,3 +454,5 @@ export default function LandingPage() {
     </>
   );
 }
+
+
