@@ -1,4 +1,4 @@
-import '../../new_landing_page/styles.css';
+import './styles.css';
 
 export default function Landing2Layout({
   children,
