@@ -177,7 +177,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           
           {/* Version Number */}
           <div className="text-center mt-4 pb-2">
-            <span className="text-xs text-gray-400 font-mono">Beta V0.9940</span>
+            <span className="text-xs text-gray-400 font-mono">Beta V0.9950</span>
           </div>
         </nav>
       </aside>
@@ -343,7 +343,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 </button>
                 {/* Version Number */}
                 <div className="text-center mt-2">
-                  <span className="text-xs text-gray-400 font-mono">Beta V0.9940</span>
+                  <span className="text-xs text-gray-400 font-mono">Beta V0.9950</span>
                 </div>
               </div>
             </div>

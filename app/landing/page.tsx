@@ -4,7 +4,7 @@ import Link from "next/link";
 import './styles.css';
 
 // Version number - increment by 0.010 for each change
-const VERSION = "0.9940";
+const VERSION = "0.9950";
 
 export default function LandingPage() {
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
